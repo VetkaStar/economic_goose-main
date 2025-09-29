@@ -2,6 +2,12 @@
   <div class="company-page">
     <!-- Выбор типа бизнеса -->
     <div v-if="!businessTypeSelected" class="business-selection">
+      <!-- Кнопка назад -->
+      <button class="back-button" @click="goBack">
+        <span class="back-icon">←</span>
+        <span class="back-text">Назад</span>
+      </button>
+      
       <div class="selection-container">
         <h1 class="selection-title">Какой бизнес для развития ты выбираешь?</h1>
         <div class="business-options">
@@ -111,6 +117,10 @@ const selectBusinessType = (type: string) => {
 const exitToMainMenu = () => {
   emit('exitToMainMenu')
 }
+
+const goBack = () => {
+  emit('exitToMainMenu')
+}
 </script>
 
 <style scoped>
@@ -142,6 +152,46 @@ const exitToMainMenu = () => {
   justify-content: center;
   height: 100vh;
   padding: clamp(20px, 3vw, 40px);
+  position: relative;
+}
+
+/* Кнопка назад */
+.back-button {
+  position: absolute;
+  top: 30px;
+  left: 30px;
+  background: var(--color-bg-menu-light);
+  border: 2px solid var(--color-buttons);
+  border-radius: 15px;
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  color: var(--color-text);
+  box-shadow: 0 4px 12px var(--shadow-medium);
+  z-index: 10;
+}
+
+.back-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px var(--shadow-dark);
+  background: var(--color-buttons);
+  color: white;
+}
+
+.back-icon {
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.back-text {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .selection-container {
