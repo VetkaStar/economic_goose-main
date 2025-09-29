@@ -1,0 +1,343 @@
+/* Общие стили для всех меню игры */
+
+/* Модальные окна */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(3px);
+}
+
+.modal {
+  background: var(--color-bg-menu);
+  border-radius: clamp(15px, 2vw, 30px);
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 clamp(10px, 2vw, 20px) clamp(30px, 6vw, 60px) var(--shadow-dark);
+  border: clamp(2px, 0.3vw, 4px) solid var(--color-text);
+  font-family: 'Orbitron', sans-serif;
+  color: var(--color-text);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: clamp(15px, 2vw, 30px);
+  border-bottom: clamp(2px, 0.3vw, 4px) solid var(--color-text);
+  background: var(--gradient-accents);
+  color: white;
+  border-radius: clamp(15px, 2vw, 30px) clamp(15px, 2vw, 30px) 0 0;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: clamp(1.2rem, 2.5vw, 2rem);
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  text-shadow: 2px 2px 0px var(--color-accents-dark);
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: clamp(1.2rem, 2vw, 1.8rem);
+  cursor: pointer;
+  color: white;
+  padding: clamp(5px, 1vw, 10px);
+  border-radius: 50%;
+  width: clamp(30px, 5vw, 45px);
+  height: clamp(30px, 5vw, 45px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: white;
+  transform: scale(1.1);
+}
+
+.modal-content {
+  padding: clamp(20px, 3vw, 40px);
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: clamp(10px, 2vw, 20px);
+  padding: clamp(15px, 2vw, 30px);
+  border-top: clamp(2px, 0.3vw, 4px) solid var(--color-text);
+  background: var(--gradient-bg);
+  border-radius: 0 0 clamp(15px, 2vw, 30px) clamp(15px, 2vw, 30px);
+}
+
+/* Общие стили для кнопок */
+.btn {
+  padding: clamp(8px, 1.5vw, 16px) clamp(16px, 3vw, 32px);
+  border: clamp(2px, 0.3vw, 4px) solid var(--color-text);
+  border-radius: clamp(6px, 1vw, 12px);
+  font-size: clamp(0.8rem, 1.5vw, 1.2rem);
+  font-weight: 700;
+  font-family: 'Orbitron', sans-serif;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-shadow: 1px 1px 0px var(--shadow-light);
+  box-shadow: 0 clamp(2px, 0.4vw, 4px) clamp(4px, 0.8vw, 8px) var(--shadow-medium);
+}
+
+.btn-primary {
+  background: var(--gradient-buttons);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--gradient-accents);
+  transform: translateY(-2px);
+  box-shadow: 0 clamp(4px, 0.8vw, 8px) clamp(6px, 1.2vw, 12px) var(--shadow-dark);
+}
+
+.btn-secondary {
+  background: var(--gradient-bg);
+  color: var(--color-text);
+}
+
+.btn-secondary:hover {
+  background: var(--color-bg-menu-light);
+  transform: translateY(-2px);
+  box-shadow: 0 clamp(4px, 0.8vw, 8px) clamp(6px, 1.2vw, 12px) var(--shadow-medium);
+}
+
+/* Базовые стили меню */
+.menu-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  font-family: 'Orbitron', 'Arial', sans-serif;
+  background: var(--color-bg-menu);
+  font-size: clamp(12px, 1.5vw, 24px);
+}
+
+/* Кнопки меню */
+.menu-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: clamp(2px, 0.4vw, 6px) solid var(--color-text);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 clamp(2px, 0.5vw, 6px) clamp(4px, 1vw, 12px) var(--shadow-medium);
+  position: relative;
+  overflow: hidden;
+  font-family: 'Orbitron', sans-serif;
+}
+
+.menu-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 clamp(4px, 0.8vw, 8px) clamp(6px, 1.2vw, 16px) var(--shadow-dark);
+}
+
+.menu-button:active {
+  transform: scale(0.95);
+}
+
+/* Размеры кнопок */
+.menu-button-small {
+  width: clamp(60px, 8vw, 120px);
+  height: clamp(60px, 8vw, 120px);
+}
+
+.menu-button-medium {
+  width: clamp(70px, 9vw, 140px);
+  height: clamp(70px, 9vw, 140px);
+}
+
+.menu-button-large {
+  width: clamp(85px, 11vw, 170px);
+  height: clamp(85px, 11vw, 170px);
+}
+
+/* Цвета кнопок */
+.menu-button-primary {
+  background: var(--gradient-buttons);
+  color: white;
+}
+
+.menu-button-accent {
+  background: var(--gradient-accents);
+  color: white;
+}
+
+.menu-button-secondary {
+  background: linear-gradient(135deg, var(--color-secondary) 0%, #6A9B2F 100%);
+  color: white;
+}
+
+.menu-button-highlight {
+  background: linear-gradient(135deg, var(--color-highlights) 0%, #5BA3D1 100%);
+  color: var(--color-text);
+}
+
+/* Иконки кнопок */
+.menu-button-icon {
+  font-size: clamp(1.5rem, 3vw, 4rem);
+  filter: drop-shadow(0 2px 4px var(--shadow-medium));
+}
+
+/* Текст кнопок */
+.menu-button-label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(0.6rem, 1.2vw, 1.4rem);
+  font-weight: 700;
+  text-align: center;
+  line-height: 1;
+  color: white;
+  text-shadow: 
+    2px 2px 0px var(--color-text),
+    -1px -1px 0px var(--color-text),
+    1px -1px 0px var(--color-text),
+    -1px 1px 0px var(--color-text),
+    0px 2px 4px var(--shadow-dark);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  z-index: 10;
+  position: relative;
+}
+
+/* Заголовки */
+.menu-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(1.5rem, 3vw, 4rem);
+  font-weight: 900;
+  color: var(--color-text);
+  text-shadow: 
+    3px 3px 0px var(--color-accents),
+    6px 6px 0px var(--color-accents-dark);
+  text-align: center;
+  margin: 0;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.menu-subtitle {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(1rem, 2vw, 2.5rem);
+  font-weight: 700;
+  color: var(--color-text);
+  text-shadow: 2px 2px 0px var(--shadow-light);
+  text-align: center;
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+/* Обычный текст */
+.menu-text {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(0.8rem, 1.5vw, 1.8rem);
+  font-weight: 400;
+  color: var(--color-text);
+  line-height: 1.4;
+  text-shadow: 1px 1px 0px var(--shadow-light);
+}
+
+/* Контейнеры */
+.menu-content {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: clamp(15px, 2vw, 30px);
+  padding: clamp(20px, 3vw, 40px);
+  box-shadow: 0 clamp(4px, 0.8vw, 8px) clamp(8px, 1.6vw, 16px) var(--shadow-medium);
+  border: clamp(2px, 0.3vw, 4px) solid var(--color-text);
+}
+
+.menu-card {
+  background: var(--gradient-bg);
+  border-radius: clamp(10px, 1.5vw, 20px);
+  padding: clamp(15px, 2vw, 30px);
+  box-shadow: 0 clamp(2px, 0.4vw, 4px) clamp(4px, 0.8vw, 8px) var(--shadow-light);
+  border: clamp(1px, 0.2vw, 2px) solid var(--color-buttons);
+}
+
+/* Анимации */
+@keyframes menuGlow {
+  0%, 100% { 
+    text-shadow: 
+      3px 3px 0px var(--color-accents),
+      6px 6px 0px var(--color-accents-dark);
+  }
+  50% { 
+    text-shadow: 
+      3px 3px 0px var(--color-accents),
+      6px 6px 0px var(--color-accents-dark),
+      0 0 20px var(--color-highlights);
+  }
+}
+
+@keyframes menuFloat {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes menuPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+/* Элементы с анимацией */
+.menu-title-animated {
+  animation: menuGlow 3s ease-in-out infinite;
+}
+
+.menu-button-animated {
+  animation: menuFloat 4s ease-in-out infinite;
+}
+
+.menu-button-pulse {
+  animation: menuPulse 2s ease-in-out infinite;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .menu-container {
+    font-size: clamp(10px, 1.2vw, 18px);
+  }
+  
+  .menu-title {
+    font-size: clamp(1.2rem, 2.5vw, 3rem);
+  }
+  
+  .menu-subtitle {
+    font-size: clamp(0.8rem, 1.5vw, 2rem);
+  }
+}
+
+@media (max-width: 480px) {
+  .menu-container {
+    font-size: clamp(8px, 1vw, 14px);
+  }
+  
+  .menu-title {
+    font-size: clamp(1rem, 2vw, 2.5rem);
+  }
+  
+  .menu-subtitle {
+    font-size: clamp(0.7rem, 1.2vw, 1.5rem);
+  }
+}

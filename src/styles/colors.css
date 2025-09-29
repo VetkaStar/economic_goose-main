@@ -1,0 +1,30 @@
+/* Цветовая палитра игры "Модная Империя Гусь-Предприниматель" */
+
+:root {
+  /* Основные цвета */
+  --color-bg-menu: #F4E6D1;        /* Теплый кремовый/бежевый - фон меню */
+  --color-buttons: #D4824A;         /* Древесный оранжевый - кнопки */
+  --color-accents: #C85A54;         /* Мягкий красный - акценты */
+  
+  /* Дополнительные цвета */
+  --color-text: #5D4037;            /* Темно-коричневый - текст */
+  --color-secondary: #7CB342;       /* Мягкий зеленый - второстепенные элементы */
+  --color-highlights: #81C4E7;      /* Светло-голубой - выделения */
+  
+  /* Дополнительные оттенки */
+  --color-bg-menu-light: #F8F0E6;   /* Светлый оттенок фона */
+  --color-buttons-light: #E09A6B;   /* Светлый оттенок кнопок */
+  --color-buttons-dark: #B86B3A;    /* Темный оттенок кнопок */
+  --color-accents-light: #D67A74;   /* Светлый оттенок акцентов */
+  --color-accents-dark: #A84842;    /* Темный оттенок акцентов */
+  
+  /* Тени и эффекты */
+  --shadow-light: rgba(93, 64, 55, 0.1);
+  --shadow-medium: rgba(93, 64, 55, 0.2);
+  --shadow-dark: rgba(93, 64, 55, 0.3);
+  
+  /* Градиенты */
+  --gradient-buttons: linear-gradient(135deg, var(--color-buttons) 0%, var(--color-buttons-dark) 100%);
+  --gradient-accents: linear-gradient(135deg, var(--color-accents) 0%, var(--color-accents-dark) 100%);
+  --gradient-bg: linear-gradient(135deg, var(--color-bg-menu) 0%, var(--color-bg-menu-light) 100%);
+}
