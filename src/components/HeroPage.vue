@@ -103,7 +103,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useCharacterStore } from '@/stores/characterStore'
 
 const emit = defineEmits<{

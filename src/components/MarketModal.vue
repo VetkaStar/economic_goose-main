@@ -1,108 +1,208 @@
 <template>
-  <div class="market-modal-overlay" @click="closeModal">
-    <div class="market-modal" @click.stop>
-      <!-- Заголовок -->
-      <div class="market-header">
-        <h2>🛒 Рынок "Ткани"</h2>
-        <button class="close-btn" @click="closeModal">×</button>
+  <div class="modal-overlay" @click.self="close">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>🧵 Закупка материалов</h2>
+        <button class="close-btn" @click="close">✕</button>
       </div>
-
-      <!-- Основной контент -->
-      <div class="market-content">
-        <!-- Левая панель - Товары -->
-        <div class="products-panel">
-          <h3>🧵 Материалы для закупки</h3>
-          
-          <div class="products-grid">
-            <div v-for="product in products" :key="product.id" class="product-item">
-              <div class="product-icon">{{ product.icon }}</div>
-              <div class="product-info">
-                <div class="product-name">{{ product.name }}</div>
-                <div class="product-description">{{ product.description }}</div>
-                <div class="product-price">{{ product.price.toLocaleString() }}₽ за {{ product.unit }}</div>
-                <div class="product-stock">В наличии: {{ product.stock }} {{ product.unit }}</div>
-              </div>
-              <div class="product-actions">
-                <div class="quantity-controls">
-                  <button @click="decreaseQuantity(product.id)" class="qty-btn">-</button>
-                  <span class="quantity">{{ getQuantity(product.id) }}</span>
-                  <button @click="increaseQuantity(product.id)" class="qty-btn">+</button>
+      
+      <div class="modal-body">
+        <!-- Прокручиваемая область с поставщиками и материалами -->
+        <div class="scrollable-content">
+          <div class="suppliers-layout">
+            <!-- Список поставщиков слева -->
+            <div class="suppliers-sidebar">
+              <h3>Поставщики</h3>
+              <div class="suppliers-list">
+                <div 
+                  v-for="supplier in suppliers" 
+                  :key="supplier.id"
+                  class="supplier-card"
+                  :class="{ 
+                    active: activeSupplier === supplier.id,
+                    locked: supplier.contractStatus === 'locked',
+                    available: checkSupplierAccess(supplier)
+                  }"
+                  @click="selectSupplier(supplier.id)"
+                >
+                  <div class="supplier-icon">{{ supplier.icon }}</div>
+                  <div class="supplier-info">
+                    <div class="supplier-name">{{ supplier.name }}</div>
+                    <div class="supplier-specialty">{{ supplier.specialty }}</div>
+                    <div class="supplier-status" :class="supplier.contractStatus">
+                      {{ getContractStatusText(supplier.contractStatus) }}
+                    </div>
+                    <div class="supplier-requirement" :class="{ 
+                      'requirement-met': checkSupplierAccess(supplier),
+                      'requirement-unmet': !checkSupplierAccess(supplier) 
+                    }">
+                      {{ getRequirementText(supplier) }}
+                    </div>
+                  </div>
                 </div>
-                <button @click="addToCart(product.id)" class="add-to-cart-btn" :disabled="getQuantity(product.id) === 0">
-                  В корзину
-                </button>
+              </div>
+            </div>
+            
+            <!-- Материалы выбранного поставщика справа -->
+            <div class="materials-content">
+              <div v-if="!activeSupplier" class="no-supplier-selected">
+                <div class="empty-icon">📋</div>
+                <p>Выберите поставщика из списка слева</p>
+              </div>
+              
+              <div v-else class="supplier-materials">
+                <div class="supplier-header">
+                  <h3>{{ currentSupplier?.name }}</h3>
+                  <div class="supplier-meta">
+                    <span class="supplier-country" v-if="currentSupplier?.country">🌍 {{ currentSupplier.country }}</span>
+                    <span class="supplier-reliability" v-if="currentSupplier?.reliability">
+                      📊 Надежность: {{ currentSupplier.reliability }}%
+                    </span>
+                    <span class="supplier-discount" v-if="currentSupplier?.discountThreshold">
+                      💰 Скидка {{ currentSupplier.discountPercent }}% от ₽{{ currentSupplier.discountThreshold.toLocaleString() }}
+                    </span>
+                  </div>
+                  <div class="contract-actions">
+                    <button 
+                      v-if="currentSupplier?.contractStatus === 'locked'"
+                      class="negotiate-btn locked"
+                      disabled
+                    >
+                      🔒 Заблокирован
+                    </button>
+                    <button 
+                      v-else-if="currentSupplier?.contractStatus === 'none'"
+                      class="negotiate-btn"
+                      :class="{ disabled: !checkSupplierAccess(currentSupplier) }"
+                      :disabled="!checkSupplierAccess(currentSupplier)"
+                      @click="negotiateContract"
+                    >
+                      💼 Договориться
+                    </button>
+                    <span 
+                      v-else-if="currentSupplier?.contractStatus === 'negotiating'"
+                      class="status-text"
+                    >
+                      ⏳ Переговоры...
+                    </span>
+                    <span 
+                      v-else-if="currentSupplier?.contractStatus === 'active'"
+                      class="status-text active"
+                    >
+                      ✅ Контракт активен
+                    </span>
+                  </div>
+                </div>
+                
+                <div v-if="currentSupplier?.contractStatus !== 'active'" class="contract-required">
+                  <p>🤝 Для заказа материалов необходимо заключить контракт с поставщиком</p>
+                </div>
+                
+                <div v-else class="materials-table">
+            <table class="procurement-table">
+              <thead>
+                <tr>
+                  <th>Материал</th>
+                  <th>На складе</th>
+                  <th>Цена за м</th>
+                  <th>Качество</th>
+                  <th>Свойства</th>
+                  <th>Количество</th>
+                  <th>Сумма</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="material in currentSupplierMaterials" :key="material.id" class="material-row">
+                  <td class="material-info">
+                    <div class="material-icon">{{ material.icon }}</div>
+                    <div class="material-details">
+                      <span class="material-name">{{ material.name }}</span>
+                      <span class="material-description">{{ material.description }}</span>
+                    </div>
+                  </td>
+                  <td class="stock-amount">
+                    <span class="stock-value">{{ material.currentStock }} м</span>
+                  </td>
+                  <td class="price">₽{{ material.price.toLocaleString() }}</td>
+                  <td class="quality">
+                    <div class="quality-bar">
+                      <div class="quality-fill" :style="{ 
+                        width: material.quality + '%', 
+                        backgroundColor: getQualityColor(material.quality) 
+                      }"></div>
+                      <span class="quality-text">{{ material.quality }}%</span>
+                    </div>
+                    <div class="quality-label">{{ getQualityGrade(material.quality).label }}</div>
+                  </td>
+                  <td class="properties">
+                    <div class="property-item" v-if="material.durability">
+                      <span class="property-icon">🛡️</span>
+                      <span class="property-value">{{ material.durability }}</span>
+                    </div>
+                    <div class="property-item" v-if="material.comfort">
+                      <span class="property-icon">😌</span>
+                      <span class="property-value">{{ material.comfort }}</span>
+                    </div>
+                    <div class="property-item" v-if="material.style">
+                      <span class="property-icon">✨</span>
+                      <span class="property-value">{{ material.style }}</span>
+                    </div>
+                  </td>
+                  <td class="quantity-cell">
+                    <input 
+                      type="number" 
+                      :value="material.orderQuantity || 0" 
+                      min="0" 
+                      max="1000"
+                      class="quantity-input"
+                      @input="updateOrderQuantity(material, $event)"
+                    />
+                  </td>
+                  <td class="cost">₽{{ (material.price * (material.orderQuantity || 0)).toLocaleString() }}</td>
+                </tr>
+              </tbody>
+            </table>
+                </div>
               </div>
             </div>
           </div>
         </div>
-
-        <!-- Правая панель - Корзина и информация -->
-        <div class="cart-panel">
-          <!-- Корзина -->
-          <div class="cart-section">
-            <h3>🛒 Корзина</h3>
-            <div v-if="cartItems.length === 0" class="empty-cart">
-              Корзина пуста
+        
+        <!-- Фиксированная нижняя панель заказа -->
+        <div class="fixed-order-panel">
+          <div class="order-summary">
+            <div class="summary-row">
+              <span>Общее количество:</span>
+              <strong>{{ totalQuantity }} м</strong>
             </div>
-            <div v-else class="cart-items">
-              <div v-for="item in cartItems" :key="item.id" class="cart-item">
-                <div class="cart-item-info">
-                  <div class="cart-item-name">{{ item.name }}</div>
-                  <div class="cart-item-qty">{{ item.quantity }} {{ item.unit }}</div>
-                </div>
-                <div class="cart-item-price">{{ (item.quantity * item.price).toLocaleString() }}₽</div>
-                <button @click="removeFromCart(item.id)" class="remove-btn">×</button>
-              </div>
+            <div class="summary-row">
+              <span>Общая стоимость:</span>
+              <strong>₽{{ totalCost.toLocaleString() }}</strong>
             </div>
-            <div v-if="cartItems.length > 0" class="cart-total">
-              <div class="total-label">Итого:</div>
-              <div class="total-amount">{{ cartTotal.toLocaleString() }}₽</div>
+            <div class="summary-row">
+              <span>Остаток средств:</span>
+              <strong class="balance-after" :class="{ negative: balanceAfter < 0 }">
+                ₽{{ balanceAfter.toLocaleString() }}
+              </strong>
             </div>
-            <button v-if="cartItems.length > 0" @click="checkout" class="checkout-btn">
-              💳 Оформить заказ
+          </div>
+          
+          <div class="order-actions">
+            <button 
+              class="order-btn"
+              @click="() => { console.log('Кнопка нажата!'); placeOrder(); }"
+              :disabled="!canOrder"
+              :style="{ 
+                opacity: canOrder ? 1 : 0.5,
+                backgroundColor: canOrder ? '#4CAF50' : '#ccc',
+                cursor: canOrder ? 'pointer' : 'not-allowed'
+              }"
+            >
+              💰 Заказать материалы ({{ canOrder ? 'активна' : 'заблокирована' }})
             </button>
-          </div>
-
-          <!-- Информация о рынке -->
-          <div class="market-info">
-            <h3>📊 Информация о рынке</h3>
-            <div class="info-grid">
-              <div class="info-item">
-                <span class="info-label">Режим работы:</span>
-                <span class="info-value">8:00 - 20:00</span>
-              </div>
-              <div class="info-item">
-                <span class="info-label">Доставка:</span>
-                <span class="info-value">Бесплатно от 10,000₽</span>
-              </div>
-              <div class="info-item">
-                <span class="info-label">Скидка постоянным клиентам:</span>
-                <span class="info-value">5%</span>
-              </div>
-              <div class="info-item">
-                <span class="info-label">Гарантия качества:</span>
-                <span class="info-value">30 дней</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Поставщики -->
-          <div class="suppliers-section">
-            <h3>🏭 Поставщики</h3>
-            <div class="suppliers-list">
-              <div v-for="supplier in suppliers" :key="supplier.id" class="supplier-item">
-                <div class="supplier-info">
-                  <div class="supplier-name">{{ supplier.name }}</div>
-                  <div class="supplier-rating">⭐ {{ supplier.rating }}/5</div>
-                  <div class="supplier-specialty">{{ supplier.specialty }}</div>
-                </div>
-                <div class="supplier-actions">
-                  <button @click="viewSupplier(supplier.id)" class="view-supplier-btn">
-                    👁️
-                  </button>
-                </div>
-              </div>
-            </div>
+            <button class="clear-btn" @click="clearOrder">
+              🗑️ Очистить заказ
+            </button>
           </div>
         </div>
       </div>
@@ -111,552 +211,502 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useWarehouseStore } from '@/stores/warehouseStore'
+import { useAuthStore } from '@/stores/authStore'
+// import { useFinancialStatsStore } from '@/stores/financialStats'
+import { SUPPLIERS_DATA, getQualityGrade, type Supplier } from '@/data/suppliers'
+
+const warehouseStore = useWarehouseStore()
+const authStore = useAuthStore()
+// const financialStats = useFinancialStatsStore()
 
 const emit = defineEmits<{
   close: []
 }>()
 
-// Товары на рынке
-const products = ref([
-  {
-    id: 1,
-    name: 'Хлопок',
-    description: 'Высококачественный хлопок',
-    icon: '🧵',
-    price: 500,
-    unit: 'метр',
-    stock: 1000
-  },
-  {
-    id: 2,
-    name: 'Шелк',
-    description: 'Натуральный шелк премиум класса',
-    icon: '🕸️',
-    price: 2000,
-    unit: 'метр',
-    stock: 200
-  },
-  {
-    id: 3,
-    name: 'Джинсовая ткань',
-    description: 'Прочная джинсовая ткань',
-    icon: '👖',
-    price: 800,
-    unit: 'метр',
-    stock: 500
-  },
-  {
-    id: 4,
-    name: 'Пуговицы',
-    description: 'Различные размеры и цвета',
-    icon: '🔘',
-    price: 50,
-    unit: 'шт',
-    stock: 2000
-  },
-  {
-    id: 5,
-    name: 'Молнии',
-    description: 'Металлические и пластиковые',
-    icon: '⚡',
-    price: 100,
-    unit: 'шт',
-    stock: 500
-  },
-  {
-    id: 6,
-    name: 'Нитки',
-    description: 'Прочные швейные нитки',
-    icon: '🧶',
-    price: 30,
-    unit: 'катушка',
-    stock: 1000
-  },
-  {
-    id: 7,
-    name: 'Подкладка',
-    description: 'Ткань для подкладки',
-    icon: '📋',
-    price: 300,
-    unit: 'метр',
-    stock: 300
-  },
-  {
-    id: 8,
-    name: 'Фурнитура',
-    description: 'Крючки, кнопки, застежки',
-    icon: '🔗',
-    price: 200,
-    unit: 'набор',
-    stock: 100
+// Поставщики загружаются из внешнего файла конфигурации
+const suppliers = ref<Supplier[]>(SUPPLIERS_DATA)
+
+const activeSupplier = ref<string | null>(null)
+
+// Текущий выбранный поставщик
+const currentSupplier = computed(() => 
+  suppliers.value.find(s => s.id === activeSupplier.value)
+)
+
+// Материалы текущего поставщика
+const currentSupplierMaterials = ref<any[]>([])
+
+// Обновляем материалы при смене поставщика
+watch(activeSupplier, (newSupplierId) => {
+  if (!newSupplierId) {
+    currentSupplierMaterials.value = []
+    return
   }
-])
-
-// Поставщики
-const suppliers = ref([
-  {
-    id: 1,
-    name: 'Ткани+',
-    rating: 4.8,
-    specialty: 'Хлопок, лен'
-  },
-  {
-    id: 2,
-    name: 'Шелк Премиум',
-    rating: 4.9,
-    specialty: 'Шелк, атлас'
-  },
-  {
-    id: 3,
-    name: 'Джинс Мастер',
-    rating: 4.6,
-    specialty: 'Джинсовые ткани'
-  },
-  {
-    id: 4,
-    name: 'Фурнитура Про',
-    rating: 4.7,
-    specialty: 'Фурнитура, аксессуары'
-  }
-])
-
-// Корзина
-const cartItems = ref([])
-const quantities = ref({})
-
-// Функции для работы с корзиной
-const getQuantity = (productId: number) => {
-  return quantities.value[productId] || 0
-}
-
-const increaseQuantity = (productId: number) => {
-  const product = products.value.find(p => p.id === productId)
-  if (product && getQuantity(productId) < product.stock) {
-    quantities.value[productId] = (quantities.value[productId] || 0) + 1
-  }
-}
-
-const decreaseQuantity = (productId: number) => {
-  if (getQuantity(productId) > 0) {
-    quantities.value[productId] = quantities.value[productId] - 1
-  }
-}
-
-const addToCart = (productId: number) => {
-  const product = products.value.find(p => p.id === productId)
-  const quantity = getQuantity(productId)
   
-  if (product && quantity > 0) {
-    const existingItem = cartItems.value.find(item => item.id === productId)
-    
-    if (existingItem) {
-      existingItem.quantity += quantity
-    } else {
-      cartItems.value.push({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        quantity: quantity,
-        unit: product.unit
-      })
-    }
-    
-    // Обновляем остатки
-    product.stock -= quantity
-    quantities.value[productId] = 0
-  }
-}
-
-const removeFromCart = (itemId: number) => {
-  const item = cartItems.value.find(i => i.id === itemId)
-  if (item) {
-    // Возвращаем товар на склад
-    const product = products.value.find(p => p.id === itemId)
-    if (product) {
-      product.stock += item.quantity
-    }
-    
-    // Удаляем из корзины
-    cartItems.value = cartItems.value.filter(i => i.id !== itemId)
-  }
-}
-
-const checkout = () => {
-  if (cartItems.value.length > 0) {
-    const total = cartTotal.value
-    alert(`Заказ оформлен! Сумма: ${total.toLocaleString()}₽\nТовары будут доставлены на склад.`)
-    cartItems.value = []
-  }
-}
-
-const viewSupplier = (supplierId: number) => {
-  const supplier = suppliers.value.find(s => s.id === supplierId)
+  const supplier = suppliers.value.find((s: any) => s.id === newSupplierId)
   if (supplier) {
-    alert(`Поставщик: ${supplier.name}\nРейтинг: ${supplier.rating}/5\nСпециализация: ${supplier.specialty}`)
+  currentSupplierMaterials.value = supplier.materials.map((supplierMaterial: any) => ({
+    id: supplierMaterial.id,
+    name: supplierMaterial.name,
+    price: supplierMaterial.price,
+    quality: supplierMaterial.quality,
+    description: supplierMaterial.description,
+    durability: supplierMaterial.durability,
+    comfort: supplierMaterial.comfort,
+    style: supplierMaterial.style,
+    minOrderQuantity: supplierMaterial.minOrderQuantity,
+    maxOrderQuantity: supplierMaterial.maxOrderQuantity,
+    deliveryTime: supplierMaterial.deliveryTime,
+    currentStock: 0, // будем получать из Supabase
+    orderQuantity: 0,
+    icon: getInventoryMaterialIcon(supplierMaterial.id)
+    }))
   }
+}, { immediate: true })
+
+// Получаем иконку материала из инвентаря
+function getInventoryMaterialIcon(materialId: string) {
+  // Простое сопоставление по ID материала
+  const iconMap: Record<string, string> = {
+    'cotton': '🧵',
+    'linen': '🌾', 
+    'silk': '🕸️',
+    'denim': '👖',
+    'wool': '🐑',
+    'leather': '🦌'
+  }
+  
+  const baseMaterialId = materialId.replace(/_[a-zA-Z]+$/, '') // убираем суффиксы типа _bulk, _premium
+  return iconMap[baseMaterialId] || '📦'
 }
 
-// Вычисляемые свойства
-const cartTotal = computed(() => {
-  return cartItems.value.reduce((sum, item) => sum + (item.quantity * item.price), 0)
+// Получаем цвет для индикатора качества используя новую градацию
+function getQualityColor(quality: number) {
+  const grade = getQualityGrade(quality)
+  return grade.color
+}
+
+const totalCost = computed(() => {
+  const result = currentSupplierMaterials.value.reduce((total, material) => {
+    return total + (material.price * (material.orderQuantity || 0))
+  }, 0)
+  console.log('totalCost computed:', {
+    materials: currentSupplierMaterials.value.map(m => ({
+      id: m.id,
+      price: m.price,
+      orderQuantity: m.orderQuantity
+    })),
+    result: result
+  })
+  return result
 })
 
-// Закрытие модального окна
-const closeModal = () => {
+const totalQuantity = computed(() => {
+  return currentSupplierMaterials.value.reduce((total, material: any) => {
+    return total + (material.orderQuantity || 0)
+  }, 0)
+})
+
+const balanceAfter = computed(() => {
+  return (authStore.user?.money || 0) - totalCost.value
+})
+
+const canOrder = computed(() => {
+  const result = totalCost.value > 0 && totalCost.value <= (authStore.user?.money || 0)
+  console.log('canOrder computed:', {
+    totalCost: totalCost.value,
+    userMoney: authStore.user?.money || 0,
+    result: result
+  })
+  return result
+})
+
+
+// Функции для работы с поставщиками
+function selectSupplier(supplierId: string) {
+  activeSupplier.value = supplierId
+}
+
+function getContractStatusText(status: string) {
+  switch (status) {
+    case 'locked': return 'Заблокирован'
+    case 'none': return 'Нет контракта'
+    case 'negotiating': return 'Переговоры'
+    case 'active': return 'Активен'
+    default: return 'Неизвестно'
+  }
+}
+
+// Проверка условий доступа к поставщику
+function checkSupplierAccess(supplier: any) {
+  if (supplier.accessType === 'starter') {
+    return true // Стартовые поставщики всегда доступны
+  }
+  
+  if (supplier.accessType === 'simple' && supplier.requirement?.type === 'auto') {
+    // Автоматическое одобрение через время (пока имитируем как доступное)
+    return true
+  }
+  
+  if (supplier.accessType === 'visit' && supplier.requirement?.type === 'visit') {
+    // Проверка посещения локации (пока имитируем как недоступное)
+    return false
+  }
+  
+  if (supplier.accessType === 'wealth' && supplier.requirement?.type === 'money') {
+    return (authStore.user?.money || 0) >= supplier.requirement.amount
+  }
+  
+  if (supplier.accessType === 'reputation' && supplier.requirement?.type === 'reputation') {
+    return (authStore.user?.level || 0) >= supplier.requirement.amount
+  }
+  
+  if (supplier.accessType === 'exclusive' && supplier.requirement?.type === 'combined') {
+    return (authStore.user?.money || 0) >= supplier.requirement.money && (authStore.user?.level || 0) >= supplier.requirement.reputation
+  }
+  
+  return false
+}
+
+// Получить текст требований для поставщика
+function getRequirementText(supplier: any) {
+  if (supplier.accessType === 'starter') {
+    return '✅ Доступен'
+  }
+  
+  if (supplier.accessType === 'simple') {
+    return '⏳ Автоодобрение'
+  }
+  
+  if (supplier.accessType === 'visit') {
+    return '🗺️ Нужно посетить'
+  }
+  
+  if (supplier.accessType === 'wealth') {
+    const hasEnough = (authStore.user?.money || 0) >= supplier.requirement.amount
+    return hasEnough ? '✅ Капитал достаточен' : `💰 Нужно ₽${supplier.requirement.amount.toLocaleString()}`
+  }
+  
+  if (supplier.accessType === 'reputation') {
+    const hasEnough = (authStore.user?.level || 0) >= supplier.requirement.amount
+    return hasEnough ? '✅ Уровень достаточен' : `⭐ Нужно ${supplier.requirement.amount} уровня`
+  }
+  
+  if (supplier.accessType === 'exclusive') {
+    const hasMoneyEnough = (authStore.user?.money || 0) >= supplier.requirement.money
+    const hasReputationEnough = (authStore.user?.level || 0) >= supplier.requirement.reputation
+    
+    if (hasMoneyEnough && hasReputationEnough) {
+      return '✅ Требования выполнены'
+    } else if (!hasMoneyEnough && !hasReputationEnough) {
+      return `💎 Нужно ₽${supplier.requirement.money.toLocaleString()} + ${supplier.requirement.reputation} репутации`
+    } else if (!hasMoneyEnough) {
+      return `💰 Нужно ₽${supplier.requirement.money.toLocaleString()}`
+    } else {
+      return `⭐ Нужно ${supplier.requirement.reputation} уровня`
+    }
+  }
+  
+  return 'Условия не определены'
+}
+
+function negotiateContract() {
+  if (!currentSupplier.value) return
+  
+  // Проверяем условия доступа
+  if (!checkSupplierAccess(currentSupplier.value)) {
+    return // Не можем заключить контракт если условия не выполнены
+  }
+  
+  // Имитация переговоров
+  currentSupplier.value.contractStatus = 'negotiating'
+  
+  // Через 2 секунды контракт становится активным
+  setTimeout(() => {
+    if (currentSupplier.value) {
+      currentSupplier.value.contractStatus = 'active'
+    }
+  }, 2000)
+}
+
+// Функция для разблокировки поставщика (когда игрок выполнил условия)
+function unlockSupplier(supplierId: string) {
+  const supplier = suppliers.value.find(s => s.id === supplierId)
+  if (supplier && supplier.contractStatus === 'locked') {
+    supplier.contractStatus = 'none'
+  }
+}
+
+// Проверяем статус поставщиков при изменении баланса/уровня
+watch([() => authStore.user?.money, () => authStore.user?.level], () => {
+  suppliers.value.forEach(supplier => {
+    if (supplier.contractStatus === 'locked' && checkSupplierAccess(supplier)) {
+      unlockSupplier(supplier.id)
+    }
+  })
+})
+
+function updateOrderQuantity(material: any, event: Event) {
+  const target = event.target as HTMLInputElement
+  const quantity = parseInt(target.value) || 0
+  material.orderQuantity = quantity
+}
+
+function clearOrder() {
+  currentSupplierMaterials.value.forEach(material => {
+    material.orderQuantity = 0
+  })
+}
+
+async function placeOrder() {
+  console.log('placeOrder - функция вызвана!')
+  console.log('placeOrder - canOrder.value:', canOrder.value)
+  console.log('placeOrder - totalCost.value:', totalCost.value)
+  console.log('placeOrder - userMoney:', authStore.user?.money)
+  
+  if (canOrder.value) {
+    console.log('placeOrder - заказ может быть выполнен, переходим к обработке')
+    const orderedMaterials = currentSupplierMaterials.value.filter(m => (m.orderQuantity || 0) > 0)
+    console.log('placeOrder - orderedMaterials:', orderedMaterials)
+    
+    // Списываем деньги
+    await authStore.spendMoney(totalCost.value)
+    
+    // Добавляем каждый товар на склад игрока
+    for (const material of orderedMaterials) {
+      console.log(`🔍 Ищем материал: ${material.name}`)
+      
+      // Находим соответствующий материал в базе данных склада
+      const existingMaterial = warehouseStore.materials.find((m: any) => 
+        m.name.toLowerCase() === material.name.toLowerCase()
+      )
+      
+      console.log('📋 Найденный материал:', existingMaterial)
+      
+      if (existingMaterial) {
+        // Если материал уже есть в базе, добавляем к нему количество
+        console.log(`✅ Добавляем ${material.orderQuantity} шт материала ${existingMaterial.name} (ID: ${existingMaterial.id})`)
+        await warehouseStore.addMaterialToWarehouse(existingMaterial.id, material.orderQuantity)
+        console.log('✅ Материал успешно добавлен на склад')
+      } else {
+        // Если материала нет в базе, создаем новый (пока что просто добавляем в локальное состояние)
+        console.log(`❌ Материал ${material.name} не найден в базе данных склада`)
+        console.log('📋 Доступные материалы:', warehouseStore.materials.map((m: any) => m.name))
+        // TODO: Создать новый материал в базе данных
+      }
+    }
+    
+    // Очищаем количества заказа
+    orderedMaterials.forEach(material => {
+      material.orderQuantity = 0
+    })
+    
+    // TODO: Записать в статистику расходов
+    console.log(`💰 Потрачено на материалы: ${totalCost.value}₽`)
+    
+    console.log(`Заказано материалов на ₽${totalCost.value}`)
+    close()
+  } else {
+    console.log('placeOrder - заказ не может быть выполнен!')
+    console.log('placeOrder - canOrder.value:', canOrder.value)
+    console.log('placeOrder - totalCost.value:', totalCost.value)
+    console.log('placeOrder - userMoney:', authStore.user?.money)
+  }
+}
+
+// Загружаем инвентарь при открытии модального окна
+onMounted(async () => {
+  // Устанавливаем первого поставщика как активного по умолчанию
+  if (suppliers.value.length > 0) {
+    activeSupplier.value = suppliers.value[0].id
+  }
+  
+  // Слушаем событие посещения промышленного района
+  const handleIndustrialVisit = (event: CustomEvent) => {
+    if (event.detail.location === 'industrial_district') {
+      const visitedBuilding = event.detail.building
+      
+      // Разблокируем поставщиков, которые требуют посещения конкретного здания
+      suppliers.value.forEach(supplier => {
+        if (supplier.accessType === 'visit' && 
+            supplier.requirement?.type === 'visit' && 
+            supplier.requirement?.location === visitedBuilding) {
+          supplier.contractStatus = 'none'
+        }
+      })
+      
+      const buildingMessages = {
+        'textile_mill': 'Джинсовая фабрика теперь доступна!',
+        'dye_house': 'Поставщик красителей теперь доступен!',
+        'warehouse_complex': 'Оптовый склад теперь доступен!',
+        'transport_hub': 'Международная логистика теперь доступна!',
+        'quality_lab': 'Лаборатория премиум качества теперь доступна!'
+      }
+      
+      console.log(`${event.detail.buildingName} посещена! ${buildingMessages[visitedBuilding as keyof typeof buildingMessages]}`)
+    }
+  }
+  
+  window.addEventListener('industrial-district-visited', handleIndustrialVisit as EventListener)
+})
+
+function close() {
   emit('close')
 }
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
-@import '@/styles/colors.css';
-@import '@/styles/menu-common.css';
-
-.market-modal-overlay {
+.modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.8);
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
-  font-family: 'Orbitron', sans-serif;
+  z-index: 100;
+  backdrop-filter: blur(5px);
 }
 
-.market-modal {
-  background: var(--color-bg-menu, #F4E6D1);
-  border: 4px solid var(--color-text, #5D4037);
-  border-radius: 20px;
-  width: 90vw;
-  max-width: 1200px;
-  height: 80vh;
-  max-height: 800px;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-}
+ .modal-content {
+   background: linear-gradient(135deg, #fff7e6 0%, #fef3c7 100%);
+   border: 4px solid #d8b86a;
+   border-radius: 20px;
+   padding: 30px;
+   width: 95%;
+   max-width: 1400px;
+   max-height: 95vh;
+   overflow-y: auto;
+   box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+ }
 
-.market-header {
-  background: var(--gradient-accents, linear-gradient(135deg, #FFC107, #FF9800));
-  color: white;
-  padding: 20px;
-  border-radius: 16px 16px 0 0;
+.modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 25px;
 }
 
-.market-header h2 {
-  margin: 0;
+.modal-header h2 {
   font-size: 24px;
-  font-weight: 700;
+  font-weight: 800;
+  color: #3a2b16;
+  margin: 0;
 }
 
 .close-btn {
   background: none;
   border: none;
-  color: white;
-  font-size: 30px;
+  font-size: 24px;
   cursor: pointer;
-  padding: 0;
-  width: 40px;
-  height: 40px;
+  color: #7a4b16;
+  padding: 5px;
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  transition: background 0.3s ease;
 }
 
 .close-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.1);
 }
 
-.market-content {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-}
+ .modal-body {
+   display: flex;
+   flex-direction: column;
+   min-height: 700px; /* Увеличена высота */
+ }
 
-.products-panel {
-  flex: 1;
-  padding: 20px;
-  border-right: 2px solid var(--color-text, #5D4037);
-  overflow-y: auto;
-}
+ .scrollable-content {
+   flex: 1;
+   overflow-y: auto;
+   margin-bottom: 20px;
+ }
 
-.cart-panel {
-  flex: 1;
-  padding: 20px;
-  overflow-y: auto;
-}
+ .suppliers-layout {
+   display: grid;
+   grid-template-columns: 350px 1fr;
+   gap: 25px;
+   min-height: 200px;
+ }
 
-.products-panel h3,
-.cart-panel h3 {
-  color: var(--color-text, #5D4037);
-  margin-bottom: 15px;
+ .suppliers-sidebar {
+   background: #fff7e6;
+   border: 2px solid #d8b86a;
+   border-radius: 15px;
+   padding: 20px;
+   height: fit-content;
+   max-height: 600px;
+   overflow-y: auto;
+   display: flex;
+   flex-direction: column;
+ }
+
+.suppliers-sidebar h3 {
+  margin: 0 0 15px 0;
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 800;
+  color: #3a2b16;
 }
 
-.products-grid {
-  display: grid;
-  gap: 15px;
-}
+ .suppliers-list {
+   display: flex;
+   flex-direction: column;
+   gap: 10px;
+   flex: 1;
+   overflow-y: auto;
+ }
 
-.product-item {
-  background: white;
-  border: 2px solid var(--color-buttons, #D4824A);
-  border-radius: 10px;
+.supplier-card {
+  background: #fef4d1;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
   padding: 15px;
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  transition: all 0.3s ease;
-}
-
-.product-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-.product-icon {
-  font-size: 32px;
-  width: 50px;
-  text-align: center;
-}
-
-.product-info {
-  flex: 1;
-}
-
-.product-name {
-  font-weight: 600;
-  color: var(--color-text, #5D4037);
-  font-size: 16px;
-  margin-bottom: 5px;
-}
-
-.product-description {
-  color: #666;
-  font-size: 12px;
-  margin-bottom: 5px;
-}
-
-.product-price {
-  color: var(--color-accents, #C85A54);
-  font-weight: 700;
-  font-size: 14px;
-  margin-bottom: 2px;
-}
-
-.product-stock {
-  color: #4CAF50;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.product-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  align-items: center;
-}
-
-.quantity-controls {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.qty-btn {
-  background: var(--color-buttons, #D4824A);
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 30px;
-  height: 30px;
   cursor: pointer;
-  font-size: 16px;
-  font-weight: 700;
   transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.qty-btn:hover {
-  background: var(--color-accents, #C85A54);
-  transform: scale(1.1);
-}
-
-.quantity {
-  font-weight: 600;
-  color: var(--color-text, #5D4037);
-  min-width: 20px;
-  text-align: center;
-}
-
-.add-to-cart-btn {
-  background: var(--gradient-accents, linear-gradient(135deg, #4CAF50, #8BC34A));
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 15px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 12px;
-  transition: all 0.3s ease;
-}
-
-.add-to-cart-btn:hover:not(:disabled) {
-  transform: scale(1.05);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-.add-to-cart-btn:disabled {
-  background: #ccc;
+.supplier-card.locked {
+  opacity: 0.6;
+  border-color: #ccc;
+  background: #f5f5f5;
   cursor: not-allowed;
 }
 
-.cart-section {
-  margin-bottom: 25px;
+.supplier-card.locked:hover {
+  border-color: #ccc;
+  box-shadow: none;
 }
 
-.empty-cart {
+.supplier-card.available {
+  border-left: 4px solid #4CAF50;
+}
+
+.supplier-card:hover {
+  border-color: #d8b86a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.supplier-card.active {
+  border-color: #b8860b;
+  background: #f4dcb3;
+  box-shadow: 0 4px 15px rgba(184, 134, 11, 0.2);
+}
+
+.supplier-icon {
+  font-size: 24px;
+  width: 40px;
   text-align: center;
-  color: #666;
-  font-style: italic;
-  padding: 20px;
-  background: white;
-  border-radius: 8px;
-  border: 1px solid var(--color-buttons, #D4824A);
-}
-
-.cart-items {
-  margin-bottom: 15px;
-}
-
-.cart-item {
-  background: white;
-  border: 1px solid var(--color-buttons, #D4824A);
-  border-radius: 8px;
-  padding: 10px;
-  margin-bottom: 8px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.cart-item-info {
-  flex: 1;
-}
-
-.cart-item-name {
-  font-weight: 600;
-  color: var(--color-text, #5D4037);
-  font-size: 14px;
-}
-
-.cart-item-qty {
-  color: #666;
-  font-size: 12px;
-}
-
-.cart-item-price {
-  color: var(--color-accents, #C85A54);
-  font-weight: 700;
-  font-size: 14px;
-  margin-right: 10px;
-}
-
-.remove-btn {
-  background: #F44336;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 25px;
-  height: 25px;
-  cursor: pointer;
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.cart-total {
-  background: var(--gradient-accents, linear-gradient(135deg, #4CAF50, #8BC34A));
-  color: white;
-  padding: 15px;
-  border-radius: 8px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-weight: 700;
-  font-size: 16px;
-  margin-bottom: 15px;
-}
-
-.checkout-btn {
-  background: var(--gradient-buttons, linear-gradient(135deg, #D4824A, #C85A54));
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 12px 20px;
-  cursor: pointer;
-  font-weight: 600;
-  width: 100%;
-  transition: all 0.3s ease;
-}
-
-.checkout-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-.info-grid {
-  display: grid;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.info-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 8px 12px;
-  background: white;
-  border-radius: 8px;
-  border: 1px solid var(--color-buttons, #D4824A);
-}
-
-.info-label {
-  font-weight: 600;
-  color: var(--color-text, #5D4037);
-}
-
-.info-value {
-  color: var(--color-accents, #C85A54);
-  font-weight: 700;
-}
-
-.suppliers-section {
-  margin-bottom: 20px;
-}
-
-.suppliers-list {
-  display: grid;
-  gap: 10px;
-}
-
-.supplier-item {
-  background: white;
-  border: 1px solid var(--color-buttons, #D4824A);
-  border-radius: 8px;
-  padding: 12px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
 }
 
 .supplier-info {
@@ -664,56 +714,451 @@ const closeModal = () => {
 }
 
 .supplier-name {
-  font-weight: 600;
-  color: var(--color-text, #5D4037);
+  font-weight: 700;
   font-size: 14px;
-  margin-bottom: 2px;
-}
-
-.supplier-rating {
-  color: #FFC107;
-  font-size: 12px;
+  color: #1e293b;
   margin-bottom: 2px;
 }
 
 .supplier-specialty {
-  color: #666;
   font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 4px;
 }
 
-.supplier-actions {
-  margin-left: 10px;
+.supplier-status {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
 }
 
-.view-supplier-btn {
-  background: var(--color-highlights, #81C4E7);
+.supplier-status.none {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.supplier-status.negotiating {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.supplier-status.active {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.supplier-status.locked {
+  color: #999;
+  background: rgba(153, 153, 153, 0.1);
+}
+
+.supplier-requirement {
+  font-size: 10px;
+  margin-top: 4px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.supplier-requirement.requirement-met {
+  color: #4CAF50;
+  background: rgba(76, 175, 80, 0.1);
+}
+
+.supplier-requirement.requirement-unmet {
+  color: #F44336;
+  background: rgba(244, 67, 54, 0.1);
+}
+
+.materials-content {
+  background: #fef4d1;
+  border: 2px solid #d8b86a;
+  border-radius: 15px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.no-supplier-selected {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  color: #6b7280;
+  min-height: 300px;
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 15px;
+}
+
+.supplier-materials {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.supplier-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #d8b86a;
+}
+
+.supplier-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: #3a2b16;
+}
+
+.contract-actions {
+  display: flex;
+  align-items: center;
+}
+
+.negotiate-btn {
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
   border: none;
-  border-radius: 5px;
-  padding: 5px 8px;
+  border-radius: 8px;
+  font-weight: 600;
   cursor: pointer;
-  font-size: 12px;
   transition: all 0.3s ease;
 }
 
-.view-supplier-btn:hover {
-  background: var(--color-accents, #C85A54);
+.negotiate-btn:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  transform: translateY(-1px);
 }
 
-/* Адаптивность */
-@media (max-width: 768px) {
-  .market-modal {
-    width: 95vw;
-    height: 90vh;
-  }
-  
-  .market-content {
-    flex-direction: column;
-  }
-  
-  .products-panel {
-    border-right: none;
-    border-bottom: 2px solid var(--color-text, #5D4037);
-  }
+.negotiate-btn.locked {
+  background: #ccc !important;
+  color: #666 !important;
+  cursor: not-allowed !important;
+}
+
+.negotiate-btn.disabled {
+  background: #e0e0e0 !important;
+  color: #999 !important;
+  cursor: not-allowed !important;
+}
+
+.negotiate-btn.disabled:hover {
+  transform: none !important;
+}
+
+.status-text {
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.status-text.active {
+  color: #16a34a;
+}
+
+.contract-required {
+  background: #fef3c7;
+  border: 2px solid #f59e0b;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  color: #92400e;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.materials-table {
+  background: #fef4d1;
+  border: 3px solid #d8b86a;
+  border-radius: 15px;
+  overflow: hidden;
+  margin-bottom: 25px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.procurement-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.procurement-table th {
+  background: #fff7e6;
+  border-bottom: 2px solid #d8b86a;
+  padding: 12px 8px;
+  text-align: left;
+  font-weight: 700;
+  color: #3a2b16;
+  font-size: 13px;
+}
+
+.procurement-table td {
+  padding: 12px 8px;
+  border-bottom: 1px solid #f2e3bf;
+  vertical-align: middle;
+}
+
+.material-row:hover {
+  background: #fff7e6;
+}
+
+.material-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 200px;
+}
+
+.material-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.material-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.material-name {
+  font-weight: 600;
+  color: #3a2b16;
+  margin-bottom: 2px;
+}
+
+.material-description {
+  font-size: 11px;
+  color: #6b7280;
+  font-style: italic;
+  line-height: 1.3;
+}
+
+
+.stock-amount {
+  min-width: 100px;
+}
+
+.stock-value {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+
+.price {
+  font-weight: 600;
+  color: #059669;
+  min-width: 80px;
+}
+
+.quality {
+  min-width: 120px;
+  text-align: center;
+}
+
+.quality-bar {
+  position: relative;
+  background: #f2e3bf;
+  border-radius: 8px;
+  height: 16px;
+  overflow: hidden;
+  margin: 0 auto 4px;
+  width: 80px;
+}
+
+.quality-fill {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.quality-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 11px;
+  font-weight: 600;
+  color: #1e293b;
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.8);
+}
+
+.quality-label {
+  font-size: 10px;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.properties {
+  text-align: center;
+  min-width: 120px;
+}
+
+.property-item {
+  display: inline-block;
+  margin: 0 2px 2px 0;
+  font-size: 10px;
+  background: rgba(216, 184, 106, 0.1);
+  padding: 2px 4px;
+  border-radius: 4px;
+  border: 1px solid rgba(216, 184, 106, 0.3);
+}
+
+.property-icon {
+  font-size: 8px;
+  margin-right: 2px;
+}
+
+.property-value {
+  font-weight: 600;
+  color: #3a2b16;
+}
+
+.supplier-meta {
+  display: flex;
+  gap: 15px;
+  margin: 8px 0;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.supplier-country,
+.supplier-reliability,
+.supplier-discount {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.quantity-cell {
+  min-width: 100px;
+}
+
+.quantity-input {
+  width: 80px;
+  padding: 6px 8px;
+  border: 2px solid #d8b86a;
+  border-radius: 6px;
+  font-size: 14px;
+  text-align: center;
+  background: #fef4d1;
+  color: #333;
+  font-weight: 500;
+}
+
+.quantity-input:focus {
+  border-color: #b8860b;
+  outline: none;
+}
+
+.quantity-input:disabled {
+  background: #f5f5f5;
+  color: #999;
+}
+
+.cost {
+  font-weight: 700;
+  color: #059669;
+  min-width: 90px;
+}
+
+
+ .fixed-order-panel {
+   background: linear-gradient(135deg, #fff7e6 0%, #fef3c7 100%);
+   border: 3px solid #d8b86a;
+   border-radius: 15px;
+   padding: 20px;
+   box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.1);
+   flex-shrink: 0; /* Не сжимается */
+ }
+
+ .order-summary {
+   display: grid;
+   grid-template-columns: 1fr 1fr 1fr;
+   gap: 20px;
+   margin-bottom: 15px;
+   background: rgba(216, 184, 106, 0.1);
+   border-radius: 10px;
+   padding: 15px;
+ }
+
+ .summary-row {
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   text-align: center;
+   gap: 5px;
+ }
+
+ .summary-row span {
+   font-size: 12px;
+   color: #6b7280;
+   font-weight: 500;
+   text-transform: uppercase;
+   letter-spacing: 0.5px;
+ }
+
+ .summary-row strong {
+   font-size: 18px;
+   font-weight: 700;
+   color: #3a2b16;
+ }
+
+ .balance-after.negative {
+   color: #dc2626 !important;
+ }
+
+ .order-actions {
+   display: flex;
+   gap: 15px;
+ }
+
+.order-btn {
+  flex: 1;
+  padding: 15px;
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.order-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #15803d 0%, #166534 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(22, 163, 74, 0.3);
+}
+
+.order-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.clear-btn {
+  padding: 15px 25px;
+  background: #fff7e6;
+  color: #7a4b16;
+  border: 2px solid #d8b86a;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.clear-btn:hover {
+  background: #f4dcb3;
+  border-color: #b8860b;
 }
 </style>

@@ -91,6 +91,9 @@ const openRating = () => emit('openRating')
 </script>
 
 <style scoped>
+/* Подключение Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+
 .main-menu {
   position: fixed;
   top: 0;
@@ -116,9 +119,6 @@ const openRating = () => emit('openRating')
   z-index: 0;
   font-size: clamp(12px, 1.5vw, 24px);
 }
-
-/* Подключение Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
 
 /* Отображение персонажа на главном экране */
 .character-display {

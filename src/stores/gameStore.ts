@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { GameState, Player, Business, EconomyState } from '@/types/game'
+import type { GameState } from '@/types/game'
 import { GAME_CONFIG } from '@/config/gameConfig'
 
 export const useGameStore = defineStore('game', () => {

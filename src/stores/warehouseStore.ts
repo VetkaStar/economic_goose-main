@@ -65,9 +65,6 @@ export const useWarehouseStore = defineStore('warehouse', () => {
   // Действия для работы с материалами
   const fetchMaterials = async () => {
     try {
-      loading.value = true
-      error.value = null
-      
       console.log('📦 Загружаем материалы склада...')
       
       const { data, error: fetchError } = await supabase
@@ -83,19 +80,14 @@ export const useWarehouseStore = defineStore('warehouse', () => {
       console.log('✅ Материалы загружены:', data)
       materials.value = data || []
     } catch (err) {
-      error.value = 'Ошибка загрузки материалов'
       console.error('❌ Error fetching materials:', err)
-    } finally {
-      loading.value = false
+      throw err
     }
   }
 
   // Действия для работы с одеждой
   const fetchClothing = async () => {
     try {
-      loading.value = true
-      error.value = null
-      
       const { data, error: fetchError } = await supabase
         .from('warehouse_clothing')
         .select('*')
@@ -107,19 +99,14 @@ export const useWarehouseStore = defineStore('warehouse', () => {
 
       clothing.value = data || []
     } catch (err) {
-      error.value = 'Ошибка загрузки одежды'
       console.error('Error fetching clothing:', err)
-    } finally {
-      loading.value = false
+      throw err
     }
   }
 
   // Действия для работы со статистикой склада
   const fetchStats = async () => {
     try {
-      loading.value = true
-      error.value = null
-      
       const { data, error: fetchError } = await supabase
         .from('warehouse_stats')
         .select('*')
@@ -131,10 +118,8 @@ export const useWarehouseStore = defineStore('warehouse', () => {
 
       stats.value = data
     } catch (err) {
-      error.value = 'Ошибка загрузки статистики склада'
       console.error('Error fetching warehouse stats:', err)
-    } finally {
-      loading.value = false
+      throw err
     }
   }
 
@@ -164,8 +149,11 @@ export const useWarehouseStore = defineStore('warehouse', () => {
         throw updateError
       }
 
-      // Обновляем локальное состояние
+      // Обновляем локальное состояние реактивно
       material.quantity = newQuantity
+      
+      // Принудительно обновляем массив для Vue
+      materials.value = [...materials.value]
       
       // Записываем транзакцию
       await recordTransaction({
@@ -210,8 +198,11 @@ export const useWarehouseStore = defineStore('warehouse', () => {
         throw updateError
       }
 
-      // Обновляем локальное состояние
+      // Обновляем локальное состояние реактивно
       clothingItem.quantity = newQuantity
+      
+      // Принудительно обновляем массив для Vue
+      clothing.value = [...clothing.value]
       
       // Записываем транзакцию
       await recordTransaction({
@@ -282,228 +273,248 @@ export const useWarehouseStore = defineStore('warehouse', () => {
     }
   }
 
-  // Покупка материалов
-  const buyMaterial = async (materialId: string, quantity: number) => {
-    try {
-      loading.value = true
-      error.value = null
 
-      console.log('🛒 Покупка материала:', { materialId, quantity })
-
-      const material = materials.value.find(m => m.id === materialId)
-      if (!material) {
-        throw new Error('Материал не найден')
-      }
-
-      const totalCost = material.price * quantity
-      console.log('💰 Стоимость покупки:', totalCost)
-      
-      // Проверяем, достаточно ли денег у игрока
-      if (!await authStore.spendMoney(totalCost)) {
-        throw new Error('Недостаточно денег для покупки')
-      }
-
-      console.log('✅ Деньги списаны, обновляем количество в базе...')
-
-      // При покупке УМЕНЬШАЕМ количество на складе
-      const newQuantity = material.quantity - quantity
-      if (newQuantity < 0) {
-        throw new Error('Недостаточно товара на складе')
-      }
-
-      const { error: updateError } = await supabase
-        .from('warehouse_materials')
-        .update({ quantity: newQuantity })
-        .eq('id', materialId)
-
-      if (updateError) {
-        throw updateError
-      }
-
-      // Обновляем локальное состояние
-      material.quantity = newQuantity
-      
-      // Записываем транзакцию (отрицательное изменение - товар уходит со склада)
-      await recordTransaction({
-        itemType: 'material',
-        itemId: materialId,
-        quantityChange: -quantity, // Отрицательное значение - товар уходит
-        reason: `Покупка игроком (${quantity} шт)`
-      })
-      
-      // Добавляем опыт за покупку
-      // Опыт будет добавлен через authStore позже(quantity * 2)
-
-      return true
-    } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Ошибка покупки материала'
-      console.error('Error buying material:', err)
-      return false
-    } finally {
-      loading.value = false
-    }
-  }
-
-  // Покупка одежды
-  const buyClothing = async (clothingId: string, quantity: number) => {
-    try {
-      loading.value = true
-      error.value = null
-
-      const clothingItem = clothing.value.find(c => c.id === clothingId)
-      if (!clothingItem) {
-        throw new Error('Одежда не найдена')
-      }
-
-      const totalCost = clothingItem.price * quantity
-      
-      // Проверяем, достаточно ли денег у игрока
-      if (!await authStore.spendMoney(totalCost)) {
-        throw new Error('Недостаточно денег для покупки')
-      }
-
-      // При покупке УМЕНЬШАЕМ количество на складе
-      const newQuantity = clothingItem.quantity - quantity
-      if (newQuantity < 0) {
-        throw new Error('Недостаточно товара на складе')
-      }
-
-      const { error: updateError } = await supabase
-        .from('warehouse_clothing')
-        .update({ quantity: newQuantity })
-        .eq('id', clothingId)
-
-      if (updateError) {
-        throw updateError
-      }
-
-      // Обновляем локальное состояние
-      clothingItem.quantity = newQuantity
-      
-      // Записываем транзакцию (отрицательное изменение - товар уходит со склада)
-      await recordTransaction({
-        itemType: 'clothing',
-        itemId: clothingId,
-        quantityChange: -quantity, // Отрицательное значение - товар уходит
-        reason: `Покупка игроком (${quantity} шт)`
-      })
-      
-      // Добавляем опыт за покупку
-      // Опыт будет добавлен через authStore позже(quantity * 3)
-
-      return true
-    } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Ошибка покупки одежды'
-      console.error('Error buying clothing:', err)
-      return false
-    } finally {
-      loading.value = false
-    }
-  }
-
-  // Продажа материалов (игрок продает свои материалы на склад)
+  // Продажа материалов (игрок продает свои материалы со склада)
   const sellMaterial = async (materialId: string, quantity: number) => {
     try {
-      loading.value = true
-      error.value = null
-
+      console.log(`💰 Начинаем продажу материала ${materialId}, количество: ${quantity}`)
+      
       const material = materials.value.find(m => m.id === materialId)
       if (!material) {
         throw new Error('Материал не найден')
       }
 
-      const totalValue = material.price * quantity * 0.8 // Склад покупает по 80% от цены
+      console.log(`📦 Текущее количество материала: ${material.quantity}`)
+
+      // Проверяем, достаточно ли материала на складе игрока
+      if (material.quantity < quantity) {
+        throw new Error('Недостаточно материала на складе')
+      }
+
+      const totalValue = material.price * quantity * 0.8 // Продаем по 80% от цены
+      console.log(`💵 Стоимость продажи: ${totalValue}₽`)
       
       // Добавляем деньги игроку
       await authStore.addMoney(totalValue)
 
-      // Обновляем количество материала напрямую
+      // При продаже УМЕНЬШАЕМ количество на складе игрока (товар уходит)
+      const newQuantity = material.quantity - quantity
+      console.log(`📦 Новое количество должно быть: ${newQuantity}`)
+
       const { error: updateError } = await supabase
         .from('warehouse_materials')
-        .update({ quantity: material.quantity + quantity })
+        .update({ quantity: newQuantity })
+        .eq('id', materialId)
+
+      if (updateError) {
+        console.error('❌ Ошибка обновления в базе:', updateError)
+        throw updateError
+      }
+
+      console.log('✅ База данных обновлена успешно')
+
+      // Обновляем локальное состояние реактивно - как в authStore
+      const materialIndex = materials.value.findIndex(m => m.id === materialId)
+      if (materialIndex !== -1) {
+        // Создаем новый массив с обновленным объектом
+        const updatedMaterials = [...materials.value]
+        updatedMaterials[materialIndex] = {
+          ...updatedMaterials[materialIndex],
+          quantity: newQuantity
+        }
+        // Присваиваем новый массив напрямую (как user.value.money = newAmount)
+        materials.value = updatedMaterials
+        console.log(`✅ Локальное состояние обновлено: ${materials.value[materialIndex].quantity}`)
+      }
+      
+      // Записываем транзакцию
+      await recordTransaction({
+        itemType: 'material',
+        itemId: materialId,
+        quantityChange: -quantity, // Отрицательное значение - товар уходит
+        reason: `Продажа игроком (${quantity} шт)`
+      })
+      
+      console.log('✅ Продажа завершена успешно')
+      return true
+    } catch (err) {
+      console.error('❌ Ошибка продажи материала:', err)
+      return false
+    }
+  }
+
+  // Продажа одежды (игрок продает свою одежду со склада)
+  const sellClothing = async (clothingId: string, quantity: number) => {
+    try {
+      console.log(`👗 Начинаем продажу одежды ${clothingId}, количество: ${quantity}`)
+      
+      const clothingItem = clothing.value.find(c => c.id === clothingId)
+      if (!clothingItem) {
+        throw new Error('Одежда не найдена')
+      }
+
+      console.log(`📦 Текущее количество одежды: ${clothingItem.quantity}`)
+
+      // Проверяем, достаточно ли одежды на складе игрока
+      if (clothingItem.quantity < quantity) {
+        throw new Error('Недостаточно одежды на складе')
+      }
+
+      const totalValue = clothingItem.price * quantity * 0.8 // Продаем по 80% от цены
+      console.log(`💵 Стоимость продажи: ${totalValue}₽`)
+      
+      // Добавляем деньги игроку
+      await authStore.addMoney(totalValue)
+
+      // При продаже УМЕНЬШАЕМ количество на складе игрока (товар уходит)
+      const newQuantity = clothingItem.quantity - quantity
+      console.log(`📦 Новое количество должно быть: ${newQuantity}`)
+
+      const { error: updateError } = await supabase
+        .from('warehouse_clothing')
+        .update({ quantity: newQuantity })
+        .eq('id', clothingId)
+
+      if (updateError) {
+        console.error('❌ Ошибка обновления в базе:', updateError)
+        throw updateError
+      }
+
+      console.log('✅ База данных обновлена успешно')
+
+      // Обновляем локальное состояние реактивно - как в authStore
+      const clothingIndex = clothing.value.findIndex(c => c.id === clothingId)
+      if (clothingIndex !== -1) {
+        // Создаем новый массив с обновленным объектом
+        const updatedClothing = [...clothing.value]
+        updatedClothing[clothingIndex] = {
+          ...updatedClothing[clothingIndex],
+          quantity: newQuantity
+        }
+        // Присваиваем новый массив напрямую (как user.value.money = newAmount)
+        clothing.value = updatedClothing
+        console.log(`✅ Локальное состояние обновлено: ${clothing.value[clothingIndex].quantity}`)
+      }
+      
+      // Записываем транзакцию
+      await recordTransaction({
+        itemType: 'clothing',
+        itemId: clothingId,
+        quantityChange: -quantity, // Отрицательное значение - товар уходит
+        reason: `Продажа игроком (${quantity} шт)`
+      })
+      
+      console.log('✅ Продажа одежды завершена успешно')
+      return true
+    } catch (err) {
+      console.error('❌ Ошибка продажи одежды:', err)
+      return false
+    }
+  }
+
+  // Добавление материала на склад игрока (при покупке в магазине)
+  const addMaterialToWarehouse = async (materialId: string, quantity: number) => {
+    try {
+      const material = materials.value.find(m => m.id === materialId)
+      if (!material) {
+        throw new Error('Материал не найден')
+      }
+
+      // Увеличиваем количество на складе игрока
+      const newQuantity = material.quantity + quantity
+
+      const { error: updateError } = await supabase
+        .from('warehouse_materials')
+        .update({ quantity: newQuantity })
         .eq('id', materialId)
 
       if (updateError) {
         throw updateError
       }
 
-      // Обновляем локальное состояние
-      material.quantity += quantity
+      // Обновляем локальное состояние реактивно - как в authStore
+      const materialIndex = materials.value.findIndex(m => m.id === materialId)
+      if (materialIndex !== -1) {
+        // Создаем новый массив с обновленным объектом
+        const updatedMaterials = [...materials.value]
+        updatedMaterials[materialIndex] = {
+          ...updatedMaterials[materialIndex],
+          quantity: newQuantity
+        }
+        // Присваиваем новый массив напрямую (как user.value.money = newAmount)
+        materials.value = updatedMaterials
+      }
       
       // Записываем транзакцию
       await recordTransaction({
         itemType: 'material',
         itemId: materialId,
-        quantityChange: quantity,
-        reason: `Продажа игроком (${quantity} шт)`
+        quantityChange: quantity, // Положительное значение - товар приходит
+        reason: `Покупка в магазине (${quantity} шт)`
       })
-      
-      // Добавляем опыт за продажу
-      // Опыт будет добавлен через authStore позже(quantity)
 
       return true
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Ошибка продажи материала'
-      console.error('Error selling material:', err)
+      console.error('Error adding material to warehouse:', err)
       return false
-    } finally {
-      loading.value = false
     }
   }
 
-  // Продажа одежды (игрок продает свою одежду на склад)
-  const sellClothing = async (clothingId: string, quantity: number) => {
+  // Добавление одежды на склад игрока (при покупке в магазине)
+  const addClothingToWarehouse = async (clothingId: string, quantity: number) => {
     try {
-      loading.value = true
-      error.value = null
-
       const clothingItem = clothing.value.find(c => c.id === clothingId)
       if (!clothingItem) {
         throw new Error('Одежда не найдена')
       }
 
-      const totalValue = clothingItem.price * quantity * 0.8 // Склад покупает по 80% от цены
-      
-      // Добавляем деньги игроку
-      await authStore.addMoney(totalValue)
+      // Увеличиваем количество на складе игрока
+      const newQuantity = clothingItem.quantity + quantity
 
-      // Обновляем количество одежды напрямую
       const { error: updateError } = await supabase
         .from('warehouse_clothing')
-        .update({ quantity: clothingItem.quantity + quantity })
+        .update({ quantity: newQuantity })
         .eq('id', clothingId)
 
       if (updateError) {
         throw updateError
       }
 
-      // Обновляем локальное состояние
-      clothingItem.quantity += quantity
+      // Обновляем локальное состояние реактивно - как в authStore
+      const clothingIndex = clothing.value.findIndex(c => c.id === clothingId)
+      if (clothingIndex !== -1) {
+        // Создаем новый массив с обновленным объектом
+        const updatedClothing = [...clothing.value]
+        updatedClothing[clothingIndex] = {
+          ...updatedClothing[clothingIndex],
+          quantity: newQuantity
+        }
+        // Присваиваем новый массив напрямую (как user.value.money = newAmount)
+        clothing.value = updatedClothing
+      }
       
       // Записываем транзакцию
       await recordTransaction({
         itemType: 'clothing',
         itemId: clothingId,
-        quantityChange: quantity,
-        reason: `Продажа игроком (${quantity} шт)`
+        quantityChange: quantity, // Положительное значение - товар приходит
+        reason: `Покупка в магазине (${quantity} шт)`
       })
-      
-      // Добавляем опыт за продажу
-      // Опыт будет добавлен через authStore позже(quantity * 2)
 
       return true
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Ошибка продажи одежды'
-      console.error('Error selling clothing:', err)
+      console.error('Error adding clothing to warehouse:', err)
       return false
-    } finally {
-      loading.value = false
     }
   }
 
   // Загрузка всех данных склада
   const loadWarehouseData = async () => {
     console.log('🏭 Загружаем данные склада...')
+    console.log('🔄 Устанавливаем loading = true')
+    loading.value = true
+    error.value = null
+    
     try {
       await Promise.all([
         fetchMaterials(),
@@ -513,6 +524,11 @@ export const useWarehouseStore = defineStore('warehouse', () => {
       console.log('✅ Данные склада загружены успешно')
     } catch (err) {
       console.error('❌ Ошибка загрузки данных склада:', err)
+      error.value = 'Ошибка загрузки данных склада'
+    } finally {
+      console.log('🔄 Устанавливаем loading = false')
+      loading.value = false
+      console.log('✅ Состояние loading сброшено')
     }
   }
 
@@ -551,10 +567,10 @@ export const useWarehouseStore = defineStore('warehouse', () => {
     updateMaterialQuantity,
     updateClothingQuantity,
     recordTransaction,
-    buyMaterial,
-    buyClothing,
     sellMaterial,
     sellClothing,
+    addMaterialToWarehouse,
+    addClothingToWarehouse,
     loadWarehouseData,
     resetWarehouse
   }

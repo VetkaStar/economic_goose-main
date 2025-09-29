@@ -16,9 +16,9 @@
                 type="range" 
                 min="0" 
                 max="100" 
-                v-model="localSettings.masterVolume"
-                @input="updateMasterVolume(Number($event.target.value))"
-                @change="updateMasterVolume(Number($event.target.value))"
+                :value="localSettings.masterVolume"
+                @input="updateMasterVolume($event)"
+                @change="updateMasterVolume($event)"
                 class="slider"
               />
               <span class="value">{{ localSettings.masterVolume }}%</span>
@@ -32,9 +32,9 @@
                 type="range" 
                 min="0" 
                 max="100" 
-                v-model="localSettings.musicVolume"
-                @input="updateMusicVolume(Number($event.target.value))"
-                @change="updateMusicVolume(Number($event.target.value))"
+                :value="localSettings.musicVolume"
+                @input="updateMusicVolume($event)"
+                @change="updateMusicVolume($event)"
                 class="slider"
               />
               <span class="value">{{ localSettings.musicVolume }}%</span>
@@ -48,9 +48,9 @@
                 type="range" 
                 min="0" 
                 max="100" 
-                v-model="localSettings.ambientVolume"
-                @input="updateAmbientVolume(Number($event.target.value))"
-                @change="updateAmbientVolume(Number($event.target.value))"
+                :value="localSettings.ambientVolume"
+                @input="updateAmbientVolume($event)"
+                @change="updateAmbientVolume($event)"
                 class="slider"
               />
               <span class="value">{{ localSettings.ambientVolume }}%</span>
@@ -66,7 +66,7 @@
               <input 
                 type="checkbox" 
                 v-model="localSettings.fullscreen"
-                @change="saveSettings"
+                @change="toggleFullscreen"
                 class="toggle"
                 id="fullscreen"
               />
@@ -74,6 +74,21 @@
             </div>
           </div>
         </div>
+
+        <!-- Дополнительные функции -->
+        <div class="settings-section">
+          <div class="setting-item">
+            <button class="btn btn-secondary settings-action-btn" @click="openHotkeys">
+              ⌨️ Горячие клавиши
+            </button>
+          </div>
+          <div class="setting-item">
+            <button class="btn btn-secondary settings-action-btn" @click="openAccount">
+              👤 Профиль
+            </button>
+          </div>
+        </div>
+
 
         
       </div>
@@ -85,7 +100,7 @@
         <button class="btn btn-primary" @click="closeModal">
           Сохранить
         </button>
-        <button class="btn btn-exit" @click="exitToMainMenu">
+        <button v-if="props.showExitButton" class="btn btn-exit" @click="exitToMainMenu">
           🏠 Главное меню
         </button>
       </div>
@@ -98,7 +113,7 @@
 import { ref, onMounted } from 'vue'
 import { useMusic } from '@/composables/useMusic'
 
-// Props
+// Пропсы
 const props = defineProps<{
   showExitButton?: boolean
 }>()
@@ -107,6 +122,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   close: []
   exitToMainMenu: []
+  openHotkeys: []
+  openAccount: []
 }>()
 
 
@@ -116,7 +133,7 @@ const musicSystem = useMusic()
 
 // Локальные значения для ползунков
 const localSettings = ref({
-  masterVolume: 80,
+  masterVolume: 36, // Соответствует значению из вашего сообщения
   musicVolume: 60,
   ambientVolume: 40,
   fullscreen: false
@@ -125,48 +142,56 @@ const localSettings = ref({
 // Загрузка настроек
 onMounted(() => {
   loadSettings()
+  // Принудительно возобновляем музыку при открытии настроек
+  if (musicSystem.isPlaying.value) {
+    console.log('🎵 Настройки открыты, принудительно возобновляем музыку...')
+    musicSystem.forceUpdateVolume()
+  }
 })
 
 const loadSettings = () => {
+  // Сначала загружаем настройки из музыкальной системы
+  musicSystem.loadSettings()
+  
   const savedSettings = localStorage.getItem('fashion_goose_settings')
   if (savedSettings) {
     try {
       const savedData = JSON.parse(savedSettings)
       localSettings.value = { ...localSettings.value, ...savedData }
       
-      // Применяем сохраненные настройки громкости к музыкальной системе
-      musicSystem.updateVolume(localSettings.value.masterVolume / 100)
-      musicSystem.updateMusicVolume(localSettings.value.musicVolume / 100)
-      musicSystem.updateEnvironmentVolume(localSettings.value.ambientVolume / 100)
-      
-      console.log('🎵 Настройки загружены:', localSettings.value)
+      console.log('🎵 Настройки загружены в SettingsModal:', localSettings.value)
     } catch (error) {
       console.error('Ошибка загрузки настроек:', error)
     }
   } else {
-    // Если нет сохраненных настроек, применяем значения по умолчанию
-    musicSystem.updateVolume(0.8)
-    musicSystem.updateMusicVolume(0.6)
-    musicSystem.updateEnvironmentVolume(0.4)
+    // Если нет сохраненных настроек, используем значения из музыкальной системы
+    localSettings.value.masterVolume = Math.round(musicSystem.volume.value * 100)
+    localSettings.value.musicVolume = Math.round(musicSystem.musicVolume.value * 100)
+    localSettings.value.ambientVolume = Math.round(musicSystem.environmentVolume.value * 100)
+    
+    console.log('🎵 Используем значения по умолчанию из музыкальной системы:', localSettings.value)
   }
 }
 
 // Функции для обновления громкости
-const updateMasterVolume = (value: number) => {
+const updateMasterVolume = async (event: Event) => {
+  const value = Number((event.target as HTMLInputElement)?.value)
   localSettings.value.masterVolume = value
-  musicSystem.updateVolume(value / 100)
+  await musicSystem.updateVolume(value / 100)
   saveSettings()
   console.log(`🔊 Общая громкость изменена на: ${value}%`)
 }
 
-const updateMusicVolume = (value: number) => {
+const updateMusicVolume = async (event: Event) => {
+  const value = Number((event.target as HTMLInputElement)?.value)
   localSettings.value.musicVolume = value
-  musicSystem.updateMusicVolume(value / 100)
+  await musicSystem.updateMusicVolume(value / 100)
   saveSettings()
   console.log(`🎵 Громкость музыки изменена на: ${value}%`)
 }
 
-const updateAmbientVolume = (value: number) => {
+const updateAmbientVolume = (event: Event) => {
+  const value = Number((event.target as HTMLInputElement)?.value)
   localSettings.value.ambientVolume = value
   musicSystem.updateEnvironmentVolume(value / 100)
   saveSettings()
@@ -183,19 +208,24 @@ const saveSettings = () => {
 // Сброс настроек
 const resetSettings = () => {
   if (confirm('Вы уверены, что хотите сбросить все настройки?')) {
+    // Очищаем localStorage
+    localStorage.removeItem('fashion_goose_settings')
+    
     localSettings.value = {
-      masterVolume: 80,
+      masterVolume: 36,
       musicVolume: 60,
       ambientVolume: 40,
       fullscreen: false
     }
     
     // Сбрасываем настройки музыкальной системы
-    musicSystem.updateVolume(0.8)
+    musicSystem.updateVolume(0.36)
     musicSystem.updateMusicVolume(0.6)
     musicSystem.updateEnvironmentVolume(0.4)
     
     saveSettings()
+    
+    console.log('🔄 Настройки сброшены к значениям по умолчанию')
   }
 }
 
@@ -204,10 +234,44 @@ const closeModal = () => {
   emit('close')
 }
 
+// Переключение полноэкранного режима
+const toggleFullscreen = async () => {
+  try {
+    if (!document.fullscreenElement) {
+      // Входим в полноэкранный режим
+      await document.documentElement.requestFullscreen()
+      console.log('🖥️ Включен полноэкранный режим')
+    } else {
+      // Выходим из полноэкранного режима
+      await document.exitFullscreen()
+      console.log('🖥️ Выключен полноэкранный режим')
+    }
+    
+    // Сохраняем настройки после успешного переключения
+    saveSettings()
+  } catch (error) {
+    console.error('❌ Ошибка переключения полноэкранного режима:', error)
+    
+    // Если переключение не удалось, возвращаем состояние переключателя
+    localSettings.value.fullscreen = !localSettings.value.fullscreen
+  }
+}
+
+// Открытие горячих клавиш
+const openHotkeys = () => {
+  emit('openHotkeys')
+}
+
+// Открытие профиля
+const openAccount = () => {
+  emit('openAccount')
+}
+
 // Выход в главное меню
 const exitToMainMenu = () => {
   emit('exitToMainMenu')
 }
+
 
 </script>
 
@@ -233,8 +297,8 @@ const exitToMainMenu = () => {
 .settings-modal {
   background: var(--color-bg-menu, #F4E6D1);
   border-radius: clamp(15px, 2vw, 30px);
-  max-width: 500px;
-  width: 85%;
+  max-width: 900px;
+  width: 95%;
   max-height: 85vh;
   height: auto;
   overflow-y: auto;
@@ -520,6 +584,24 @@ select:focus {
     transform: translateY(-2px);
     box-shadow: 0 clamp(4px, 0.8vw, 8px) clamp(6px, 1.2vw, 12px) var(--shadow-dark);
   }
+
+/* Кнопки действий в настройках */
+.settings-action-btn {
+  width: 100%;
+  margin: clamp(5px, 1vw, 10px) 0;
+  background: var(--color-buttons, #D4824A);
+  color: white;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(5px, 1vw, 10px);
+}
+
+.settings-action-btn:hover {
+  background: var(--color-highlights, #81C4E7);
+  transform: translateY(-2px);
+}
 
 /* Адаптивность */
 @media (max-width: 768px) {
