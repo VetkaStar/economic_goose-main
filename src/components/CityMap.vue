@@ -2231,7 +2231,7 @@ const closeMarket = () => {
 }
 
 .building:hover {
-  transform: scale(1.1);
+  transform: translate(-50%, -50%) scale(1.1);
   z-index: 20;
   filter: brightness(1.2) drop-shadow(0 0 15px rgba(100, 200, 255, 0.6));
   transition: all 0.2s ease-out;
