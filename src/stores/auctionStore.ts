@@ -91,23 +91,6 @@ export const useAuctionStore = defineStore('auction', () => {
 
       console.log(`📋 Загружено ${availableAuctions.value.length} аукционов`)
       
-      // Если нет активных/ожидающих аукционов, создаём несколько новых
-      const activeAuctions = availableAuctions.value.filter(a => 
-        a.status === 'waiting' || a.status === 'active'
-      )
-      
-      if (activeAuctions.length < 3) {
-        const toCreate = 3 - activeAuctions.length
-        console.log(`🆕 Создаём ${toCreate} новых аукционов`)
-        
-        // Создаём несколько аукционов параллельно
-        await Promise.all(
-          Array.from({ length: toCreate }, () => createAuction())
-        )
-        
-        await loadAvailableAuctions()  // Перезагружаем список
-      }
-      
       // Подписываемся на обновления списка аукционов
       subscribeToAuctionsList()
 
@@ -279,136 +262,7 @@ export const useAuctionStore = defineStore('auction', () => {
     return null
   }
 
-  // Создать новый аукцион (временная функция для тестирования)
-  async function createAuction() {
-    // Эксклюзивные материалы для аукционов
-    const exclusiveMaterials = [
-      {
-        id: 'silk_imperial',
-        name: 'Императорский шёлк',
-        icon: '👑',
-        description: 'Редчайший шёлк из королевских тутовых садов',
-        base_price: 2500,
-        quality: 99,
-        quantity: 20,
-        durability: 7,
-        comfort: 10,
-        style: 10
-      },
-      {
-        id: 'cashmere_himalayan',
-        name: 'Гималайский кашемир',
-        icon: '🏔️',
-        description: 'Невероятно мягкий кашемир из Гималаев',
-        base_price: 3000,
-        quality: 98,
-        quantity: 15,
-        durability: 8,
-        comfort: 10,
-        style: 9
-      },
-      {
-        id: 'leather_exotic',
-        name: 'Экзотическая кожа',
-        icon: '🐊',
-        description: 'Премиальная кожа редких животных',
-        base_price: 4000,
-        quality: 97,
-        quantity: 10,
-        durability: 10,
-        comfort: 7,
-        style: 10
-      },
-      {
-        id: 'wool_merino_gold',
-        name: 'Золотая шерсть мериноса',
-        icon: '🐑',
-        description: 'Лучшая шерсть мериноса класса люкс',
-        base_price: 1800,
-        quality: 95,
-        quantity: 30,
-        durability: 9,
-        comfort: 9,
-        style: 8
-      },
-      {
-        id: 'velvet_royal',
-        name: 'Королевский бархат',
-        icon: '💎',
-        description: 'Роскошный бархат для королевских нарядов',
-        base_price: 2200,
-        quality: 96,
-        quantity: 25,
-        durability: 7,
-        comfort: 10,
-        style: 10
-      },
-      {
-        id: 'linen_belgian',
-        name: 'Бельгийский лён премиум',
-        icon: '🌾',
-        description: 'Высококачественный лён из Бельгии',
-        base_price: 1500,
-        quality: 93,
-        quantity: 35,
-        durability: 9,
-        comfort: 9,
-        style: 7
-      },
-      {
-        id: 'satin_moonlight',
-        name: 'Лунный атлас',
-        icon: '🌙',
-        description: 'Переливающийся атлас с эффектом лунного света',
-        base_price: 2000,
-        quality: 94,
-        quantity: 28,
-        durability: 6,
-        comfort: 9,
-        style: 10
-      },
-      {
-        id: 'tweed_scottish',
-        name: 'Шотландский твид',
-        icon: '🏴󠁧󠁢󠁳󠁣󠁴󠁿',
-        description: 'Классический твид из Шотландии',
-        base_price: 1600,
-        quality: 92,
-        quantity: 32,
-        durability: 10,
-        comfort: 7,
-        style: 9
-      }
-    ]
-
-    const randomMaterial = exclusiveMaterials[Math.floor(Math.random() * exclusiveMaterials.length)]
-
-    // Добавляем рандом в качество и количество
-    const qualityVariation = Math.floor(Math.random() * 10) - 5 // ±5%
-    const quantityVariation = Math.floor(Math.random() * 10) - 5 // ±5 метров
-    
-    const materialWithVariation = {
-      ...randomMaterial,
-      quality: Math.min(100, Math.max(85, randomMaterial.quality + qualityVariation)),
-      quantity: Math.max(5, randomMaterial.quantity + quantityVariation)
-    }
-
-    const { data, error: insertError } = await supabase
-      .from('auctions')
-      .insert({
-        material_data: materialWithVariation,
-        starting_price: materialWithVariation.base_price,
-        current_bid: materialWithVariation.base_price,
-        time_left: 60,
-        status: 'waiting'
-      })
-      .select()
-      .single()
-
-    if (insertError) throw insertError
-
-    return data.id
-  }
+  // Создание аукционов теперь на сервере через heartbeat_check_auctions()
 
   // Присоединиться к аукциону
   async function joinAuction(auctionId: string) {
@@ -798,12 +652,7 @@ export const useAuctionStore = defineStore('auction', () => {
         }
       }
 
-        // Автоматически создаём новые аукционы через 3 секунды
-        setTimeout(async () => {
-          console.log('🔄 Проверяем количество активных аукционов...')
-          await loadAvailableAuctions() // Это автоматически создаст недостающие аукционы
-          console.log('✅ Аукционы обновлены')
-        }, 3000)
+        // Новые аукционы создаются автоматически через heartbeat на сервере
 
     } catch (err: any) {
       error.value = err.message
