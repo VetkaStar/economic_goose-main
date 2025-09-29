@@ -5,7 +5,7 @@
         <h2>🧵 Закупка материалов</h2>
         <button class="close-btn" @click="close">✕</button>
       </div>
-      
+
       <div class="modal-body">
         <!-- Прокручиваемая область с поставщиками и материалами -->
         <div class="scrollable-content">
@@ -20,7 +20,7 @@
                   class="supplier-card"
                   :class="{ 
                     active: activeSupplier === supplier.id,
-                    locked: supplier.contractStatus === 'locked',
+                    locked: supplier.contract_status === 'locked',
                     available: checkSupplierAccess(supplier)
                   }"
                   @click="selectSupplier(supplier.id)"
@@ -29,8 +29,8 @@
                   <div class="supplier-info">
                     <div class="supplier-name">{{ supplier.name }}</div>
                     <div class="supplier-specialty">{{ supplier.specialty }}</div>
-                    <div class="supplier-status" :class="supplier.contractStatus">
-                      {{ getContractStatusText(supplier.contractStatus) }}
+                    <div class="supplier-status" :class="supplier.contract_status">
+                      {{ getContractStatusText(supplier.contract_status) }}
                     </div>
                     <div class="supplier-requirement" :class="{ 
                       'requirement-met': checkSupplierAccess(supplier),
@@ -38,17 +38,17 @@
                     }">
                       {{ getRequirementText(supplier) }}
                     </div>
-                  </div>
-                </div>
               </div>
             </div>
-            
+          </div>
+        </div>
+
             <!-- Материалы выбранного поставщика справа -->
             <div class="materials-content">
               <div v-if="!activeSupplier" class="no-supplier-selected">
                 <div class="empty-icon">📋</div>
                 <p>Выберите поставщика из списка слева</p>
-              </div>
+            </div>
               
               <div v-else class="supplier-materials">
                 <div class="supplier-header">
@@ -58,20 +58,20 @@
                     <span class="supplier-reliability" v-if="currentSupplier?.reliability">
                       📊 Надежность: {{ currentSupplier.reliability }}%
                     </span>
-                    <span class="supplier-discount" v-if="currentSupplier?.discountThreshold">
-                      💰 Скидка {{ currentSupplier.discountPercent }}% от ₽{{ currentSupplier.discountThreshold.toLocaleString() }}
+                    <span class="supplier-discount" v-if="currentSupplier?.discount_threshold">
+                      💰 Скидка {{ currentSupplier.discount_percent }}% от ₽{{ currentSupplier.discount_threshold.toLocaleString() }}
                     </span>
                   </div>
                   <div class="contract-actions">
                     <button 
-                      v-if="currentSupplier?.contractStatus === 'locked'"
+                      v-if="currentSupplier?.contract_status === 'locked'"
                       class="negotiate-btn locked"
                       disabled
                     >
                       🔒 Заблокирован
                     </button>
                     <button 
-                      v-else-if="currentSupplier?.contractStatus === 'none'"
+                      v-else-if="currentSupplier?.contract_status === 'none'"
                       class="negotiate-btn"
                       :class="{ disabled: !checkSupplierAccess(currentSupplier) }"
                       :disabled="!checkSupplierAccess(currentSupplier)"
@@ -80,24 +80,24 @@
                       💼 Договориться
                     </button>
                     <span 
-                      v-else-if="currentSupplier?.contractStatus === 'negotiating'"
+                      v-else-if="currentSupplier?.contract_status === 'negotiating'"
                       class="status-text"
                     >
                       ⏳ Переговоры...
                     </span>
                     <span 
-                      v-else-if="currentSupplier?.contractStatus === 'active'"
+                      v-else-if="currentSupplier?.contract_status === 'active'"
                       class="status-text active"
                     >
                       ✅ Контракт активен
                     </span>
-                  </div>
-                </div>
+              </div>
+            </div>
                 
-                <div v-if="currentSupplier?.contractStatus !== 'active'" class="contract-required">
+                <div v-if="currentSupplier?.contract_status !== 'active'" class="contract-required">
                   <p>🤝 Для заказа материалов необходимо заключить контракт с поставщиком</p>
                 </div>
-                
+
                 <div v-else class="materials-table">
             <table class="procurement-table">
               <thead>
@@ -114,14 +114,14 @@
               <tbody>
                 <tr v-for="material in currentSupplierMaterials" :key="material.id" class="material-row">
                   <td class="material-info">
-                    <div class="material-icon">{{ material.icon }}</div>
+                    <div class="material-icon">{{ material.icon || '🧵' }}</div>
                     <div class="material-details">
                       <span class="material-name">{{ material.name }}</span>
                       <span class="material-description">{{ material.description }}</span>
                     </div>
                   </td>
                   <td class="stock-amount">
-                    <span class="stock-value">{{ material.currentStock }} м</span>
+                    <span class="stock-value">{{ material.currentStock || 0 }} м</span>
                   </td>
                   <td class="price">₽{{ material.price.toLocaleString() }}</td>
                   <td class="quality">
@@ -131,18 +131,18 @@
                         backgroundColor: getQualityColor(material.quality) 
                       }"></div>
                       <span class="quality-text">{{ material.quality }}%</span>
-                    </div>
+              </div>
                     <div class="quality-label">{{ getQualityGrade(material.quality).label }}</div>
                   </td>
                   <td class="properties">
                     <div class="property-item" v-if="material.durability">
                       <span class="property-icon">🛡️</span>
                       <span class="property-value">{{ material.durability }}</span>
-                    </div>
+              </div>
                     <div class="property-item" v-if="material.comfort">
                       <span class="property-icon">😌</span>
                       <span class="property-value">{{ material.comfort }}</span>
-                    </div>
+              </div>
                     <div class="property-item" v-if="material.style">
                       <span class="property-icon">✨</span>
                       <span class="property-value">{{ material.style }}</span>
@@ -165,27 +165,27 @@
                 </div>
               </div>
             </div>
+            </div>
           </div>
-        </div>
-        
+
         <!-- Фиксированная нижняя панель заказа -->
         <div class="fixed-order-panel">
           <div class="order-summary">
             <div class="summary-row">
               <span>Общее количество:</span>
               <strong>{{ totalQuantity }} м</strong>
-            </div>
+                </div>
             <div class="summary-row">
               <span>Общая стоимость:</span>
               <strong>₽{{ totalCost.toLocaleString() }}</strong>
-            </div>
+                </div>
             <div class="summary-row">
               <span>Остаток средств:</span>
               <strong class="balance-after" :class="{ negative: balanceAfter < 0 }">
                 ₽{{ balanceAfter.toLocaleString() }}
               </strong>
+              </div>
             </div>
-          </div>
           
           <div class="order-actions">
             <button 
@@ -214,19 +214,16 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useWarehouseStore } from '@/stores/warehouseStore'
 import { useAuthStore } from '@/stores/authStore'
-// import { useFinancialStatsStore } from '@/stores/financialStats'
-import { SUPPLIERS_DATA, getQualityGrade, type Supplier } from '@/data/suppliers'
+import { useSuppliers, type Supplier, type SupplierMaterial } from '@/composables/useSuppliers'
+import { getQualityGrade } from '@/data/suppliers'
 
 const warehouseStore = useWarehouseStore()
 const authStore = useAuthStore()
-// const financialStats = useFinancialStatsStore()
+const { suppliers, materials, loading, error, fetchSuppliers, fetchSupplierMaterials, updateContractStatus, getSupplierMaterials, getSupplier } = useSuppliers()
 
 const emit = defineEmits<{
   close: []
 }>()
-
-// Поставщики загружаются из внешнего файла конфигурации
-const suppliers = ref<Supplier[]>(SUPPLIERS_DATA)
 
 const activeSupplier = ref<string | null>(null)
 
@@ -236,34 +233,21 @@ const currentSupplier = computed(() =>
 )
 
 // Материалы текущего поставщика
-const currentSupplierMaterials = ref<any[]>([])
+const currentSupplierMaterials = ref<SupplierMaterial[]>([])
 
 // Обновляем материалы при смене поставщика
-watch(activeSupplier, (newSupplierId) => {
+watch(activeSupplier, async (newSupplierId) => {
   if (!newSupplierId) {
     currentSupplierMaterials.value = []
     return
   }
   
-  const supplier = suppliers.value.find((s: any) => s.id === newSupplierId)
-  if (supplier) {
-  currentSupplierMaterials.value = supplier.materials.map((supplierMaterial: any) => ({
-    id: supplierMaterial.id,
-    name: supplierMaterial.name,
-    price: supplierMaterial.price,
-    quality: supplierMaterial.quality,
-    description: supplierMaterial.description,
-    durability: supplierMaterial.durability,
-    comfort: supplierMaterial.comfort,
-    style: supplierMaterial.style,
-    minOrderQuantity: supplierMaterial.minOrderQuantity,
-    maxOrderQuantity: supplierMaterial.maxOrderQuantity,
-    deliveryTime: supplierMaterial.deliveryTime,
-    currentStock: 0, // будем получать из Supabase
-    orderQuantity: 0,
-    icon: getInventoryMaterialIcon(supplierMaterial.id)
-    }))
-  }
+  // Загружаем материалы поставщика из базы данных
+  await fetchSupplierMaterials(newSupplierId)
+  currentSupplierMaterials.value = materials.value.map(material => ({
+    ...material,
+    orderQuantity: 0
+  }))
 }, { immediate: true })
 
 // Получаем иконку материала из инвентаря
@@ -296,7 +280,7 @@ const totalCost = computed(() => {
     materials: currentSupplierMaterials.value.map(m => ({
       id: m.id,
       price: m.price,
-      orderQuantity: m.orderQuantity
+      orderQuantity: m.orderQuantity || 0
     })),
     result: result
   })
@@ -304,7 +288,7 @@ const totalCost = computed(() => {
 })
 
 const totalQuantity = computed(() => {
-  return currentSupplierMaterials.value.reduce((total, material: any) => {
+  return currentSupplierMaterials.value.reduce((total, material) => {
     return total + (material.orderQuantity || 0)
   }, 0)
 })
@@ -340,79 +324,79 @@ function getContractStatusText(status: string) {
 }
 
 // Проверка условий доступа к поставщику
-function checkSupplierAccess(supplier: any) {
-  if (supplier.accessType === 'starter') {
+function checkSupplierAccess(supplier: Supplier) {
+  if (supplier.access_type === 'starter') {
     return true // Стартовые поставщики всегда доступны
   }
   
-  if (supplier.accessType === 'simple' && supplier.requirement?.type === 'auto') {
+  if (supplier.access_type === 'simple' && supplier.requirement_type === 'auto') {
     // Автоматическое одобрение через время (пока имитируем как доступное)
     return true
   }
   
-  if (supplier.accessType === 'visit' && supplier.requirement?.type === 'visit') {
+  if (supplier.access_type === 'visit' && supplier.requirement_type === 'visit') {
     // Проверка посещения локации (пока имитируем как недоступное)
     return false
   }
   
-  if (supplier.accessType === 'wealth' && supplier.requirement?.type === 'money') {
-    return (authStore.user?.money || 0) >= supplier.requirement.amount
+  if (supplier.access_type === 'wealth' && supplier.requirement_type === 'money') {
+    return (authStore.user?.money || 0) >= (supplier.requirement_amount || 0)
   }
   
-  if (supplier.accessType === 'reputation' && supplier.requirement?.type === 'reputation') {
-    return (authStore.user?.level || 0) >= supplier.requirement.amount
+  if (supplier.access_type === 'reputation' && supplier.requirement_type === 'reputation') {
+    return (authStore.user?.level || 0) >= (supplier.requirement_amount || 0)
   }
   
-  if (supplier.accessType === 'exclusive' && supplier.requirement?.type === 'combined') {
-    return (authStore.user?.money || 0) >= supplier.requirement.money && (authStore.user?.level || 0) >= supplier.requirement.reputation
+  if (supplier.access_type === 'exclusive' && supplier.requirement_type === 'combined') {
+    return (authStore.user?.money || 0) >= (supplier.requirement_money || 0) && (authStore.user?.level || 0) >= (supplier.requirement_reputation || 0)
   }
   
   return false
 }
 
 // Получить текст требований для поставщика
-function getRequirementText(supplier: any) {
-  if (supplier.accessType === 'starter') {
+function getRequirementText(supplier: Supplier) {
+  if (supplier.access_type === 'starter') {
     return '✅ Доступен'
   }
   
-  if (supplier.accessType === 'simple') {
+  if (supplier.access_type === 'simple') {
     return '⏳ Автоодобрение'
   }
   
-  if (supplier.accessType === 'visit') {
+  if (supplier.access_type === 'visit') {
     return '🗺️ Нужно посетить'
   }
   
-  if (supplier.accessType === 'wealth') {
-    const hasEnough = (authStore.user?.money || 0) >= supplier.requirement.amount
-    return hasEnough ? '✅ Капитал достаточен' : `💰 Нужно ₽${supplier.requirement.amount.toLocaleString()}`
+  if (supplier.access_type === 'wealth') {
+    const hasEnough = (authStore.user?.money || 0) >= (supplier.requirement_amount || 0)
+    return hasEnough ? '✅ Капитал достаточен' : `💰 Нужно ₽${(supplier.requirement_amount || 0).toLocaleString()}`
   }
   
-  if (supplier.accessType === 'reputation') {
-    const hasEnough = (authStore.user?.level || 0) >= supplier.requirement.amount
-    return hasEnough ? '✅ Уровень достаточен' : `⭐ Нужно ${supplier.requirement.amount} уровня`
+  if (supplier.access_type === 'reputation') {
+    const hasEnough = (authStore.user?.level || 0) >= (supplier.requirement_amount || 0)
+    return hasEnough ? '✅ Уровень достаточен' : `⭐ Нужно ${supplier.requirement_amount || 0} уровня`
   }
   
-  if (supplier.accessType === 'exclusive') {
-    const hasMoneyEnough = (authStore.user?.money || 0) >= supplier.requirement.money
-    const hasReputationEnough = (authStore.user?.level || 0) >= supplier.requirement.reputation
+  if (supplier.access_type === 'exclusive') {
+    const hasMoneyEnough = (authStore.user?.money || 0) >= (supplier.requirement_money || 0)
+    const hasReputationEnough = (authStore.user?.level || 0) >= (supplier.requirement_reputation || 0)
     
     if (hasMoneyEnough && hasReputationEnough) {
       return '✅ Требования выполнены'
     } else if (!hasMoneyEnough && !hasReputationEnough) {
-      return `💎 Нужно ₽${supplier.requirement.money.toLocaleString()} + ${supplier.requirement.reputation} репутации`
+      return `💎 Нужно ₽${(supplier.requirement_money || 0).toLocaleString()} + ${supplier.requirement_reputation || 0} репутации`
     } else if (!hasMoneyEnough) {
-      return `💰 Нужно ₽${supplier.requirement.money.toLocaleString()}`
+      return `💰 Нужно ₽${(supplier.requirement_money || 0).toLocaleString()}`
     } else {
-      return `⭐ Нужно ${supplier.requirement.reputation} уровня`
+      return `⭐ Нужно ${supplier.requirement_reputation || 0} уровня`
     }
   }
   
   return 'Условия не определены'
 }
 
-function negotiateContract() {
+async function negotiateContract() {
   if (!currentSupplier.value) return
   
   // Проверяем условия доступа
@@ -420,35 +404,35 @@ function negotiateContract() {
     return // Не можем заключить контракт если условия не выполнены
   }
   
-  // Имитация переговоров
-  currentSupplier.value.contractStatus = 'negotiating'
+  // Обновляем статус на "переговоры"
+  await updateContractStatus(currentSupplier.value.id, 'negotiating')
   
   // Через 2 секунды контракт становится активным
-  setTimeout(() => {
+  setTimeout(async () => {
     if (currentSupplier.value) {
-      currentSupplier.value.contractStatus = 'active'
+      await updateContractStatus(currentSupplier.value.id, 'active')
     }
   }, 2000)
 }
 
 // Функция для разблокировки поставщика (когда игрок выполнил условия)
-function unlockSupplier(supplierId: string) {
+async function unlockSupplier(supplierId: string) {
   const supplier = suppliers.value.find(s => s.id === supplierId)
-  if (supplier && supplier.contractStatus === 'locked') {
-    supplier.contractStatus = 'none'
+  if (supplier && supplier.contract_status === 'locked') {
+    await updateContractStatus(supplierId, 'none')
   }
 }
 
 // Проверяем статус поставщиков при изменении баланса/уровня
 watch([() => authStore.user?.money, () => authStore.user?.level], () => {
   suppliers.value.forEach(supplier => {
-    if (supplier.contractStatus === 'locked' && checkSupplierAccess(supplier)) {
+    if (supplier.contract_status === 'locked' && checkSupplierAccess(supplier)) {
       unlockSupplier(supplier.id)
     }
   })
 })
 
-function updateOrderQuantity(material: any, event: Event) {
+function updateOrderQuantity(material: SupplierMaterial, event: Event) {
   const target = event.target as HTMLInputElement
   const quantity = parseInt(target.value) || 0
   material.orderQuantity = quantity
@@ -477,18 +461,47 @@ async function placeOrder() {
     // Добавляем каждый товар на склад игрока
     for (const material of orderedMaterials) {
       console.log(`🔍 Ищем материал: ${material.name}`)
+      console.log('📋 Доступные материалы в базе:', warehouseStore.materials.map((m: any) => m.name))
       
       // Находим соответствующий материал в базе данных склада
-      const existingMaterial = warehouseStore.materials.find((m: any) => 
+      // Сначала ищем точное совпадение
+      let existingMaterial = warehouseStore.materials.find((m: any) => 
         m.name.toLowerCase() === material.name.toLowerCase()
       )
+      console.log('🔍 Точное совпадение:', existingMaterial?.name || 'не найдено')
+      
+      // Если не найдено, ищем по ключевым словам
+      if (!existingMaterial) {
+        const keywords = material.name.toLowerCase().split(' ')
+        console.log('🔍 Ключевые слова:', keywords)
+        existingMaterial = warehouseStore.materials.find((m: any) => {
+          const materialName = m.name.toLowerCase()
+          const found = keywords.some((keyword: string) => materialName.includes(keyword))
+          if (found) console.log(`✅ Найдено по ключевому слову: ${m.name}`)
+          return found
+        })
+      }
+      
+      // Если все еще не найдено, ищем по частичному совпадению
+      if (!existingMaterial) {
+        const materialWords = material.name.toLowerCase().split(' ')
+        console.log('🔍 Поиск по частичному совпадению:', materialWords.filter((w: string) => w.length > 3))
+        existingMaterial = warehouseStore.materials.find((m: any) => {
+          const materialName = m.name.toLowerCase()
+          const found = materialWords.some((word: string) => 
+            word.length > 3 && materialName.includes(word)
+          )
+          if (found) console.log(`✅ Найдено по частичному совпадению: ${m.name}`)
+          return found
+        })
+      }
       
       console.log('📋 Найденный материал:', existingMaterial)
       
       if (existingMaterial) {
         // Если материал уже есть в базе, добавляем к нему количество
-        console.log(`✅ Добавляем ${material.orderQuantity} шт материала ${existingMaterial.name} (ID: ${existingMaterial.id})`)
-        await warehouseStore.addMaterialToWarehouse(existingMaterial.id, material.orderQuantity)
+        console.log(`✅ Добавляем ${material.orderQuantity || 0} шт материала ${existingMaterial.name} (ID: ${existingMaterial.id})`)
+        await warehouseStore.addMaterialToWarehouse(existingMaterial.id, material.orderQuantity || 0)
         console.log('✅ Материал успешно добавлен на склад')
       } else {
         // Если материала нет в базе, создаем новый (пока что просто добавляем в локальное состояние)
@@ -518,6 +531,9 @@ async function placeOrder() {
 
 // Загружаем инвентарь при открытии модального окна
 onMounted(async () => {
+  // Загружаем поставщиков из базы данных
+  await fetchSuppliers()
+  
   // Устанавливаем первого поставщика как активного по умолчанию
   if (suppliers.value.length > 0) {
     activeSupplier.value = suppliers.value[0].id
@@ -530,10 +546,10 @@ onMounted(async () => {
       
       // Разблокируем поставщиков, которые требуют посещения конкретного здания
       suppliers.value.forEach(supplier => {
-        if (supplier.accessType === 'visit' && 
-            supplier.requirement?.type === 'visit' && 
-            supplier.requirement?.location === visitedBuilding) {
-          supplier.contractStatus = 'none'
+        if (supplier.access_type === 'visit' && 
+            supplier.requirement_type === 'visit' && 
+            supplier.requirement_location === visitedBuilding) {
+          updateContractStatus(supplier.id, 'none')
         }
       })
       
@@ -575,7 +591,7 @@ function close() {
  .modal-content {
    background: linear-gradient(135deg, #fff7e6 0%, #fef3c7 100%);
    border: 4px solid #d8b86a;
-   border-radius: 20px;
+  border-radius: 20px;
    padding: 30px;
    width: 95%;
    max-width: 1400px;
@@ -618,14 +634,14 @@ function close() {
 }
 
  .modal-body {
-   display: flex;
+  display: flex;
    flex-direction: column;
    min-height: 700px; /* Увеличена высота */
- }
+}
 
  .scrollable-content {
-   flex: 1;
-   overflow-y: auto;
+  flex: 1;
+  overflow-y: auto;
    margin-bottom: 20px;
  }
 
@@ -640,10 +656,10 @@ function close() {
    background: #fff7e6;
    border: 2px solid #d8b86a;
    border-radius: 15px;
-   padding: 20px;
+  padding: 20px;
    height: fit-content;
    max-height: 600px;
-   overflow-y: auto;
+  overflow-y: auto;
    display: flex;
    flex-direction: column;
  }
@@ -1097,7 +1113,7 @@ function close() {
  }
 
  .summary-row span {
-   font-size: 12px;
+  font-size: 12px;
    color: #6b7280;
    font-weight: 500;
    text-transform: uppercase;
