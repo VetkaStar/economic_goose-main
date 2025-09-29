@@ -19,6 +19,7 @@ export const useAuctionStore = defineStore('auction', () => {
   let auctionsListChannel: RealtimeChannel | null = null // Канал для списка аукционов
   let timerInterval: number | null = null
   let listTimerInterval: number | null = null // Таймер для списка аукционов
+  let heartbeatInterval: number | null = null // Heartbeat для автоматического завершения аукционов
 
   // Computed
   const isParticipating = computed(() => {
@@ -59,23 +60,34 @@ export const useAuctionStore = defineStore('auction', () => {
 
       if (fetchError) throw fetchError
 
-      availableAuctions.value = (auctions || []).map(a => ({
-        id: a.id,
-        material: a.material_data,
-        starting_price: a.starting_price,
-        current_bid: a.current_bid,
-        current_bidder_id: a.current_bidder_id,
-        current_bidder_name: a.current_bidder_name,
-        time_left: a.time_left,
-        status: a.status,
-        participants: [],
-        bids_history: [],
-        winner_id: a.winner_id,
-        winner_name: a.winner_name,
-        created_at: a.created_at,
-        started_at: a.started_at,
-        finished_at: a.finished_at
-      }))
+      availableAuctions.value = (auctions || []).map(a => {
+        // Вычисляем реальное время сразу при загрузке
+        let realTimeLeft = a.time_left
+        if (a.status === 'active' && a.started_at) {
+          const startedAt = new Date(a.started_at).getTime()
+          const now = Date.now()
+          const elapsed = Math.floor((now - startedAt) / 1000)
+          realTimeLeft = Math.max(0, 60 - elapsed)
+        }
+
+        return {
+          id: a.id,
+          material: a.material_data,
+          starting_price: a.starting_price,
+          current_bid: a.current_bid,
+          current_bidder_id: a.current_bidder_id,
+          current_bidder_name: a.current_bidder_name,
+          time_left: realTimeLeft,  // Используем вычисленное время
+          status: a.status,
+          participants: [],
+          bids_history: [],
+          winner_id: a.winner_id,
+          winner_name: a.winner_name,
+          created_at: a.created_at,
+          started_at: a.started_at,
+          finished_at: a.finished_at
+        }
+      })
 
       console.log(`📋 Загружено ${availableAuctions.value.length} аукционов`)
       
@@ -145,23 +157,34 @@ export const useAuctionStore = defineStore('auction', () => {
             .limit(20)
 
           if (auctionsData) {
-            availableAuctions.value = auctionsData.map(a => ({
-              id: a.id,
-              material: a.material_data,
-              starting_price: a.starting_price,
-              current_bid: a.current_bid,
-              current_bidder_id: a.current_bidder_id,
-              current_bidder_name: a.current_bidder_name,
-              time_left: a.time_left,
-              status: a.status,
-              participants: [],
-              bids_history: [],
-              winner_id: a.winner_id,
-              winner_name: a.winner_name,
-              created_at: a.created_at,
-              started_at: a.started_at,
-              finished_at: a.finished_at
-            }))
+            availableAuctions.value = auctionsData.map(a => {
+              // Вычисляем реальное время сразу
+              let realTimeLeft = a.time_left
+              if (a.status === 'active' && a.started_at) {
+                const startedAt = new Date(a.started_at).getTime()
+                const now = Date.now()
+                const elapsed = Math.floor((now - startedAt) / 1000)
+                realTimeLeft = Math.max(0, 60 - elapsed)
+              }
+
+              return {
+                id: a.id,
+                material: a.material_data,
+                starting_price: a.starting_price,
+                current_bid: a.current_bid,
+                current_bidder_id: a.current_bidder_id,
+                current_bidder_name: a.current_bidder_name,
+                time_left: realTimeLeft,
+                status: a.status,
+                participants: [],
+                bids_history: [],
+                winner_id: a.winner_id,
+                winner_name: a.winner_name,
+                created_at: a.created_at,
+                started_at: a.started_at,
+                finished_at: a.finished_at
+              }
+            })
           }
         }
       )
@@ -180,6 +203,48 @@ export const useAuctionStore = defineStore('auction', () => {
         }
       })
     }, 1000)
+
+    // Запускаем heartbeat для автоматического завершения аукционов (каждые 10 секунд)
+    startHeartbeat()
+  }
+
+  // Запуск heartbeat для автоматического завершения аукционов
+  function startHeartbeat() {
+    if (heartbeatInterval) {
+      clearInterval(heartbeatInterval)
+    }
+
+    // Вызываем сразу при запуске
+    callHeartbeat()
+
+    // И затем каждые 10 секунд
+    heartbeatInterval = window.setInterval(() => {
+      callHeartbeat()
+    }, 10000)
+  }
+
+  // Вызов heartbeat функции на сервере
+  async function callHeartbeat() {
+    try {
+      const { data, error } = await supabase.rpc('heartbeat_check_auctions')
+      
+      if (error) {
+        console.error('⚠️ Ошибка heartbeat:', error)
+        return
+      }
+
+      console.log('💓 Heartbeat выполнен:', data)
+    } catch (err) {
+      console.error('⚠️ Критическая ошибка heartbeat:', err)
+    }
+  }
+
+  // Остановка heartbeat
+  function stopHeartbeat() {
+    if (heartbeatInterval) {
+      clearInterval(heartbeatInterval)
+      heartbeatInterval = null
+    }
   }
 
   // Отписаться от списка аукционов
@@ -193,6 +258,8 @@ export const useAuctionStore = defineStore('auction', () => {
       clearInterval(listTimerInterval)
       listTimerInterval = null
     }
+
+    stopHeartbeat()
   }
 
   // Найти доступный аукцион или создать новый (DEPRECATED - использовать loadAvailableAuctions)
@@ -431,6 +498,15 @@ export const useAuctionStore = defineStore('auction', () => {
 
     if (bidsError) throw bidsError
 
+    // Вычисляем реальное время
+    let realTimeLeft = auctionData.time_left
+    if (auctionData.status === 'active' && auctionData.started_at) {
+      const startedAt = new Date(auctionData.started_at).getTime()
+      const now = Date.now()
+      const elapsed = Math.floor((now - startedAt) / 1000)
+      realTimeLeft = Math.max(0, 60 - elapsed)
+    }
+
     // Формируем объект аукциона
     currentAuction.value = {
       id: auctionData.id,
@@ -439,7 +515,7 @@ export const useAuctionStore = defineStore('auction', () => {
       current_bid: auctionData.current_bid,
       current_bidder_id: auctionData.current_bidder_id,
       current_bidder_name: auctionData.current_bidder_name,
-      time_left: auctionData.time_left,
+      time_left: realTimeLeft,
       status: auctionData.status,
       participants: participants.map(p => ({
         id: p.player_id,
