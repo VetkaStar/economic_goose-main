@@ -2,11 +2,24 @@
   <div class="modal-overlay" @click="closeModal">
     <div class="modal minigames-modal" @click.stop>
       <div class="modal-header">
-        <h2>🎮 Мини-игры</h2>
+        <h2 class="menu-title">🎮 Мини-игры</h2>
         <button class="close-btn" @click="closeModal">✕</button>
       </div>
       
       <div class="modal-content">
+        <!-- Онлайн статус -->
+        <div class="online-status">
+          <div class="status-indicator">
+            <span class="status-dot"></span>
+            <span class="status-text">Онлайн: {{ onlinePlayers }} игроков</span>
+          </div>
+          <div class="quick-join">
+            <button class="btn btn-primary" @click="quickJoinGame">
+              🚀 Быстрое подключение
+            </button>
+          </div>
+        </div>
+
         <!-- Категории игр -->
         <div class="game-categories">
           <button 
@@ -55,6 +68,10 @@
                   <span class="stat-icon">⭐</span>
                   <span class="stat-text">{{ game.difficulty }}</span>
                 </div>
+                <div v-if="game.onlinePlayers > 0" class="stat online-stat">
+                  <span class="stat-icon">🟢</span>
+                  <span class="stat-text">{{ game.onlinePlayers }} онлайн</span>
+                </div>
               </div>
               
               <div class="game-rewards">
@@ -89,7 +106,7 @@
               v-for="game in recommendedGames" 
               :key="game.id"
               class="recommended-card"
-              @click="playGame(game)"
+              @click="playGame(allGames.find(g => g.id === game.id))"
             >
               <span class="game-emoji">{{ game.icon }}</span>
               <div class="game-details">
@@ -97,6 +114,36 @@
                 <p>{{ game.shortDescription }}</p>
               </div>
               <div class="play-arrow">▶️</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Активные события -->
+        <div class="events-section">
+          <h3>🎉 Активные события</h3>
+          <div class="events-grid">
+            <div 
+              v-for="event in activeEvents" 
+              :key="event.id"
+              class="event-card"
+              :class="{ 'event-weekly': event.eventType === 'weekly', 'event-monthly': event.eventType === 'monthly' }"
+              @click="playGame(event)"
+            >
+              <div class="event-header">
+                <span class="event-icon">{{ event.icon }}</span>
+                <div class="event-badge" :class="event.eventType">
+                  {{ event.eventType === 'weekly' ? 'Еженедельно' : 'Ежемесячно' }}
+                </div>
+              </div>
+              <div class="event-content">
+                <h4>{{ event.name }}</h4>
+                <p>{{ event.description }}</p>
+                <div class="event-participants">
+                  <span class="participants-count">👥 {{ event.onlinePlayers }} участников</span>
+                  <span class="event-time">⏰ {{ event.duration }}</span>
+                </div>
+              </div>
+              <button class="event-join-btn">Присоединиться</button>
             </div>
           </div>
         </div>
@@ -159,145 +206,187 @@ const gamesWon = ref(12)
 const averageRating = ref(4.2)
 const totalEarned = ref(2500)
 
+// Онлайн статус
+const onlinePlayers = ref(127)
+
 // Категории игр
 const categories = ref([
   { id: 'all', name: 'Все', icon: '🎮' },
-  { id: 'production', name: 'Производство', icon: '🏭' },
-  { id: 'sales', name: 'Продажи', icon: '🛍️' },
-  { id: 'design', name: 'Дизайн', icon: '🎨' },
-  { id: 'coop', name: 'Кооператив', icon: '🤝' },
-  { id: 'puzzle', name: 'Головоломки', icon: '🧩' }
+  { id: 'social', name: 'Социальные', icon: '👥' },
+  { id: 'competitive', name: 'Соревнования', icon: '🏆' },
+  { id: 'cooperative', name: 'Кооператив', icon: '🤝' },
+  { id: 'events', name: 'События', icon: '🎉' },
+  { id: 'solo', name: 'Одиночные', icon: '🎯' }
 ])
 
 // Список всех игр
 const allGames = ref([
+  // Социальные мини-игры
   {
-    id: 'sewing_master',
-    name: 'Мастер шитья',
-    description: 'Создавайте одежду на швейной машинке',
-    icon: '🧵',
-    category: 'production',
-    players: '1-2',
+    id: 'material_auction',
+    name: 'Аукцион материалов',
+    description: 'Соревнуйтесь за дефицитную ткань в режиме реального времени',
+    icon: '🔨',
+    category: 'social',
+    players: '2-8',
     duration: '5 мин',
     difficulty: '⭐⭐⭐',
-    rewards: ['💰', '⭐', '🧵'],
+    rewards: ['🧵', '💰', '⭐'],
     locked: false,
-    featured: true
+    featured: true,
+    onlinePlayers: 23,
+    type: 'competitive'
   },
   {
-    id: 'fashion_show',
-    name: 'Модный показ',
-    description: 'Проведите показ мод и привлеките зрителей',
+    id: 'fashion_battle',
+    name: 'Fashion Battle',
+    description: 'Покажите свои дизайны и победите в модном состязании',
     icon: '👗',
-    category: 'sales',
-    players: '1-4',
+    category: 'social',
+    players: '2-4',
+    duration: '8 мин',
+    difficulty: '⭐⭐⭐',
+    rewards: ['🏆', '💰', '⭐'],
+    locked: false,
+    featured: true,
+    onlinePlayers: 15,
+    type: 'competitive'
+  },
+  {
+    id: 'logistics_race',
+    name: 'Логистическая гонка',
+    description: 'Разведите заказы по городам быстрее всех',
+    icon: '🚚',
+    category: 'social',
+    players: '2-6',
     duration: '10 мин',
     difficulty: '⭐⭐⭐⭐',
-    rewards: ['💰', '⭐', '🏆'],
+    rewards: ['🚚', '💰', '⭐'],
     locked: false,
-    featured: true
+    featured: true,
+    onlinePlayers: 31,
+    type: 'competitive'
   },
+  
+  // Кооперативные игры
   {
-    id: 'color_matching',
-    name: 'Подбор цветов',
-    description: 'Создавайте гармоничные цветовые сочетания',
-    icon: '🎨',
-    category: 'design',
-    players: '1',
-    duration: '3 мин',
-    difficulty: '⭐⭐',
-    rewards: ['⭐', '🎨'],
-    locked: false,
-    featured: false
-  },
-  {
-    id: 'customer_service',
-    name: 'Обслуживание клиентов',
-    description: 'Помогайте покупателям выбрать одежду',
-    icon: '🛍️',
-    category: 'sales',
-    players: '1-2',
-    duration: '7 мин',
+    id: 'team_production',
+    name: 'Командное производство',
+    description: 'Создавайте одежду вместе с друзьями',
+    icon: '🏭',
+    category: 'cooperative',
+    players: '2-4',
+    duration: '12 мин',
     difficulty: '⭐⭐⭐',
-    rewards: ['💰', '⭐'],
+    rewards: ['🧵', '⭐', '🎁'],
     locked: false,
-    featured: false
+    featured: false,
+    onlinePlayers: 8,
+    type: 'cooperative'
   },
   {
-    id: 'fabric_cutting',
-    name: 'Раскрой ткани',
-    description: 'Точно вырезайте детали одежды',
-    icon: '✂️',
-    category: 'production',
-    players: '1',
-    duration: '4 мин',
-    difficulty: '⭐⭐',
-    rewards: ['⭐', '🧵'],
-    locked: false,
-    featured: false
-  },
-  {
-    id: 'team_design',
-    name: 'Командный дизайн',
-    description: 'Создавайте коллекции вместе с друзьями',
-    icon: '👥',
-    category: 'coop',
+    id: 'fashion_collaboration',
+    name: 'Модная коллаборация',
+    description: 'Разработайте коллекцию в команде',
+    icon: '🎨',
+    category: 'cooperative',
     players: '2-6',
     duration: '15 мин',
-    difficulty: '⭐⭐⭐⭐⭐',
-    rewards: ['💰', '⭐', '🏆', '🎁'],
+    difficulty: '⭐⭐⭐⭐',
+    rewards: ['🎨', '🏆', '💰'],
     locked: true,
     featured: false,
-    unlockRequirement: 'Уровень 10'
+    onlinePlayers: 5,
+    type: 'cooperative',
+    unlockRequirement: 'Уровень 8'
+  },
+  
+  // События и челленджи
+  {
+    id: 'weekly_challenge',
+    name: 'Еженедельный челлендж',
+    description: 'Достигните максимальной капитализации за игровой год',
+    icon: '📈',
+    category: 'events',
+    players: '1',
+    duration: '20 мин',
+    difficulty: '⭐⭐⭐⭐⭐',
+    rewards: ['🏆', '💰', '🎁', '⭐'],
+    locked: false,
+    featured: true,
+    onlinePlayers: 89,
+    type: 'solo',
+    eventType: 'weekly'
   },
   {
-    id: 'pattern_puzzle',
-    name: 'Головоломка узоров',
-    description: 'Создавайте красивые узоры на ткани',
-    icon: '🧩',
-    category: 'puzzle',
+    id: 'eco_challenge',
+    name: 'Эко-инициатива',
+    description: 'Изготовьте 1,000,000 масок за неделю с другими игроками',
+    icon: '🌱',
+    category: 'events',
+    players: '∞',
+    duration: '7 дней',
+    difficulty: '⭐⭐⭐⭐',
+    rewards: ['🌱', '🏆', '💰', '🎁'],
+    locked: false,
+    featured: true,
+    onlinePlayers: 156,
+    type: 'cooperative',
+    eventType: 'monthly'
+  },
+  
+  // Одиночные игры
+  {
+    id: 'design_master',
+    name: 'Мастер дизайна',
+    description: 'Создавайте уникальные дизайны одежды',
+    icon: '✏️',
+    category: 'solo',
     players: '1',
     duration: '6 мин',
-    difficulty: '⭐⭐⭐',
-    rewards: ['⭐', '🎨'],
-    locked: true,
+    difficulty: '⭐⭐',
+    rewards: ['🎨', '⭐'],
+    locked: false,
     featured: false,
-    unlockRequirement: '5 побед в дизайне'
+    onlinePlayers: 0,
+    type: 'solo'
   },
   {
-    id: 'fashion_quiz',
-    name: 'Модная викторина',
-    description: 'Проверьте свои знания о моде',
-    icon: '❓',
-    category: 'puzzle',
-    players: '1-4',
-    duration: '8 мин',
-    difficulty: '⭐⭐',
-    rewards: ['⭐', '📚'],
+    id: 'business_simulator',
+    name: 'Бизнес-симулятор',
+    description: 'Управляйте своим модным бизнесом',
+    icon: '📊',
+    category: 'solo',
+    players: '1',
+    duration: '15 мин',
+    difficulty: '⭐⭐⭐⭐',
+    rewards: ['💰', '📈', '⭐'],
     locked: false,
-    featured: false
+    featured: false,
+    onlinePlayers: 0,
+    type: 'solo'
   }
 ])
 
 // Рекомендуемые игры
 const recommendedGames = ref([
   {
-    id: 'sewing_master',
-    name: 'Мастер шитья',
-    shortDescription: 'Быстрая игра для новичков',
-    icon: '🧵'
+    id: 'material_auction',
+    name: 'Аукцион материалов',
+    shortDescription: 'Горячие торги за ткань!',
+    icon: '🔨'
   },
   {
-    id: 'fashion_show',
-    name: 'Модный показ',
-    shortDescription: 'Популярная игра с друзьями',
+    id: 'fashion_battle',
+    name: 'Fashion Battle',
+    shortDescription: 'Соревнование дизайнеров',
     icon: '👗'
   },
   {
-    id: 'color_matching',
-    name: 'Подбор цветов',
-    shortDescription: 'Расслабляющая творческая игра',
-    icon: '🎨'
+    id: 'weekly_challenge',
+    name: 'Еженедельный челлендж',
+    shortDescription: 'Проверь свои навыки!',
+    icon: '📈'
   }
 ])
 
@@ -309,9 +398,44 @@ const filteredGames = computed(() => {
   return allGames.value.filter(game => game.category === activeCategory.value)
 })
 
+// Активные события
+const activeEvents = computed(() => {
+  return allGames.value.filter(game => game.eventType)
+})
+
 // Установка активной категории
 const setActiveCategory = (categoryId: string) => {
   activeCategory.value = categoryId
+}
+
+// Быстрое подключение к игре
+const quickJoinGame = () => {
+  const isAuthenticated = requireAuth('quick-join', () => {
+    // Находим самую популярную игру
+    const popularGame = allGames.value
+      .filter(game => game.onlinePlayers > 0)
+      .sort((a, b) => b.onlinePlayers - a.onlinePlayers)[0]
+    
+    if (popularGame) {
+      alert(`Подключаемся к "${popularGame.name}" (${popularGame.onlinePlayers} игроков онлайн)`)
+      console.log('Быстрое подключение к:', popularGame)
+    } else {
+      alert('Сейчас нет доступных игр для быстрого подключения')
+    }
+  })
+  
+  if (isAuthenticated) {
+    const popularGame = allGames.value
+      .filter(game => game.onlinePlayers > 0)
+      .sort((a, b) => b.onlinePlayers - a.onlinePlayers)[0]
+    
+    if (popularGame) {
+      alert(`Подключаемся к "${popularGame.name}" (${popularGame.onlinePlayers} игроков онлайн)`)
+      console.log('Быстрое подключение к:', popularGame)
+    } else {
+      alert('Сейчас нет доступных игр для быстрого подключения')
+    }
+  }
 }
 
 // Запуск игры
@@ -323,16 +447,22 @@ const playGame = (game: any) => {
   
   // Проверяем авторизацию перед запуском игры
   const isAuthenticated = requireAuth('game-start', () => {
-    // Здесь будет логика запуска игры после авторизации
-    alert(`Запускаем игру: ${game.name}`)
-    console.log('Запуск игры:', game)
+    startGame(game)
   })
   
   if (isAuthenticated) {
-    // Здесь будет логика запуска игры
-    alert(`Запускаем игру: ${game.name}`)
-    console.log('Запуск игры:', game)
+    startGame(game)
   }
+}
+
+// Функция запуска игры
+const startGame = (game: any) => {
+  const gameInfo = game.onlinePlayers > 0 
+    ? `🎮 Запускаем "${game.name}"\n👥 Онлайн: ${game.onlinePlayers} игроков\n⏱️ Время: ${game.duration}\n🏆 Тип: ${game.type === 'competitive' ? 'Соревнование' : game.type === 'cooperative' ? 'Кооператив' : 'Одиночная'}`
+    : `🎮 Запускаем "${game.name}"\n⏱️ Время: ${game.duration}\n🎯 Режим: Одиночная игра`
+  
+  alert(gameInfo)
+  console.log('Запуск игры:', game)
 }
 
 // Закрытие модального окна
@@ -342,6 +472,8 @@ const closeModal = () => {
 </script>
 
 <style scoped>
+@import '@/styles/menu-common.css';
+
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -357,126 +489,193 @@ const closeModal = () => {
 }
 
 .minigames-modal {
-  background: white;
-  border-radius: 20px;
-  max-width: 1000px;
+  background: var(--color-bg-menu);
+  border-radius: clamp(15px, 2vw, 30px);
+  max-width: 1200px;
   width: 95%;
-  max-height: 80vh;
+  max-height: 85vh;
   overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 clamp(10px, 2vw, 20px) clamp(30px, 6vw, 60px) var(--shadow-dark);
+  border: clamp(2px, 0.3vw, 4px) solid var(--color-text);
+  font-family: 'Orbitron', sans-serif;
+  color: var(--color-text);
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 30px;
-  border-bottom: 2px solid #f0f0f0;
-  background: linear-gradient(135deg, #9b59b6, #8e44ad);
+  padding: clamp(15px, 2vw, 30px);
+  border-bottom: clamp(2px, 0.3vw, 4px) solid var(--color-text);
+  background: var(--gradient-accents);
   color: white;
-  border-radius: 20px 20px 0 0;
+  border-radius: clamp(15px, 2vw, 30px) clamp(15px, 2vw, 30px) 0 0;
 }
 
-.modal-header h2 {
+.modal-header .menu-title {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  text-shadow: 2px 2px 0px var(--color-accents-dark);
+  color: white;
 }
 
 .close-btn {
   background: none;
   border: none;
-  font-size: 1.5rem;
+  font-size: clamp(1.2rem, 2vw, 1.8rem);
   cursor: pointer;
   color: white;
-  padding: 5px;
+  padding: clamp(5px, 1vw, 10px);
   border-radius: 50%;
-  width: 35px;
-  height: 35px;
+  width: clamp(30px, 5vw, 45px);
+  height: clamp(30px, 5vw, 45px);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.3s ease;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
 }
 
 .close-btn:hover {
   background: rgba(255, 255, 255, 0.2);
+  border-color: white;
+  transform: scale(1.1);
 }
 
 .modal-content {
-  padding: 30px;
+  padding: clamp(20px, 3vw, 40px);
+}
+
+/* Онлайн статус */
+.online-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--gradient-bg);
+  padding: clamp(15px, 2vw, 25px);
+  border-radius: clamp(10px, 1.5vw, 20px);
+  margin-bottom: clamp(20px, 3vw, 30px);
+  border: clamp(1px, 0.2vw, 2px) solid var(--color-buttons);
+  box-shadow: 0 clamp(2px, 0.4vw, 4px) clamp(4px, 0.8vw, 8px) var(--shadow-light);
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 1.5vw, 12px);
+}
+
+.status-dot {
+  width: clamp(8px, 1.5vw, 12px);
+  height: clamp(8px, 1.5vw, 12px);
+  background: #27ae60;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+.status-text {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(0.9rem, 1.5vw, 1.3rem);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.quick-join .btn {
+  padding: clamp(8px, 1.5vw, 12px) clamp(16px, 3vw, 24px);
+  font-size: clamp(0.8rem, 1.3vw, 1.1rem);
 }
 
 .game-categories {
   display: flex;
-  gap: 10px;
-  margin-bottom: 30px;
+  gap: clamp(8px, 1.5vw, 15px);
+  margin-bottom: clamp(20px, 3vw, 30px);
   overflow-x: auto;
-  padding-bottom: 10px;
+  padding-bottom: clamp(8px, 1.5vw, 15px);
 }
 
 .category-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
-  padding: 15px 20px;
-  background: #f8f9fa;
-  border: 2px solid transparent;
-  border-radius: 15px;
+  gap: clamp(4px, 0.8vw, 8px);
+  padding: clamp(12px, 2vw, 20px) clamp(16px, 2.5vw, 24px);
+  background: var(--gradient-bg);
+  border: clamp(2px, 0.3vw, 3px) solid var(--color-buttons);
+  border-radius: clamp(10px, 1.5vw, 15px);
   cursor: pointer;
   transition: all 0.3s ease;
-  min-width: 100px;
+  min-width: clamp(80px, 12vw, 120px);
   white-space: nowrap;
+  font-family: 'Orbitron', sans-serif;
+  box-shadow: 0 clamp(2px, 0.4vw, 4px) clamp(4px, 0.8vw, 8px) var(--shadow-light);
 }
 
 .category-btn:hover {
-  background: #e9ecef;
+  background: var(--color-bg-menu-light);
   transform: translateY(-2px);
+  box-shadow: 0 clamp(4px, 0.8vw, 8px) clamp(6px, 1.2vw, 12px) var(--shadow-medium);
 }
 
 .category-btn.active {
-  background: #9b59b6;
+  background: var(--gradient-buttons);
   color: white;
-  border-color: #8e44ad;
+  border-color: var(--color-buttons-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 clamp(4px, 0.8vw, 8px) clamp(6px, 1.2vw, 12px) var(--shadow-medium);
 }
 
 .category-icon {
-  font-size: 1.5rem;
+  font-size: clamp(1.2rem, 2.5vw, 2rem);
+  filter: drop-shadow(0 1px 2px var(--shadow-light));
 }
 
 .category-name {
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: clamp(0.7rem, 1.3vw, 1.1rem);
+  font-weight: 700;
+  font-family: 'Orbitron', sans-serif;
+  text-shadow: 1px 1px 0px var(--shadow-light);
 }
 
 .games-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
-  margin-bottom: 40px;
+  grid-template-columns: repeat(auto-fill, minmax(clamp(280px, 30vw, 350px), 1fr));
+  gap: clamp(15px, 2.5vw, 25px);
+  margin-bottom: clamp(30px, 4vw, 40px);
 }
 
 .game-card {
-  background: white;
-  border-radius: 15px;
+  background: var(--gradient-bg);
+  border-radius: clamp(12px, 2vw, 20px);
   overflow: hidden;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 clamp(3px, 0.6vw, 6px) clamp(8px, 1.5vw, 15px) var(--shadow-medium);
   transition: all 0.3s ease;
   position: relative;
+  border: clamp(2px, 0.3vw, 3px) solid var(--color-buttons);
+  font-family: 'Orbitron', sans-serif;
 }
 
 .game-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 clamp(6px, 1.2vw, 12px) clamp(12px, 2.5vw, 25px) var(--shadow-dark);
 }
 
 .game-card.featured {
-  border: 3px solid #f39c12;
+  border: clamp(3px, 0.5vw, 4px) solid var(--color-highlights);
+  background: linear-gradient(135deg, var(--color-bg-menu) 0%, var(--color-highlights) 100%);
 }
 
 .game-card.locked {
   opacity: 0.6;
   cursor: not-allowed;
+  background: var(--color-bg-menu-light);
 }
 
 .game-image {
@@ -547,13 +746,23 @@ const closeModal = () => {
 .stat {
   display: flex;
   align-items: center;
-  gap: 5px;
-  font-size: 0.8rem;
-  color: #666;
+  gap: clamp(4px, 0.8vw, 8px);
+  font-size: clamp(0.7rem, 1.2vw, 1rem);
+  color: var(--color-text);
+  font-family: 'Orbitron', sans-serif;
 }
 
 .stat-icon {
-  font-size: 1rem;
+  font-size: clamp(0.9rem, 1.5vw, 1.2rem);
+}
+
+.online-stat {
+  color: #27ae60;
+  font-weight: 700;
+  background: rgba(39, 174, 96, 0.1);
+  padding: clamp(2px, 0.4vw, 4px) clamp(6px, 1vw, 8px);
+  border-radius: clamp(4px, 0.8vw, 8px);
+  border: 1px solid rgba(39, 174, 96, 0.3);
 }
 
 .game-rewards {
@@ -714,6 +923,147 @@ const closeModal = () => {
   font-size: 1.1rem;
 }
 
+/* Секция событий */
+.events-section {
+  margin-bottom: clamp(30px, 4vw, 40px);
+}
+
+.events-section h3 {
+  margin: 0 0 clamp(15px, 2.5vw, 25px) 0;
+  color: var(--color-text);
+  font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  text-shadow: 2px 2px 0px var(--shadow-light);
+}
+
+.events-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(clamp(300px, 35vw, 400px), 1fr));
+  gap: clamp(15px, 2.5vw, 25px);
+}
+
+.event-card {
+  background: var(--gradient-bg);
+  border-radius: clamp(12px, 2vw, 20px);
+  overflow: hidden;
+  box-shadow: 0 clamp(3px, 0.6vw, 6px) clamp(8px, 1.5vw, 15px) var(--shadow-medium);
+  transition: all 0.3s ease;
+  position: relative;
+  border: clamp(2px, 0.3vw, 3px) solid var(--color-buttons);
+  font-family: 'Orbitron', sans-serif;
+}
+
+.event-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 clamp(6px, 1.2vw, 12px) clamp(12px, 2.5vw, 25px) var(--shadow-dark);
+}
+
+.event-card.event-weekly {
+  border-color: var(--color-highlights);
+  background: linear-gradient(135deg, var(--color-bg-menu) 0%, rgba(129, 196, 231, 0.1) 100%);
+}
+
+.event-card.event-monthly {
+  border-color: var(--color-secondary);
+  background: linear-gradient(135deg, var(--color-bg-menu) 0%, rgba(124, 179, 66, 0.1) 100%);
+}
+
+.event-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: clamp(15px, 2.5vw, 20px);
+  background: var(--gradient-accents);
+  color: white;
+}
+
+.event-icon {
+  font-size: clamp(2rem, 4vw, 3rem);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.event-badge {
+  padding: clamp(4px, 0.8vw, 8px) clamp(8px, 1.5vw, 12px);
+  border-radius: clamp(6px, 1vw, 10px);
+  font-size: clamp(0.7rem, 1.2vw, 1rem);
+  font-weight: 700;
+  font-family: 'Orbitron', sans-serif;
+  text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.3);
+}
+
+.event-badge.weekly {
+  background: var(--color-highlights);
+  color: var(--color-text);
+}
+
+.event-badge.monthly {
+  background: var(--color-secondary);
+  color: white;
+}
+
+.event-content {
+  padding: clamp(15px, 2.5vw, 20px);
+}
+
+.event-content h4 {
+  margin: 0 0 clamp(8px, 1.5vw, 12px) 0;
+  font-size: clamp(1.1rem, 2vw, 1.5rem);
+  color: var(--color-text);
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+}
+
+.event-content p {
+  margin: 0 0 clamp(12px, 2vw, 16px) 0;
+  color: var(--color-text);
+  font-size: clamp(0.8rem, 1.3vw, 1.1rem);
+  line-height: 1.4;
+  font-family: 'Orbitron', sans-serif;
+}
+
+.event-participants {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: clamp(12px, 2vw, 16px);
+  font-size: clamp(0.7rem, 1.2vw, 1rem);
+  color: var(--color-text);
+  font-family: 'Orbitron', sans-serif;
+}
+
+.participants-count {
+  color: #27ae60;
+  font-weight: 600;
+}
+
+.event-time {
+  color: var(--color-accents);
+  font-weight: 600;
+}
+
+.event-join-btn {
+  width: 100%;
+  padding: clamp(10px, 1.8vw, 14px);
+  background: var(--gradient-buttons);
+  color: white;
+  border: none;
+  border-radius: clamp(6px, 1vw, 10px);
+  font-size: clamp(0.9rem, 1.5vw, 1.2rem);
+  font-weight: 700;
+  font-family: 'Orbitron', sans-serif;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-shadow: 1px 1px 0px var(--shadow-dark);
+  box-shadow: 0 clamp(2px, 0.4vw, 4px) clamp(4px, 0.8vw, 8px) var(--shadow-medium);
+}
+
+.event-join-btn:hover {
+  background: var(--gradient-accents);
+  transform: translateY(-2px);
+  box-shadow: 0 clamp(4px, 0.8vw, 8px) clamp(6px, 1.2vw, 12px) var(--shadow-dark);
+}
+
 /* Адаптивность */
 @media (max-width: 768px) {
   .minigames-modal {
@@ -722,6 +1072,10 @@ const closeModal = () => {
   }
   
   .games-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .events-grid {
     grid-template-columns: 1fr;
   }
   
@@ -734,7 +1088,13 @@ const closeModal = () => {
   }
   
   .category-btn {
-    min-width: 80px;
+    min-width: clamp(70px, 10vw, 100px);
+  }
+  
+  .online-status {
+    flex-direction: column;
+    gap: clamp(10px, 2vw, 15px);
+    text-align: center;
   }
 }
 </style>
