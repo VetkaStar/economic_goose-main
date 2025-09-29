@@ -207,7 +207,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-import { useAuthStore } from '@/stores/authStore'
+// import { useAuthStore } from '@/stores/authStore' // Пока не используется
 import GameStats from './GameStats.vue'
 import SettingsModal from './SettingsModal.vue'
 import HotkeysModal from './HotkeysModal.vue'
@@ -222,7 +222,7 @@ const emit = defineEmits<{
 }>()
 
 // Инициализация auth store
-const authStore = useAuthStore()
+// const authStore = useAuthStore() // Пока не используется
 
 // Состояние модальных окон
 const showSettings = ref(false)

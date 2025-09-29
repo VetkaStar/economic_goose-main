@@ -25,13 +25,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted } from 'vue'
+import { useMusic } from '@/composables/useMusic'
+
+// Музыкальная система
+const musicSystem = useMusic()
 
 // Эмиты
 const emit = defineEmits<{
   start: []
 }>()
 
+// Инициализация при монтировании
+onMounted(() => {
+  console.log('🎵 Стартовый экран загружен, ждем взаимодействия пользователя...')
+  // НЕ запускаем музыку автоматически - ждем нажатия кнопки
+})
 
 // Запуск игры
 const startGame = () => {

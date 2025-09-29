@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { EconomyState, MarketTrend, EconomicEvent, Product, InventoryItem } from '@/types/game'
+import type { EconomyState, MarketTrend, EconomicEvent } from '@/types/game'
 import { GAME_CONFIG } from '@/config/gameConfig'
 
 export const useEconomyStore = defineStore('economy', () => {
@@ -104,25 +104,25 @@ export const useEconomyStore = defineStore('economy', () => {
         name: 'Модная неделя',
         description: 'Повышенный спрос на одежду',
         type: 'positive' as const,
-        effects: [{ target: 'demand', value: 0.3, category: 'all' }]
+        effects: [{ target: 'demand' as const, value: 0.3, category: 'all' }]
       },
       {
         name: 'Экономический кризис',
         description: 'Снижение покупательной способности',
         type: 'negative' as const,
-        effects: [{ target: 'demand', value: -0.2, category: 'all' }]
+        effects: [{ target: 'demand' as const, value: -0.2, category: 'all' }]
       },
       {
         name: 'Новый тренд',
         description: 'Популярность определенного стиля',
         type: 'positive' as const,
-        effects: [{ target: 'demand', value: 0.4, category: 'dresses' }]
+        effects: [{ target: 'demand' as const, value: 0.4, category: 'dresses' }]
       },
       {
         name: 'Проблемы с поставками',
         description: 'Рост цен на материалы',
         type: 'negative' as const,
-        effects: [{ target: 'price', value: 0.2, category: 'materials' }]
+        effects: [{ target: 'price' as const, value: 0.2, category: 'materials' }]
       }
     ]
 

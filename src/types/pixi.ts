@@ -97,7 +97,7 @@ export interface Shop {
   sprite: GameSprite
   position: { x: number; y: number }
   level: number
-  products: Product[]
+  products: any[] // Временно используем any, пока не определим точный тип Product
   customers: Customer[]
   revenue: number
 }

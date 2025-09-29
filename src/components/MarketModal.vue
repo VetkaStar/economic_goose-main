@@ -113,12 +113,40 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 
+// Типы для MarketModal
+interface Product {
+  id: number
+  name: string
+  description: string
+  price: number
+  stock: number
+  unit: string
+  icon: string
+  category: string
+  quality: number
+}
+
+interface CartItem {
+  id: number
+  name: string
+  price: number
+  quantity: number
+  unit: string
+}
+
+interface Supplier {
+  id: number
+  name: string
+  rating: number
+  specialty: string
+}
+
 const emit = defineEmits<{
   close: []
 }>()
 
 // Товары на рынке
-const products = ref([
+const products = ref<Product[]>([
   {
     id: 1,
     name: 'Хлопок',
@@ -126,7 +154,9 @@ const products = ref([
     icon: '🧵',
     price: 500,
     unit: 'метр',
-    stock: 1000
+    stock: 1000,
+    category: 'fabric',
+    quality: 4
   },
   {
     id: 2,
@@ -135,7 +165,9 @@ const products = ref([
     icon: '🕸️',
     price: 2000,
     unit: 'метр',
-    stock: 200
+    stock: 200,
+    category: 'fabric',
+    quality: 5
   },
   {
     id: 3,
@@ -144,7 +176,9 @@ const products = ref([
     icon: '👖',
     price: 800,
     unit: 'метр',
-    stock: 500
+    stock: 500,
+    category: 'fabric',
+    quality: 3
   },
   {
     id: 4,
@@ -153,7 +187,9 @@ const products = ref([
     icon: '🔘',
     price: 50,
     unit: 'шт',
-    stock: 2000
+    stock: 2000,
+    category: 'accessory',
+    quality: 3
   },
   {
     id: 5,
@@ -162,7 +198,9 @@ const products = ref([
     icon: '⚡',
     price: 100,
     unit: 'шт',
-    stock: 500
+    stock: 500,
+    category: 'accessory',
+    quality: 4
   },
   {
     id: 6,
@@ -171,7 +209,9 @@ const products = ref([
     icon: '🧶',
     price: 30,
     unit: 'катушка',
-    stock: 1000
+    stock: 1000,
+    category: 'tool',
+    quality: 3
   },
   {
     id: 7,
@@ -180,7 +220,9 @@ const products = ref([
     icon: '📋',
     price: 300,
     unit: 'метр',
-    stock: 300
+    stock: 300,
+    category: 'fabric',
+    quality: 3
   },
   {
     id: 8,
@@ -189,12 +231,14 @@ const products = ref([
     icon: '🔗',
     price: 200,
     unit: 'набор',
-    stock: 100
+    stock: 100,
+    category: 'accessory',
+    quality: 4
   }
 ])
 
 // Поставщики
-const suppliers = ref([
+const suppliers = ref<Supplier[]>([
   {
     id: 1,
     name: 'Ткани+',
@@ -222,8 +266,8 @@ const suppliers = ref([
 ])
 
 // Корзина
-const cartItems = ref([])
-const quantities = ref({})
+const cartItems = ref<CartItem[]>([])
+const quantities = ref<Record<number, number>>({})
 
 // Функции для работы с корзиной
 const getQuantity = (productId: number) => {

@@ -16,9 +16,9 @@
                 type="range" 
                 min="0" 
                 max="100" 
-                v-model="localSettings.masterVolume"
-                @input="updateMasterVolume(Number($event.target.value))"
-                @change="updateMasterVolume(Number($event.target.value))"
+                :value="localSettings.masterVolume"
+                @input="updateMasterVolume($event)"
+                @change="updateMasterVolume($event)"
                 class="slider"
               />
               <span class="value">{{ localSettings.masterVolume }}%</span>
@@ -32,9 +32,9 @@
                 type="range" 
                 min="0" 
                 max="100" 
-                v-model="localSettings.musicVolume"
-                @input="updateMusicVolume(Number($event.target.value))"
-                @change="updateMusicVolume(Number($event.target.value))"
+                :value="localSettings.musicVolume"
+                @input="updateMusicVolume($event)"
+                @change="updateMusicVolume($event)"
                 class="slider"
               />
               <span class="value">{{ localSettings.musicVolume }}%</span>
@@ -48,9 +48,9 @@
                 type="range" 
                 min="0" 
                 max="100" 
-                v-model="localSettings.ambientVolume"
-                @input="updateAmbientVolume(Number($event.target.value))"
-                @change="updateAmbientVolume(Number($event.target.value))"
+                :value="localSettings.ambientVolume"
+                @input="updateAmbientVolume($event)"
+                @change="updateAmbientVolume($event)"
                 class="slider"
               />
               <span class="value">{{ localSettings.ambientVolume }}%</span>
@@ -71,6 +71,27 @@
                 id="fullscreen"
               />
               <label for="fullscreen" class="toggle-label"></label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Отладка -->
+        <div class="settings-section">
+          <div class="setting-item">
+            <label>Отладка громкости</label>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+              <button class="btn btn-secondary" @click="forceUpdateVolume">
+                🔧 Принудительно обновить громкость
+              </button>
+              <button class="btn btn-secondary" @click="checkAudioState">
+                🔍 Проверить состояние аудио
+              </button>
+              <button class="btn btn-secondary" @click="forceRestartMusic">
+                🔄 Перезапустить музыку
+              </button>
+              <button class="btn btn-secondary" @click="forcePlayMusic">
+                ▶️ Принудительно запустить
+              </button>
             </div>
           </div>
         </div>
@@ -99,7 +120,7 @@ import { ref, onMounted } from 'vue'
 import { useMusic } from '@/composables/useMusic'
 
 // Props
-const props = defineProps<{
+defineProps<{
   showExitButton?: boolean
 }>()
 
@@ -116,7 +137,7 @@ const musicSystem = useMusic()
 
 // Локальные значения для ползунков
 const localSettings = ref({
-  masterVolume: 80,
+  masterVolume: 36, // Соответствует значению из вашего сообщения
   musicVolume: 60,
   ambientVolume: 40,
   fullscreen: false
@@ -125,48 +146,56 @@ const localSettings = ref({
 // Загрузка настроек
 onMounted(() => {
   loadSettings()
+  // Принудительно возобновляем музыку при открытии настроек
+  if (musicSystem.isPlaying.value) {
+    console.log('🎵 Настройки открыты, принудительно возобновляем музыку...')
+    musicSystem.forceUpdateVolume()
+  }
 })
 
 const loadSettings = () => {
+  // Сначала загружаем настройки из музыкальной системы
+  musicSystem.loadSettings()
+  
   const savedSettings = localStorage.getItem('fashion_goose_settings')
   if (savedSettings) {
     try {
       const savedData = JSON.parse(savedSettings)
       localSettings.value = { ...localSettings.value, ...savedData }
       
-      // Применяем сохраненные настройки громкости к музыкальной системе
-      musicSystem.updateVolume(localSettings.value.masterVolume / 100)
-      musicSystem.updateMusicVolume(localSettings.value.musicVolume / 100)
-      musicSystem.updateEnvironmentVolume(localSettings.value.ambientVolume / 100)
-      
-      console.log('🎵 Настройки загружены:', localSettings.value)
+      console.log('🎵 Настройки загружены в SettingsModal:', localSettings.value)
     } catch (error) {
       console.error('Ошибка загрузки настроек:', error)
     }
   } else {
-    // Если нет сохраненных настроек, применяем значения по умолчанию
-    musicSystem.updateVolume(0.8)
-    musicSystem.updateMusicVolume(0.6)
-    musicSystem.updateEnvironmentVolume(0.4)
+    // Если нет сохраненных настроек, используем значения из музыкальной системы
+    localSettings.value.masterVolume = Math.round(musicSystem.volume.value * 100)
+    localSettings.value.musicVolume = Math.round(musicSystem.musicVolume.value * 100)
+    localSettings.value.ambientVolume = Math.round(musicSystem.environmentVolume.value * 100)
+    
+    console.log('🎵 Используем значения по умолчанию из музыкальной системы:', localSettings.value)
   }
 }
 
 // Функции для обновления громкости
-const updateMasterVolume = (value: number) => {
+const updateMasterVolume = async (event: Event) => {
+  const value = Number((event.target as HTMLInputElement)?.value)
   localSettings.value.masterVolume = value
-  musicSystem.updateVolume(value / 100)
+  await musicSystem.updateVolume(value / 100)
   saveSettings()
   console.log(`🔊 Общая громкость изменена на: ${value}%`)
 }
 
-const updateMusicVolume = (value: number) => {
+const updateMusicVolume = async (event: Event) => {
+  const value = Number((event.target as HTMLInputElement)?.value)
   localSettings.value.musicVolume = value
-  musicSystem.updateMusicVolume(value / 100)
+  await musicSystem.updateMusicVolume(value / 100)
   saveSettings()
   console.log(`🎵 Громкость музыки изменена на: ${value}%`)
 }
 
-const updateAmbientVolume = (value: number) => {
+const updateAmbientVolume = (event: Event) => {
+  const value = Number((event.target as HTMLInputElement)?.value)
   localSettings.value.ambientVolume = value
   musicSystem.updateEnvironmentVolume(value / 100)
   saveSettings()
@@ -183,19 +212,24 @@ const saveSettings = () => {
 // Сброс настроек
 const resetSettings = () => {
   if (confirm('Вы уверены, что хотите сбросить все настройки?')) {
+    // Очищаем localStorage
+    localStorage.removeItem('fashion_goose_settings')
+    
     localSettings.value = {
-      masterVolume: 80,
+      masterVolume: 36,
       musicVolume: 60,
       ambientVolume: 40,
       fullscreen: false
     }
     
     // Сбрасываем настройки музыкальной системы
-    musicSystem.updateVolume(0.8)
+    musicSystem.updateVolume(0.36)
     musicSystem.updateMusicVolume(0.6)
     musicSystem.updateEnvironmentVolume(0.4)
     
     saveSettings()
+    
+    console.log('🔄 Настройки сброшены к значениям по умолчанию')
   }
 }
 
@@ -207,6 +241,35 @@ const closeModal = () => {
 // Выход в главное меню
 const exitToMainMenu = () => {
   emit('exitToMainMenu')
+}
+
+// Принудительное обновление громкости (для отладки)
+const forceUpdateVolume = async () => {
+  await musicSystem.forceUpdateVolume()
+  console.log('🔧 Принудительное обновление громкости вызвано из настроек')
+}
+
+// Проверка состояния аудио (для отладки)
+const checkAudioState = () => {
+  musicSystem.checkAudioState()
+  console.log('🔍 Проверка состояния аудио вызвана из настроек')
+}
+
+// Принудительный перезапуск музыки (для отладки)
+const forceRestartMusic = async () => {
+  await musicSystem.forceRestartMusic()
+  console.log('🔄 Принудительный перезапуск музыки вызван из настроек')
+}
+
+// Принудительный запуск музыки (для отладки)
+const forcePlayMusic = async () => {
+  console.log('▶️ Принудительный запуск музыки...')
+  try {
+    await musicSystem.play()
+    console.log('✅ Музыка принудительно запущена')
+  } catch (error) {
+    console.error('❌ Ошибка принудительного запуска:', error)
+  }
 }
 
 </script>

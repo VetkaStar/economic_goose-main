@@ -209,7 +209,7 @@ interface PhoneInterfaceProps {
   unreadMessages?: number
 }
 
-const props = withDefaults(defineProps<PhoneInterfaceProps>(), {
+withDefaults(defineProps<PhoneInterfaceProps>(), {
   unreadMessages: 0
 })
 
@@ -312,7 +312,7 @@ const currentMonth = computed(() => {
 const calendarDays = computed(() => {
   const days = []
   const now = new Date()
-  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
+  // const firstDay = new Date(now.getFullYear(), now.getMonth(), 1) // Пока не используется
   const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
   
   for (let i = 1; i <= lastDay.getDate(); i++) {
@@ -346,7 +346,7 @@ const nextMonth = () => {
 }
 
 // Функции задач
-const updateTask = (task: any) => {
+const updateTask = (_task: any) => {
   // Логика обновления задачи
 }
 

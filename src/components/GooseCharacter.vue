@@ -194,7 +194,7 @@ watch(() => props.animation, (newAnimation) => {
 // Методы для управления персонажем
 const changeHero = (heroId: string) => {
   // Эмитим событие смены героя
-  emit('hero-change', heroId)
+  emit('heroChange', heroId)
 }
 
 const addExperience = (amount: number) => {
