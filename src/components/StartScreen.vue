@@ -58,10 +58,10 @@ const startGame = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Orbitron', sans-serif;
+  font-family: 'Segoe Print', cursive, sans-serif;
 }
 
-/* Фоновое изображение - без прозрачности */
+/* Фоновое изображение */
 .background {
   position: absolute;
   top: 0;
@@ -101,54 +101,46 @@ const startGame = () => {
 }
 
 .welcome-text {
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: #ffffff;
-  font-family: Arial, sans-serif;
+  font-size: clamp(1.3rem, 2.3vw, 1.8rem);
+  font-weight: bold;
+  color: #8B4513;
+  font-family: 'Segoe Print', cursive, sans-serif;
+  margin-bottom: 0.5rem;
   text-shadow: 
-    3px 3px 0px #000000,
-    -3px -3px 0px #000000,
-    3px -3px 0px #000000,
-    -3px 3px 0px #000000,
-    0 0 20px rgba(0, 0, 0, 1);
-  margin-bottom: 1rem;
-  letter-spacing: 0.1em;
+    2px 2px 0px rgba(255, 255, 255, 0.9),
+    -1px -1px 0px rgba(255, 255, 255, 0.9),
+    1px -1px 0px rgba(255, 255, 255, 0.9),
+    -1px 1px 0px rgba(255, 255, 255, 0.9),
+    0 3px 8px rgba(0, 0, 0, 0.3);
 }
 
 .title-main {
-  font-size: 6rem;
-  font-weight: 900;
-  color: #ffffff;
-  font-family: Arial, sans-serif;
+  font-size: clamp(3.5rem, 7.5vw, 6.5rem);
+  font-weight: bold;
+  color: #C85A54;
+  font-family: 'Segoe Print', cursive, sans-serif;
+  margin: 0.3rem 0;
+  line-height: 1.1;
   text-shadow: 
-    4px 4px 0px #000000,
-    -4px -4px 0px #000000,
-    4px -4px 0px #000000,
-    -4px 4px 0px #000000,
-    0 0 30px rgba(0, 0, 0, 1);
-  margin: 0 0 1rem 0;
-  letter-spacing: 0.15em;
-  background: linear-gradient(45deg, #FFD700, #FFA500, #FFD700);
-  background-size: 200% 200%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: titleShine 3s ease-in-out infinite;
+    3px 3px 0px rgba(255, 255, 255, 0.9),
+    -2px -2px 0px rgba(255, 255, 255, 0.9),
+    2px -2px 0px rgba(255, 255, 255, 0.9),
+    -2px 2px 0px rgba(255, 255, 255, 0.9),
+    0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 .title-subtitle {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: #ffffff;
-  font-family: Arial, sans-serif;
-  text-shadow: 
-    3px 3px 0px #000000,
-    -3px -3px 0px #000000,
-    3px -3px 0px #000000,
-    -3px 3px 0px #000000,
-    0 0 20px rgba(0, 0, 0, 1);
+  font-size: clamp(1.5rem, 3.2vw, 2.4rem);
+  font-weight: bold;
+  color: #8B4513;
+  font-family: 'Segoe Print', cursive, sans-serif;
   margin: 0;
-  letter-spacing: 0.1em;
+  text-shadow: 
+    2px 2px 0px rgba(255, 255, 255, 0.9),
+    -1px -1px 0px rgba(255, 255, 255, 0.9),
+    1px -1px 0px rgba(255, 255, 255, 0.9),
+    -1px 1px 0px rgba(255, 255, 255, 0.9),
+    0 3px 8px rgba(0, 0, 0, 0.3);
 }
 
 /* Кнопка начать */
@@ -158,39 +150,35 @@ const startGame = () => {
 }
 
 .start-button {
-  padding: 2rem 5rem;
-  font-size: 2.5rem;
-  font-weight: 900;
+  padding: clamp(1rem, 2.2vw, 1.8rem) clamp(2.5rem, 5vw, 4.5rem);
+  font-size: clamp(1.6rem, 2.8vw, 2.5rem);
+  font-weight: bold;
   color: #ffffff;
-  font-family: Arial, sans-serif;
-  background: linear-gradient(45deg, #4CAF50, #45a049);
-  border: 4px solid #ffffff;
-  border-radius: 20px;
+  font-family: 'Segoe Print', cursive, sans-serif;
+  background: linear-gradient(135deg, var(--color-buttons, #D4824A) 0%, var(--color-buttons-dark, #B86B3A) 100%);
+  border: clamp(3px, 0.5vw, 5px) solid var(--color-text, #5D4037);
+  border-radius: clamp(15px, 2.5vw, 25px);
   cursor: pointer;
   transition: all 0.3s ease;
   text-transform: uppercase;
-  letter-spacing: 0.2em;
   box-shadow: 
-    0 10px 30px rgba(0, 0, 0, 0.5),
-    0 0 0 0 rgba(76, 175, 80, 0.6);
+    0 6px 20px rgba(93, 64, 55, 0.3),
+    inset 0 1px 3px rgba(255, 255, 255, 0.3);
   position: relative;
   overflow: hidden;
-  text-shadow: 
-    2px 2px 0px #000000,
-    -2px -2px 0px #000000,
-    2px -2px 0px #000000,
-    -2px 2px 0px #000000;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .start-button:hover {
-  transform: translateY(-5px) scale(1.05);
+  transform: translateY(-3px) scale(1.03);
+  background: linear-gradient(135deg, var(--color-accents, #C85A54) 0%, var(--color-accents-dark, #A84842) 100%);
   box-shadow: 
-    0 15px 40px rgba(0, 0, 0, 0.7),
-    0 0 0 10px rgba(76, 175, 80, 0.1);
+    0 8px 25px rgba(93, 64, 55, 0.4),
+    inset 0 1px 3px rgba(255, 255, 255, 0.4);
 }
 
 .start-button:active {
-  transform: translateY(-2px) scale(1.02);
+  transform: translateY(-1px) scale(1.01);
 }
 
 .start-button::before {
@@ -208,28 +196,6 @@ const startGame = () => {
   left: 100%;
 }
 
-/* Анимации */
-@keyframes titleAppear {
-  0% {
-    opacity: 0;
-    transform: translateY(-50px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes titleShine {
-  0%, 100% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-}
-
-
 /* Адаптивность */
 @media (max-width: 768px) {
   .content {
@@ -238,42 +204,14 @@ const startGame = () => {
   
   .game-title {
     margin-bottom: 3rem;
-  }
-  
-  .welcome-text {
-    font-size: 1.4rem;
-  }
-  
-  .title-main {
-    font-size: 4rem;
-  }
-  
-  .title-subtitle {
-    font-size: 2rem;
-  }
-  
-  .start-button {
-    padding: 1.5rem 3rem;
-    font-size: 2rem;
+    padding: clamp(1.5rem, 3vw, 2rem) clamp(2rem, 4vw, 3rem);
   }
 }
 
 @media (max-width: 480px) {
-  .welcome-text {
-    font-size: 1.2rem;
-  }
-  
-  .title-main {
-    font-size: 3rem;
-  }
-  
-  .title-subtitle {
-    font-size: 1.5rem;
-  }
-  
-  .start-button {
-    padding: 1.2rem 2rem;
-    font-size: 1.5rem;
+  .game-title {
+    margin-bottom: 2rem;
+    padding: 1.2rem 1.5rem;
   }
 }
 </style>
