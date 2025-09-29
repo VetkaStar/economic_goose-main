@@ -181,6 +181,7 @@
     <!-- Модальное окно склада -->
     <WarehouseModal 
       v-if="showWarehouse"
+      :show="showWarehouse"
       @close="closeWarehouse"
     />
 

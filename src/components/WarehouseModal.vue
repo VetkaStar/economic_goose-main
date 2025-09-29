@@ -4,7 +4,7 @@
       <!-- Заголовок -->
       <div class="warehouse-header">
         <div class="header-left">
-          <h2>🏭 Склад "Логистик+"</h2>
+          <h2>📦 Мой склад</h2>
           <div class="player-balance">
             <span class="balance-label">Баланс:</span>
             <span class="balance-amount">{{ authStore.user?.money?.toLocaleString() || '0' }}₽</span>
@@ -22,7 +22,7 @@
       <!-- Основной контент -->
       <div class="warehouse-content">
         <!-- Индикатор загрузки -->
-        <div v-if="loading" class="loading-indicator">
+        <div v-if="initialLoading" class="loading-indicator">
           <div class="spinner"></div>
           <p>Загрузка данных склада...</p>
         </div>
@@ -37,13 +37,16 @@
         <template v-else>
           <!-- Левая панель - Инвентарь -->
           <div class="inventory-panel">
-            <h3>📦 Содержимое склада</h3>
+            <h3>📦 Содержимое склада ({{ materials.value?.length || 0 }} материалов, {{ clothing.value?.length || 0 }} одежды)</h3>
             
             <!-- Материалы -->
             <div class="inventory-section">
               <h4>🧵 Материалы</h4>
-              <div class="inventory-grid">
-                <div v-for="material in materials" :key="material.id" class="inventory-item">
+              <div v-if="materialsWithStock.length === 0" class="empty-section">
+                <p>📦 На складе нет материалов</p>
+              </div>
+              <div v-else class="inventory-grid">
+                <div v-for="material in materialsWithStock" :key="material.id" class="inventory-item">
                   <div class="item-icon">{{ material.icon }}</div>
                   <div class="item-info">
                     <div class="item-name">{{ material.name }}</div>
@@ -55,22 +58,33 @@
                     <div class="total-value">{{ (material.quantity * material.price).toLocaleString() }}₽</div>
                   </div>
                   <div class="item-actions">
-                    <button 
-                      @click="handleBuyMaterial(material.id, 1)" 
-                      class="action-btn buy-btn"
-                      :disabled="(authStore.user?.money || 0) < material.price || loading || material.quantity < 1"
-                      title="Купить 1 шт"
-                    >
-                      Купить
-                    </button>
-                    <button 
-                      @click="handleSellMaterial(material.id, 1)" 
-                      class="action-btn sell-btn"
-                      :disabled="material.quantity < 1 || loading"
-                      title="Продать 1 шт"
-                    >
-                      Продать
-                    </button>
+                    <div class="quantity-controls">
+                      <input 
+                        type="number" 
+                        :id="`material-quantity-${material.id}`"
+                        :max="material.quantity"
+                        min="1"
+                        :value="1"
+                        class="quantity-input"
+                        :disabled="loading.value"
+                      />
+                      <button 
+                        @click="handleSellMaterial(material.id, getQuantityInput(`material-quantity-${material.id}`))" 
+                        class="action-btn sell-btn"
+                        :disabled="material.quantity < 1 || loading.value"
+                        title="Продать указанное количество"
+                      >
+                        Продать
+                      </button>
+                      <button 
+                        @click="handleSellMaterial(material.id, material.quantity)" 
+                        class="action-btn sell-all-btn"
+                        :disabled="material.quantity < 1 || loading.value"
+                        title="Продать всё"
+                      >
+                        Всё
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -79,8 +93,11 @@
             <!-- Готовая одежда -->
             <div class="inventory-section">
               <h4>👕 Готовая одежда</h4>
-              <div class="inventory-grid">
-                <div v-for="clothingItem in clothing" :key="clothingItem.id" class="inventory-item">
+              <div v-if="clothingWithStock.length === 0" class="empty-section">
+                <p>👕 На складе нет готовой одежды</p>
+              </div>
+              <div v-else class="inventory-grid">
+                <div v-for="clothingItem in clothingWithStock" :key="clothingItem.id" class="inventory-item">
                   <div class="item-icon">{{ clothingItem.icon }}</div>
                   <div class="item-info">
                     <div class="item-name">{{ clothingItem.name }}</div>
@@ -94,22 +111,33 @@
                     <div class="total-value">{{ (clothingItem.quantity * clothingItem.price).toLocaleString() }}₽</div>
                   </div>
                   <div class="item-actions">
-                    <button 
-                      @click="handleBuyClothing(clothingItem.id, 1)" 
-                      class="action-btn buy-btn"
-                      :disabled="(authStore.user?.money || 0) < clothingItem.price || loading || clothingItem.quantity < 1"
-                      title="Купить 1 шт"
-                    >
-                      Купить
-                    </button>
-                    <button 
-                      @click="handleSellClothing(clothingItem.id, 1)" 
-                      class="action-btn sell-btn"
-                      :disabled="clothingItem.quantity < 1 || loading"
-                      title="Продать 1 шт"
-                    >
-                      Продать
-                    </button>
+                    <div class="quantity-controls">
+                      <input 
+                        type="number" 
+                        :id="`clothing-quantity-${clothingItem.id}`"
+                        :max="clothingItem.quantity"
+                        min="1"
+                        :value="1"
+                        class="quantity-input"
+                        :disabled="loading.value"
+                      />
+                      <button 
+                        @click="handleSellClothing(clothingItem.id, getQuantityInput(`clothing-quantity-${clothingItem.id}`))" 
+                        class="action-btn sell-btn"
+                        :disabled="clothingItem.quantity < 1 || loading.value"
+                        title="Продать указанное количество"
+                      >
+                        Продать
+                      </button>
+                      <button 
+                        @click="handleSellClothing(clothingItem.id, clothingItem.quantity)" 
+                        class="action-btn sell-all-btn"
+                        :disabled="clothingItem.quantity < 1 || loading.value"
+                        title="Продать всё"
+                      >
+                        Всё
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -120,7 +148,7 @@
           <div class="management-panel">
             <!-- Информация о складе -->
             <div class="warehouse-info">
-              <h3>📊 Статистика склада</h3>
+              <h3>📊 Статистика инвентаря</h3>
               <div class="info-grid">
                 <div class="info-item">
                   <span class="info-label">Загруженность:</span>
@@ -194,9 +222,14 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed, nextTick } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useWarehouseStore } from '@/stores/warehouseStore'
 import { useAuthStore } from '@/stores/authStore'
+
+const props = defineProps<{
+  show?: boolean
+}>()
 
 const emit = defineEmits<{
   close: []
@@ -209,12 +242,26 @@ const authStore = useAuthStore()
 // Состояние для уведомлений
 const notification = ref<{ type: 'success' | 'error', message: string } | null>(null)
 
-// Загружаем данные склада при монтировании компонента
+// Локальное состояние загрузки только для первого раза
+const initialLoading = ref(true)
+
+// Загружаем данные склада только при монтировании компонента
 onMounted(async () => {
   console.log('🏭 WarehouseModal: Начинаем загрузку данных склада...')
-  await warehouseStore.loadWarehouseData()
-  console.log('🏭 WarehouseModal: Данные склада загружены, материалы:', warehouseStore.materials.length)
-  console.log('🏭 WarehouseModal: Одежда:', warehouseStore.clothing.length)
+  
+  // Загружаем данные БЕЗ использования loading из store
+  try {
+    await warehouseStore.fetchMaterials()
+    await warehouseStore.fetchClothing()
+    await warehouseStore.fetchStats()
+    console.log('🏭 WarehouseModal: Данные склада загружены, материалы:', materials.value?.length || 0)
+    console.log('🏭 WarehouseModal: Одежда:', clothing.value?.length || 0)
+  } catch (error) {
+    console.error('Ошибка загрузки:', error)
+  } finally {
+    console.log('🏭 WarehouseModal: Сбрасываем initialLoading')
+    initialLoading.value = false
+  }
 })
 
 // Функция для показа уведомлений
@@ -225,12 +272,12 @@ const showNotification = (type: 'success' | 'error', message: string) => {
   }, 3000)
 }
 
-// Получаем данные из store
-const { 
-  materials, 
-  clothing, 
-  stats, 
-  loading, 
+// Получаем данные из store правильно с помощью storeToRefs
+const {
+  materials,
+  clothing,
+  stats,
+  loading,
   error,
   materialsTotal,
   materialsValue,
@@ -238,46 +285,62 @@ const {
   clothingValue,
   totalValue,
   warehouseCapacity,
-  freeSpace,
-  buyMaterial,
-  buyClothing,
-  sellMaterial,
-  sellClothing
-} = warehouseStore
+  freeSpace
+} = storeToRefs(warehouseStore)
 
-// Обработчики для кнопок покупки/продажи
-const handleBuyMaterial = async (materialId: string, quantity: number) => {
-  try {
-    const success = await buyMaterial(materialId, quantity)
-    if (success) {
-      showNotification('success', 'Материал успешно куплен!')
-    } else {
-      showNotification('error', 'Ошибка покупки материала')
-    }
-  } catch (error) {
-    console.error('Error buying material:', error)
-    showNotification('error', 'Ошибка покупки материала')
-  }
+// Получаем методы из store
+const { sellMaterial, sellClothing } = warehouseStore
+
+// Фильтруем товары с наличием на складе
+const materialsWithStock = computed(() => {
+  if (!materials.value) return []
+  console.log('🔄 Пересчитываем materialsWithStock, всего материалов:', materials.value.length)
+  const filtered = materials.value.filter(material => material.quantity > 0)
+  console.log('📦 Материалы с наличием:', filtered.map(m => `${m.name}: ${m.quantity}`))
+  return filtered
+})
+
+const clothingWithStock = computed(() => {
+  if (!clothing.value) return []
+  console.log('🔄 Пересчитываем clothingWithStock, всего одежды:', clothing.value.length)
+  const filtered = clothing.value.filter(item => item.quantity > 0)
+  console.log('👗 Одежда с наличием:', filtered.map(c => `${c.name}: ${c.quantity}`))
+  return filtered
+})
+
+
+// Получение количества из input поля
+const getQuantityInput = (inputId: string): number => {
+  const input = document.getElementById(inputId) as HTMLInputElement
+  if (!input) return 1
+  
+  const value = parseInt(input.value) || 1
+  const max = parseInt(input.max) || 1
+  const min = parseInt(input.min) || 1
+  
+  // Проверяем границы
+  if (value < min) return min
+  if (value > max) return max
+  
+  return value
 }
 
-const handleBuyClothing = async (clothingId: string, quantity: number) => {
-  try {
-    const success = await buyClothing(clothingId, quantity)
-    if (success) {
-      showNotification('success', 'Одежда успешно куплена!')
-    } else {
-      showNotification('error', 'Ошибка покупки одежды')
-    }
-  } catch (error) {
-    console.error('Error buying clothing:', error)
-    showNotification('error', 'Ошибка покупки одежды')
-  }
-}
+// Обработчики для кнопок продажи
 
 const handleSellMaterial = async (materialId: string, quantity: number) => {
   try {
+    console.log(`🛒 Продаем материал ${materialId}, количество: ${quantity}`)
+    const materialBefore = materials.value?.find(m => m.id === materialId)
+    console.log('📦 Количество до продажи:', materialBefore?.quantity)
+    
     const success = await sellMaterial(materialId, quantity)
     if (success) {
+      // Принудительно обновляем Vue
+      await nextTick()
+      
+      const materialAfter = materials.value?.find(m => m.id === materialId)
+      console.log('📦 Количество после продажи:', materialAfter?.quantity)
+      
       showNotification('success', 'Материал успешно продан!')
     } else {
       showNotification('error', 'Ошибка продажи материала')
@@ -292,6 +355,8 @@ const handleSellClothing = async (clothingId: string, quantity: number) => {
   try {
     const success = await sellClothing(clothingId, quantity)
     if (success) {
+      // Принудительно обновляем Vue
+      await nextTick()
       showNotification('success', 'Одежда успешно продана!')
     } else {
       showNotification('error', 'Ошибка продажи одежды')
@@ -736,6 +801,52 @@ const closeModal = () => {
   margin-left: 10px;
 }
 
+.quantity-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.quantity-input {
+  width: 60px;
+  padding: 4px 6px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 12px;
+  text-align: center;
+  background: white;
+  color: #333;
+  font-weight: 500;
+}
+
+.quantity-input:disabled {
+  background: #f5f5f5;
+  color: #999;
+}
+
+.quantity-input:focus {
+  outline: none;
+  border-color: #4CAF50;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+  color: #333;
+}
+
+.quantity-input::placeholder {
+  color: #999;
+  opacity: 1;
+}
+
+.quantity-input::-webkit-outer-spin-button,
+.quantity-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.quantity-input[type=number] {
+  -moz-appearance: textfield;
+}
+
 .action-btn {
   padding: 6px 12px;
   border: none;
@@ -767,11 +878,40 @@ const closeModal = () => {
   transform: translateY(-1px);
 }
 
+.sell-all-btn {
+  background: #FF9800;
+  color: white;
+  font-size: 11px;
+  padding: 4px 8px;
+}
+
+.sell-all-btn:hover:not(:disabled) {
+  background: #F57C00;
+  transform: translateY(-1px);
+}
+
 .action-btn:disabled {
   background: #ccc;
   color: #666;
   cursor: not-allowed;
   transform: none;
+}
+
+/* Пустые секции */
+.empty-section {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+  font-style: italic;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 10px;
+  border: 2px dashed var(--color-buttons, #D4824A);
+}
+
+.empty-section p {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
 }
 
 /* Адаптивность */
