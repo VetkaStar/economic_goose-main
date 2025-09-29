@@ -16,8 +16,8 @@
         <div v-for="i in 7" :key="`v-${i}`" 
              class="debug-line vertical" 
              :style="{ left: (i * 16.66) + '%' }">
-        </div>
-        
+      </div>
+
         <!-- Номера всех точек пересечения -->
         <div v-for="(point, index) in allGridIntersections" :key="`point-${index}`"
              class="grid-point-label"
@@ -30,98 +30,266 @@
         </div>
       </div>
 
-      <!-- Фоновое изображение (пока заглушка) -->
-      <div class="map-background">
-        <!-- Здесь будет фоновое изображение с дорогами и дизайном -->
-      </div>
+        <!-- Фоновое изображение карты -->
+        <div class="map-background">
+          <!-- Слой 1: Фоновые куски -->
+          <div class="background-pieces">
+            <img src="/maps/flora/фон 1.svg" alt="Фон 1" class="bg-piece bg-1" />
+            <img src="/maps/flora/фон 2.svg" alt="Фон 2" class="bg-piece bg-2" />
+            <img src="/maps/flora/фон3.svg" alt="Фон 3" class="bg-piece bg-3" />
+            <img src="/maps/flora/фон 4.svg" alt="Фон 4" class="bg-piece bg-4" />
+            <img src="/maps/flora/фон 1.svg" alt="Фон 1" class="bg-piece bg-5" />
+            <img src="/maps/flora/фон 2.svg" alt="Фон 2" class="bg-piece bg-6" />
+            <img src="/maps/flora/фон3.svg" alt="Фон 3" class="bg-piece bg-7" />
+            <img src="/maps/flora/фон 4.svg" alt="Фон 4" class="bg-piece bg-8" />
+            <img src="/maps/flora/фон 1.svg" alt="Фон 1" class="bg-piece bg-9" />
+            <img src="/maps/flora/фон 2.svg" alt="Фон 2" class="bg-piece bg-10" />
+            <img src="/maps/flora/фон3.svg" alt="Фон 3" class="bg-piece bg-11" />
+            <img src="/maps/flora/фон 4.svg" alt="Фон 4" class="bg-piece bg-12" />
+            <img src="/maps/flora/фон 1.svg" alt="Фон 1" class="bg-piece bg-13" />
+            <img src="/maps/flora/фон 2.svg" alt="Фон 2" class="bg-piece bg-14" />
+            <img src="/maps/flora/фон3.svg" alt="Фон 3" class="bg-piece bg-15" />
+            <img src="/maps/flora/фон 4.svg" alt="Фон 4" class="bg-piece bg-16" />
+          </div>
 
-      <!-- Система дорог -->
-      <div class="roads-network">
-        <!-- Основная замкнутая дорога: 2→3→4→9→14→13→18→17→16→11→12→7→2 -->
-        <div class="road road-2-to-3"></div>
-        <div class="road road-3-to-4"></div>
-        <div class="road road-4-to-9"></div>
-        <div class="road road-9-to-14"></div>
-        <div class="road road-14-to-13"></div>
-        <div class="road road-13-to-18"></div>
-        <div class="road road-18-to-17"></div>
-        <div class="road road-17-to-16"></div>
-        <div class="road road-16-to-11"></div>
-        <div class="road road-11-to-12"></div>
-        <div class="road road-12-to-7"></div>
-        <div class="road road-7-to-2"></div>
+          <!-- Слой 2: Деревья -->
+          <div class="trees-layer">
+            <img src="/maps/flora/дерево круглое.svg" alt="Дерево" class="tree tree-1" />
+            <img src="/maps/flora/деревце.svg" alt="Деревце" class="tree tree-2" />
+            <img src="/maps/flora/елочка.svg" alt="Елочка" class="tree tree-3" />
+            <img src="/maps/flora/ёлочка.svg" alt="Елочка" class="tree tree-4" />
+            <img src="/maps/flora/маленькое дерево конус 1.svg" alt="Маленькое дерево" class="tree tree-5" />
+            <img src="/maps/flora/яблоня.svg" alt="Яблоня" class="tree tree-6" />
+            <img src="/maps/flora/дерево круглое.svg" alt="Дерево" class="tree tree-7" />
+            <img src="/maps/flora/деревце.svg" alt="Деревце" class="tree tree-8" />
+            <img src="/maps/flora/елочка.svg" alt="Елочка" class="tree tree-9" />
+            <img src="/maps/flora/яблоня.svg" alt="Яблоня" class="tree tree-10" />
+            <img src="/maps/flora/дерево круглое.svg" alt="Дерево" class="tree tree-11" />
+            <img src="/maps/flora/деревце.svg" alt="Деревце" class="tree tree-12" />
+            <img src="/maps/flora/елочка.svg" alt="Елочка" class="tree tree-13" />
+            <img src="/maps/flora/ёлочка.svg" alt="Елочка" class="tree tree-14" />
+            <img src="/maps/flora/маленькое дерево конус 1.svg" alt="Маленькое дерево" class="tree tree-15" />
+            <img src="/maps/flora/яблоня.svg" alt="Яблоня" class="tree tree-16" />
+            <img src="/maps/flora/дерево круглое.svg" alt="Дерево" class="tree tree-17" />
+            <img src="/maps/flora/деревце.svg" alt="Деревце" class="tree tree-18" />
+            <img src="/maps/flora/елочка.svg" alt="Елочка" class="tree tree-19" />
+            <img src="/maps/flora/яблоня.svg" alt="Яблоня" class="tree tree-20" />
+            <img src="/maps/flora/дерево круглое.svg" alt="Дерево" class="tree tree-21" />
+            <img src="/maps/flora/деревце.svg" alt="Деревце" class="tree tree-22" />
+            <img src="/maps/flora/елочка.svg" alt="Елочка" class="tree tree-23" />
+            <img src="/maps/flora/ёлочка.svg" alt="Елочка" class="tree tree-24" />
+            <img src="/maps/flora/маленькое дерево конус 1.svg" alt="Маленькое дерево" class="tree tree-25" />
+            <img src="/maps/flora/яблоня.svg" alt="Яблоня" class="tree tree-26" />
+            <!-- Деревья по краям карты -->
+            <img src="/maps/flora/дерево круглое.svg" alt="Дерево" class="tree tree-27" />
+            <img src="/maps/flora/елочка.svg" alt="Елочка" class="tree tree-28" />
+            <img src="/maps/flora/деревце.svg" alt="Деревце" class="tree tree-29" />
+            <img src="/maps/flora/ёлочка.svg" alt="Елочка" class="tree tree-30" />
+            <img src="/maps/flora/яблоня.svg" alt="Яблоня" class="tree tree-31" />
+            <img src="/maps/flora/дерево круглое.svg" alt="Дерево" class="tree tree-32" />
+            <img src="/maps/flora/елочка.svg" alt="Елочка" class="tree tree-33" />
+            <img src="/maps/flora/деревце.svg" alt="Деревце" class="tree tree-34" />
+            <img src="/maps/flora/ёлочка.svg" alt="Елочка" class="tree tree-35" />
+            <img src="/maps/flora/яблоня.svg" alt="Яблоня" class="tree tree-36" />
+            <img src="/maps/flora/дерево круглое.svg" alt="Дерево" class="tree tree-37" />
+            <img src="/maps/flora/елочка.svg" alt="Елочка" class="tree tree-38" />
+            <img src="/maps/flora/деревце.svg" alt="Деревце" class="tree tree-39" />
+            <img src="/maps/flora/ёлочка.svg" alt="Елочка" class="tree tree-40" />
+            <img src="/maps/flora/яблоня.svg" alt="Яблоня" class="tree tree-41" />
+            <img src="/maps/flora/дерево круглое.svg" alt="Дерево" class="tree tree-42" />
+            <img src="/maps/flora/елочка.svg" alt="Елочка" class="tree tree-43" />
+            <img src="/maps/flora/деревце.svg" alt="Деревце" class="tree tree-44" />
+            <img src="/maps/flora/ёлочка.svg" alt="Елочка" class="tree tree-45" />
+            <img src="/maps/flora/яблоня.svg" alt="Яблоня" class="tree tree-46" />
+          </div>
 
-        <!-- Дороги за пределы карты -->
-        <div class="road road-7-to-6"></div>
-        <div class="road road-6-exit"></div>
-        <div class="road road-3-exit"></div>
-        <div class="road road-9-to-10"></div>
-        <div class="road road-10-exit"></div>
-        <div class="road road-14-to-19"></div>
-        <div class="road road-19-to-20"></div>
-      </div>
+          <!-- Слой 3: Кусты -->
+          <div class="bushes-layer">
+            <img src="/maps/flora/куст как кучка.svg" alt="Куст" class="bush bush-1" />
+            <img src="/maps/flora/кустик маленький.svg" alt="Маленький кустик" class="bush bush-2" />
+            <img src="/maps/flora/кустик.svg" alt="Кустик" class="bush bush-3" />
+            <img src="/maps/flora/широкий кус.svg" alt="Широкий куст" class="bush bush-4" />
+            <img src="/maps/flora/куст как кучка.svg" alt="Куст" class="bush bush-5" />
+            <img src="/maps/flora/кустик маленький.svg" alt="Маленький кустик" class="bush bush-6" />
+            <img src="/maps/flora/кустик.svg" alt="Кустик" class="bush bush-7" />
+            <img src="/maps/flora/широкий кус.svg" alt="Широкий куст" class="bush bush-8" />
+            <img src="/maps/flora/куст как кучка.svg" alt="Куст" class="bush bush-9" />
+            <img src="/maps/flora/кустик.svg" alt="Кустик" class="bush bush-10" />
+            <img src="/maps/flora/куст как кучка.svg" alt="Куст" class="bush bush-11" />
+            <img src="/maps/flora/кустик маленький.svg" alt="Маленький кустик" class="bush bush-12" />
+            <img src="/maps/flora/кустик.svg" alt="Кустик" class="bush bush-13" />
+            <img src="/maps/flora/широкий кус.svg" alt="Широкий куст" class="bush bush-14" />
+            <img src="/maps/flora/куст как кучка.svg" alt="Куст" class="bush bush-15" />
+            <img src="/maps/flora/кустик маленький.svg" alt="Маленький кустик" class="bush bush-16" />
+            <img src="/maps/flora/кустик.svg" alt="Кустик" class="bush bush-17" />
+            <img src="/maps/flora/широкий кус.svg" alt="Широкий куст" class="bush bush-18" />
+            <img src="/maps/flora/куст как кучка.svg" alt="Куст" class="bush bush-19" />
+            <img src="/maps/flora/кустик.svg" alt="Кустик" class="bush bush-20" />
+            <img src="/maps/flora/куст как кучка.svg" alt="Куст" class="bush bush-21" />
+            <img src="/maps/flora/кустик маленький.svg" alt="Маленький кустик" class="bush bush-22" />
+            <img src="/maps/flora/кустик.svg" alt="Кустик" class="bush bush-23" />
+            <img src="/maps/flora/широкий кус.svg" alt="Широкий куст" class="bush bush-24" />
+            <!-- Дополнительные кусты для плотности -->
+            <img src="/maps/flora/куст как кучка.svg" alt="Куст" class="bush bush-25" />
+            <img src="/maps/flora/кустик маленький.svg" alt="Маленький кустик" class="bush bush-26" />
+            <img src="/maps/flora/кустик.svg" alt="Кустик" class="bush bush-27" />
+            <img src="/maps/flora/широкий кус.svg" alt="Широкий куст" class="bush bush-28" />
+            <img src="/maps/flora/куст как кучка.svg" alt="Куст" class="bush bush-29" />
+            <img src="/maps/flora/кустик маленький.svg" alt="Маленький кустик" class="bush bush-30" />
+            <img src="/maps/flora/кустик.svg" alt="Кустик" class="bush bush-31" />
+            <img src="/maps/flora/широкий кус.svg" alt="Широкий куст" class="bush bush-32" />
+            <img src="/maps/flora/куст как кучка.svg" alt="Куст" class="bush bush-33" />
+            <img src="/maps/flora/кустик.svg" alt="Кустик" class="bush bush-34" />
+            <img src="/maps/flora/кустик маленький.svg" alt="Маленький кустик" class="bush bush-35" />
+            <img src="/maps/flora/широкий кус.svg" alt="Широкий куст" class="bush bush-36" />
+            <img src="/maps/flora/куст как кучка.svg" alt="Куст" class="bush bush-37" />
+            <img src="/maps/flora/кустик.svg" alt="Кустик" class="bush bush-38" />
+          </div>
 
-      <!-- Здания на доступных точках пересечения -->
+          <!-- Слой 4: Цветы -->
+          <div class="flowers-layer">
+            <img src="/maps/flora/flower.svg" alt="Цветок" class="flower flower-1" />
+            <img src="/maps/flora/flowers_2.svg" alt="Цветы" class="flower flower-2" />
+            <img src="/maps/flora/flower.svg" alt="Цветок" class="flower flower-3" />
+            <img src="/maps/flora/flowers_2.svg" alt="Цветы" class="flower flower-4" />
+            <img src="/maps/flora/flower.svg" alt="Цветок" class="flower flower-5" />
+            <img src="/maps/flora/flowers_2.svg" alt="Цветы" class="flower flower-6" />
+            <img src="/maps/flora/flower.svg" alt="Цветок" class="flower flower-7" />
+            <img src="/maps/flora/flowers_2.svg" alt="Цветы" class="flower flower-8" />
+            <img src="/maps/flora/flower.svg" alt="Цветок" class="flower flower-9" />
+            <img src="/maps/flora/flowers_2.svg" alt="Цветы" class="flower flower-10" />
+            <img src="/maps/flora/flower.svg" alt="Цветок" class="flower flower-11" />
+            <img src="/maps/flora/flowers_2.svg" alt="Цветы" class="flower flower-12" />
+            <img src="/maps/flora/flower.svg" alt="Цветок" class="flower flower-13" />
+            <img src="/maps/flora/flowers_2.svg" alt="Цветы" class="flower flower-14" />
+            <img src="/maps/flora/flower.svg" alt="Цветок" class="flower flower-15" />
+            <img src="/maps/flora/flowers_2.svg" alt="Цветы" class="flower flower-16" />
+            <img src="/maps/flora/flower.svg" alt="Цветок" class="flower flower-17" />
+            <img src="/maps/flora/flowers_2.svg" alt="Цветы" class="flower flower-18" />
+            <img src="/maps/flora/flower.svg" alt="Цветок" class="flower flower-19" />
+            <img src="/maps/flora/flowers_2.svg" alt="Цветы" class="flower flower-20" />
+            <!-- Дополнительные цветы для плотности -->
+            <img src="/maps/flora/flower.svg" alt="Цветок" class="flower flower-21" />
+            <img src="/maps/flora/flowers_2.svg" alt="Цветы" class="flower flower-22" />
+            <img src="/maps/flora/flower.svg" alt="Цветок" class="flower flower-23" />
+            <img src="/maps/flora/flowers_2.svg" alt="Цветы" class="flower flower-24" />
+            <img src="/maps/flora/flower.svg" alt="Цветок" class="flower flower-25" />
+            <img src="/maps/flora/flowers_2.svg" alt="Цветы" class="flower flower-26" />
+            <img src="/maps/flora/flower.svg" alt="Цветок" class="flower flower-27" />
+            <img src="/maps/flora/flowers_2.svg" alt="Цветы" class="flower flower-28" />
+            <img src="/maps/flora/flower.svg" alt="Цветок" class="flower flower-29" />
+            <img src="/maps/flora/flowers_2.svg" alt="Цветы" class="flower flower-30" />
+            <img src="/maps/flora/flower.svg" alt="Цветок" class="flower flower-31" />
+            <img src="/maps/flora/flowers_2.svg" alt="Цветы" class="flower flower-32" />
+            <img src="/maps/flora/flower.svg" alt="Цветок" class="flower flower-33" />
+            <img src="/maps/flora/flowers_2.svg" alt="Цветы" class="flower flower-34" />
+            <img src="/maps/flora/flower.svg" alt="Цветок" class="flower flower-35" />
+            <img src="/maps/flora/flowers_2.svg" alt="Цветы" class="flower flower-36" />
+          </div>
+        </div>
+
+       <!-- Система дорог -->
+       <div class="roads-network">
+         <!-- Основная замкнутая дорога: 2→3→4→9→14→13→18→17→16→11→12→7→2 -->
+         <div class="road road-2-to-3"></div>
+         <div class="road road-3-to-4"></div>
+         <div class="road road-4-to-9"></div>
+         <div class="road road-9-to-14"></div>
+         <div class="road road-14-to-13"></div>
+         <div class="road road-13-to-18"></div>
+         <div class="road road-18-to-17"></div>
+         <div class="road road-17-to-16"></div>
+         <div class="road road-16-to-11"></div>
+         <div class="road road-11-to-12"></div>
+         <div class="road road-12-to-7"></div>
+         <div class="road road-7-to-2"></div>
+
+         <!-- Дороги за пределы карты -->
+         <div class="road road-7-to-6"></div>
+         <div class="road road-6-exit"></div>
+         <div class="road road-3-exit"></div>
+         <div class="road road-9-to-10"></div>
+         <div class="road road-10-exit"></div>
+         <div class="road road-14-to-19"></div>
+         <div class="road road-19-to-20"></div>
+
+         <!-- Соединительные элементы для плавных стыков -->
+         <div class="road-junction junction-2"></div>
+         <div class="road-junction junction-3"></div>
+         <div class="road-junction junction-4"></div>
+         <div class="road-junction junction-7"></div>
+         <div class="road-junction junction-9"></div>
+         <div class="road-junction junction-11"></div>
+         <div class="road-junction junction-12"></div>
+         <div class="road-junction junction-13"></div>
+         <div class="road-junction junction-14"></div>
+         <div class="road-junction junction-16"></div>
+         <div class="road-junction junction-17"></div>
+         <div class="road-junction junction-18"></div>
+         <div class="road-junction junction-19"></div>
+       </div>
+
+       <!-- Здания на доступных точках пересечения -->
       <div class="buildings">
-        <!-- Точка 1 - Банк -->
+         <!-- Точка 1 - Банк -->
         <div class="building bank" @click="openBank">
-          <img :src="buildingImages.bank" alt="Банк" class="building-image" />
+           <img src="/maps/банк.svg" alt="Банк" class="building-image" />
         </div>
 
-        <!-- Точка 2 - Торговый центр -->
+         <!-- Точка 2 - Торговый центр -->
         <div class="building mall" @click="openMall">
-          <img :src="buildingImages.mall" alt="Торговый центр" class="building-image" />
+           <img src="/maps/тц стиль.svg" alt="Торговый центр" class="building-image" />
         </div>
 
-        <!-- Точка 3 - Администрация -->
+         <!-- Точка 3 - Администрация -->
         <div class="building government" @click="openGovernment">
-          <img :src="buildingImages.government" alt="Администрация" class="building-image" />
+           <img src="/maps/администрация.svg" alt="Администрация" class="building-image" />
         </div>
 
-        <!-- Точка 4 - Жилой дом 1 -->
+         <!-- Точка 4 - Жилой дом 1 -->
         <div class="building house-1" @click="openHouse">
-          <img :src="buildingImages.houses[0]" alt="Дом" class="building-image" />
+           <img src="/maps/дом1.svg" alt="Дом" class="building-image" />
         </div>
 
-        <!-- Точка 5 - Жилой дом 2 -->
-        <div class="building house-2" @click="openHouse">
-          <img :src="buildingImages.houses[1]" alt="Дом" class="building-image" />
+         <!-- Точка 5 - Жилой дом 2 -->
+         <div class="building house-2" @click="openHouse">
+           <img src="/maps/дом2.svg" alt="Дом" class="building-image" />
         </div>
 
-        <!-- Точка 6 - Жилой дом 3 -->
-        <div class="building house-3" @click="openHouse">
-          <img :src="buildingImages.houses[2]" alt="Дом" class="building-image" />
+         <!-- Точка 6 - Жилой дом 3 -->
+         <div class="building house-3" @click="openHouse">
+           <img src="/maps/дом3.svg" alt="Дом" class="building-image" />
         </div>
 
-        <!-- Точка 7 - Производственный цех -->
+         <!-- Точка 7 - Производственный цех -->
         <div class="building workshop" @click="openWorkshop">
-          <img :src="buildingImages.workshop" alt="Производственный цех" class="building-image" />
+           <img src="/maps/фабрика.svg" alt="Производственный цех" class="building-image" />
         </div>
 
-        <!-- Точка 8 - Офисное здание -->
+         <!-- Точка 8 - Офисное здание -->
         <div class="building office" @click="openOffice">
-          <img :src="buildingImages.office" alt="Офисное здание" class="building-image" />
+           <img src="/maps/офис.svg" alt="Офисное здание" class="building-image" />
         </div>
 
-        <!-- Точка 9 - Склад -->
+         <!-- Точка 9 - Склад -->
         <div class="building warehouse" @click="openWarehouse">
-          <img :src="buildingImages.warehouse" alt="Склад" class="building-image" />
+           <img src="/maps/склад.svg" alt="Склад" class="building-image" />
         </div>
 
-        <!-- Дополнительные здания на свободных точках -->
-        <!-- Магазин (можно добавить на точку 1.5 - между 1 и 2) -->
+         <!-- Дополнительные здания на свободных точках -->
+        <!-- Магазин -->
         <div class="building shop" @click="openShop">
-          <img :src="buildingImages.shop" alt="Магазин" class="building-image" />
+           <img src="/maps/магазин.svg" alt="Магазин" class="building-image" />
         </div>
 
-        <!-- Рынок (можно добавить на точку 2.5 - между 2 и 3) -->
+        <!-- Рынок -->
         <div class="building market" @click="openMarket">
-          <img :src="buildingImages.market" alt="Рынок" class="building-image" />
+           <img src="/maps/рынок.svg" alt="Рынок" class="building-image" />
         </div>
 
-        <!-- Ателье (можно добавить на точку 3.5 - между 3 и 4) -->
+        <!-- Ателье -->
         <div class="building atelier" @click="openAtelier">
-          <img :src="buildingImages.atelier" alt="Ателье" class="building-image" />
+           <img src="/maps/ателье модный дом.svg" alt="Ателье" class="building-image" />
         </div>
       </div>
 
@@ -153,7 +321,7 @@
     <!-- Кнопка отладки сетки (временно) -->
     <button class="debug-btn" @click="showDebugGrid = !showDebugGrid" title="Показать/скрыть сетку">
       🔧
-    </button>
+      </button>
 
     
 
@@ -262,23 +430,7 @@ const allGridIntersections = ref([
 
 
 
-// Изображения зданий с прозрачным фоном
-const buildingImages = ref({
-  houses: [
-    'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=150&h=150&fit=crop&crop=center&auto=format&q=80&fm=png',
-    'https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=150&h=150&fit=crop&crop=center&auto=format&q=80&fm=png',
-    'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=150&h=150&fit=crop&crop=center&auto=format&q=80&fm=png'
-  ],
-  bank: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=150&h=150&fit=crop&crop=center&auto=format&q=80&fm=png',
-  government: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=150&h=150&fit=crop&crop=center&auto=format&q=80&fm=png',
-  mall: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=150&h=150&fit=crop&crop=center&auto=format&q=80&fm=png',
-  workshop: 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=150&h=150&fit=crop&crop=center&auto=format&q=80&fm=png',
-  warehouse: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=150&h=150&fit=crop&crop=center&auto=format&q=80&fm=png',
-  office: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=150&h=150&fit=crop&crop=center&auto=format&q=80&fm=png',
-  shop: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=150&h=150&fit=crop&crop=center&auto=format&q=80&fm=png',
-  atelier: 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=150&h=150&fit=crop&crop=center&auto=format&q=80&fm=png',
-  market: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=150&h=150&fit=crop&crop=center&auto=format&q=80&fm=png'
-})
+// Теперь используем SVG файлы из папки /maps/
 
 // Время и дата
 const currentTime = ref('')
@@ -460,7 +612,7 @@ const closeMarket = () => {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: #4CAF50; /* Зеленый фон как трава */
+  background: linear-gradient(135deg, #F5E6D3 0%, #E6D3B7 50%, #D4C4A8 100%);
   overflow: hidden;
   font-family: 'Orbitron', sans-serif;
 }
@@ -536,7 +688,7 @@ const closeMarket = () => {
   position: relative;
   width: 100%;
   height: 100%;
-  background: #4CAF50;
+  background: transparent;
 }
 
 /* Отладочные направляющие */
@@ -587,9 +739,1166 @@ const closeMarket = () => {
   position: absolute;
   width: 100%;
   height: 100%;
-  background: #4CAF50;
+  background: #7e8f47; /* Травяной зеленый цвет - нижний слой */
   z-index: 0;
-  /* Здесь будет фоновое изображение с дорогами */
+  overflow: hidden;
+}
+
+/* Слой 1: Фоновые куски */
+.background-pieces {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.bg-piece {
+  position: absolute;
+  opacity: 0.8;
+  filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.bg-1 {
+  top: 10%;
+  left: 5%;
+  width: 1000px;
+  height: 750px;
+  transform: rotate(-5deg);
+}
+
+.bg-2 {
+  top: 30%;
+  right: 10%;
+  width: 900px;
+  height: 600px;
+  transform: rotate(3deg);
+}
+
+.bg-3 {
+  bottom: 20%;
+  left: 15%;
+  width: 800px;
+  height: 700px;
+  transform: rotate(-2deg);
+}
+
+.bg-4 {
+  top: 60%;
+  right: 20%;
+  width: 950px;
+  height: 650px;
+  transform: rotate(4deg);
+}
+
+.bg-5 {
+  top: 45%;
+  left: 50%;
+  width: 850px;
+  height: 550px;
+  transform: rotate(-3deg);
+}
+
+.bg-6 {
+  bottom: 10%;
+  right: 5%;
+  width: 750px;
+  height: 800px;
+  transform: rotate(2deg);
+}
+
+.bg-7 {
+  top: 15%;
+  left: 25%;
+  width: 900px;
+  height: 700px;
+  transform: rotate(-4deg);
+}
+
+.bg-8 {
+  top: 55%;
+  right: 35%;
+  width: 800px;
+  height: 600px;
+  transform: rotate(3deg);
+}
+
+.bg-9 {
+  bottom: 35%;
+  left: 8%;
+  width: 950px;
+  height: 750px;
+  transform: rotate(-1deg);
+}
+
+.bg-10 {
+  top: 75%;
+  right: 15%;
+  width: 850px;
+  height: 650px;
+  transform: rotate(2deg);
+}
+
+.bg-11 {
+  top: 40%;
+  left: 35%;
+  width: 700px;
+  height: 550px;
+  transform: rotate(-3deg);
+}
+
+.bg-12 {
+  bottom: 5%;
+  left: 30%;
+  width: 1000px;
+  height: 850px;
+  transform: rotate(1deg);
+}
+
+.bg-13 {
+  top: 5%;
+  right: 30%;
+  width: 800px;
+  height: 625px;
+  transform: rotate(-2deg);
+}
+
+.bg-14 {
+  top: 65%;
+  left: 40%;
+  width: 750px;
+  height: 700px;
+  transform: rotate(4deg);
+}
+
+.bg-15 {
+  bottom: 25%;
+  right: 40%;
+  width: 900px;
+  height: 675px;
+  transform: rotate(-1deg);
+}
+
+.bg-16 {
+  top: 25%;
+  left: 60%;
+  width: 650px;
+  height: 500px;
+  transform: rotate(2deg);
+}
+
+/* Слой 2: Деревья */
+.trees-layer {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.tree {
+  position: absolute;
+  filter: drop-shadow(3px 3px 6px rgba(0, 0, 0, 0.3));
+}
+
+.tree-1 {
+  top: 8%;
+  left: 8%;
+  width: 80px;
+  height: 100px;
+  transform: rotate(-2deg);
+}
+
+.tree-2 {
+  top: 25%;
+  right: 12%;
+  width: 60px;
+  height: 80px;
+  transform: rotate(3deg);
+}
+
+.tree-3 {
+  bottom: 25%;
+  left: 12%;
+  width: 70px;
+  height: 90px;
+  transform: rotate(-1deg);
+}
+
+.tree-4 {
+  top: 50%;
+  right: 8%;
+  width: 65px;
+  height: 85px;
+  transform: rotate(2deg);
+}
+
+.tree-5 {
+  bottom: 15%;
+  right: 25%;
+  width: 55px;
+  height: 70px;
+  transform: rotate(-3deg);
+}
+
+.tree-6 {
+  top: 35%;
+  left: 25%;
+  width: 75px;
+  height: 95px;
+  transform: rotate(1deg);
+}
+
+.tree-7 {
+  top: 70%;
+  left: 5%;
+  width: 85px;
+  height: 105px;
+  transform: rotate(-2deg);
+}
+
+.tree-8 {
+  top: 15%;
+  left: 60%;
+  width: 60px;
+  height: 75px;
+  transform: rotate(4deg);
+}
+
+.tree-9 {
+  bottom: 40%;
+  right: 15%;
+  width: 70px;
+  height: 90px;
+  transform: rotate(-1deg);
+}
+
+.tree-10 {
+  top: 80%;
+  right: 30%;
+  width: 80px;
+  height: 100px;
+  transform: rotate(2deg);
+}
+
+.tree-11 {
+  top: 12%;
+  left: 45%;
+  width: 70px;
+  height: 90px;
+  transform: rotate(-1deg);
+}
+
+.tree-12 {
+  top: 35%;
+  right: 45%;
+  width: 65px;
+  height: 85px;
+  transform: rotate(3deg);
+}
+
+.tree-13 {
+  bottom: 35%;
+  left: 35%;
+  width: 75px;
+  height: 95px;
+  transform: rotate(-2deg);
+}
+
+.tree-14 {
+  top: 60%;
+  right: 25%;
+  width: 60px;
+  height: 80px;
+  transform: rotate(1deg);
+}
+
+.tree-15 {
+  bottom: 5%;
+  left: 55%;
+  width: 55px;
+  height: 70px;
+  transform: rotate(-3deg);
+}
+
+.tree-16 {
+  top: 45%;
+  left: 15%;
+  width: 80px;
+  height: 100px;
+  transform: rotate(2deg);
+}
+
+.tree-17 {
+  top: 85%;
+  left: 25%;
+  width: 70px;
+  height: 90px;
+  transform: rotate(-1deg);
+}
+
+.tree-18 {
+  top: 20%;
+  left: 80%;
+  width: 60px;
+  height: 75px;
+  transform: rotate(4deg);
+}
+
+.tree-19 {
+  bottom: 45%;
+  right: 5%;
+  width: 75px;
+  height: 95px;
+  transform: rotate(-2deg);
+}
+
+.tree-20 {
+  top: 70%;
+  right: 50%;
+  width: 85px;
+  height: 105px;
+  transform: rotate(1deg);
+}
+
+.tree-21 {
+  top: 5%;
+  left: 35%;
+  width: 65px;
+  height: 85px;
+  transform: rotate(-2deg);
+}
+
+.tree-22 {
+  top: 50%;
+  left: 5%;
+  width: 70px;
+  height: 90px;
+  transform: rotate(3deg);
+}
+
+.tree-23 {
+  bottom: 15%;
+  left: 70%;
+  width: 60px;
+  height: 80px;
+  transform: rotate(-1deg);
+}
+
+.tree-24 {
+  top: 75%;
+  right: 5%;
+  width: 75px;
+  height: 95px;
+  transform: rotate(2deg);
+}
+
+.tree-25 {
+  bottom: 50%;
+  right: 60%;
+  width: 55px;
+  height: 70px;
+  transform: rotate(-3deg);
+}
+
+.tree-26 {
+  top: 30%;
+  left: 70%;
+  width: 80px;
+  height: 100px;
+  transform: rotate(1deg);
+}
+
+/* Деревья по краям карты */
+.tree-27 {
+  top: 2%;
+  left: 2%;
+  width: 70px;
+  height: 90px;
+  transform: rotate(-2deg);
+}
+
+.tree-28 {
+  top: 2%;
+  left: 8%;
+  width: 60px;
+  height: 80px;
+  transform: rotate(3deg);
+}
+
+.tree-29 {
+  top: 2%;
+  left: 15%;
+  width: 65px;
+  height: 85px;
+  transform: rotate(-1deg);
+}
+
+.tree-30 {
+  top: 2%;
+  left: 22%;
+  width: 55px;
+  height: 75px;
+  transform: rotate(2deg);
+}
+
+.tree-31 {
+  top: 2%;
+  left: 28%;
+  width: 75px;
+  height: 95px;
+  transform: rotate(-3deg);
+}
+
+.tree-32 {
+  top: 2%;
+  right: 2%;
+  width: 70px;
+  height: 90px;
+  transform: rotate(2deg);
+}
+
+.tree-33 {
+  top: 2%;
+  right: 8%;
+  width: 60px;
+  height: 80px;
+  transform: rotate(-2deg);
+}
+
+.tree-34 {
+  top: 2%;
+  right: 15%;
+  width: 65px;
+  height: 85px;
+  transform: rotate(1deg);
+}
+
+.tree-35 {
+  top: 2%;
+  right: 22%;
+  width: 55px;
+  height: 75px;
+  transform: rotate(-1deg);
+}
+
+.tree-36 {
+  top: 2%;
+  right: 28%;
+  width: 75px;
+  height: 95px;
+  transform: rotate(3deg);
+}
+
+.tree-37 {
+  bottom: 2%;
+  left: 2%;
+  width: 70px;
+  height: 90px;
+  transform: rotate(-2deg);
+}
+
+.tree-38 {
+  bottom: 2%;
+  left: 8%;
+  width: 60px;
+  height: 80px;
+  transform: rotate(3deg);
+}
+
+.tree-39 {
+  bottom: 2%;
+  left: 15%;
+  width: 65px;
+  height: 85px;
+  transform: rotate(-1deg);
+}
+
+.tree-40 {
+  bottom: 2%;
+  left: 22%;
+  width: 55px;
+  height: 75px;
+  transform: rotate(2deg);
+}
+
+.tree-41 {
+  bottom: 2%;
+  left: 28%;
+  width: 75px;
+  height: 95px;
+  transform: rotate(-3deg);
+}
+
+.tree-42 {
+  bottom: 2%;
+  right: 2%;
+  width: 70px;
+  height: 90px;
+  transform: rotate(2deg);
+}
+
+.tree-43 {
+  bottom: 2%;
+  right: 8%;
+  width: 60px;
+  height: 80px;
+  transform: rotate(-2deg);
+}
+
+.tree-44 {
+  bottom: 2%;
+  right: 15%;
+  width: 65px;
+  height: 85px;
+  transform: rotate(1deg);
+}
+
+.tree-45 {
+  bottom: 2%;
+  right: 22%;
+  width: 55px;
+  height: 75px;
+  transform: rotate(-1deg);
+}
+
+.tree-46 {
+  bottom: 2%;
+  right: 28%;
+  width: 75px;
+  height: 95px;
+  transform: rotate(3deg);
+}
+
+/* Слой 3: Кусты */
+.bushes-layer {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.bush {
+  position: absolute;
+  filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.bush-1 {
+  top: 20%;
+  left: 15%;
+  width: 40px;
+  height: 35px;
+  transform: rotate(-1deg);
+}
+
+.bush-2 {
+  top: 40%;
+  right: 20%;
+  width: 25px;
+  height: 20px;
+  transform: rotate(2deg);
+}
+
+.bush-3 {
+  bottom: 30%;
+  left: 20%;
+  width: 35px;
+  height: 30px;
+  transform: rotate(-2deg);
+}
+
+.bush-4 {
+  top: 65%;
+  right: 10%;
+  width: 50px;
+  height: 40px;
+  transform: rotate(1deg);
+}
+
+.bush-5 {
+  top: 10%;
+  left: 70%;
+  width: 30px;
+  height: 25px;
+  transform: rotate(3deg);
+}
+
+.bush-6 {
+  bottom: 50%;
+  right: 35%;
+  width: 25px;
+  height: 20px;
+  transform: rotate(-1deg);
+}
+
+.bush-7 {
+  top: 55%;
+  left: 8%;
+  width: 40px;
+  height: 35px;
+  transform: rotate(2deg);
+}
+
+.bush-8 {
+  bottom: 10%;
+  left: 40%;
+  width: 45px;
+  height: 38px;
+  transform: rotate(-2deg);
+}
+
+.bush-9 {
+  top: 30%;
+  left: 45%;
+  width: 35px;
+  height: 30px;
+  transform: rotate(1deg);
+}
+
+.bush-10 {
+  bottom: 60%;
+  right: 5%;
+  width: 30px;
+  height: 25px;
+  transform: rotate(-1deg);
+}
+
+.bush-11 {
+  top: 25%;
+  left: 25%;
+  width: 35px;
+  height: 30px;
+  transform: rotate(2deg);
+}
+
+.bush-12 {
+  top: 45%;
+  right: 30%;
+  width: 25px;
+  height: 20px;
+  transform: rotate(-1deg);
+}
+
+.bush-13 {
+  bottom: 25%;
+  left: 30%;
+  width: 40px;
+  height: 35px;
+  transform: rotate(1deg);
+}
+
+.bush-14 {
+  top: 70%;
+  right: 20%;
+  width: 45px;
+  height: 38px;
+  transform: rotate(-2deg);
+}
+
+.bush-15 {
+  top: 15%;
+  left: 75%;
+  width: 30px;
+  height: 25px;
+  transform: rotate(3deg);
+}
+
+.bush-16 {
+  bottom: 45%;
+  right: 40%;
+  width: 25px;
+  height: 20px;
+  transform: rotate(-1deg);
+}
+
+.bush-17 {
+  top: 60%;
+  left: 12%;
+  width: 35px;
+  height: 30px;
+  transform: rotate(2deg);
+}
+
+.bush-18 {
+  bottom: 5%;
+  left: 50%;
+  width: 40px;
+  height: 35px;
+  transform: rotate(-2deg);
+}
+
+.bush-19 {
+  top: 35%;
+  left: 50%;
+  width: 30px;
+  height: 25px;
+  transform: rotate(1deg);
+}
+
+.bush-20 {
+  bottom: 55%;
+  right: 10%;
+  width: 35px;
+  height: 30px;
+  transform: rotate(-1deg);
+}
+
+.bush-21 {
+  top: 80%;
+  left: 35%;
+  width: 40px;
+  height: 35px;
+  transform: rotate(2deg);
+}
+
+.bush-22 {
+  top: 5%;
+  left: 85%;
+  width: 25px;
+  height: 20px;
+  transform: rotate(-1deg);
+}
+
+.bush-23 {
+  bottom: 20%;
+  left: 60%;
+  width: 30px;
+  height: 25px;
+  transform: rotate(1deg);
+}
+
+.bush-24 {
+  top: 85%;
+  right: 15%;
+  width: 45px;
+  height: 38px;
+  transform: rotate(-2deg);
+}
+
+.bush-25 {
+  top: 12%;
+  left: 18%;
+  width: 35px;
+  height: 30px;
+  transform: rotate(2deg);
+}
+
+.bush-26 {
+  top: 38%;
+  right: 25%;
+  width: 25px;
+  height: 20px;
+  transform: rotate(-1deg);
+}
+
+.bush-27 {
+  bottom: 18%;
+  left: 25%;
+  width: 40px;
+  height: 35px;
+  transform: rotate(1deg);
+}
+
+.bush-28 {
+  top: 72%;
+  right: 18%;
+  width: 45px;
+  height: 38px;
+  transform: rotate(-2deg);
+}
+
+.bush-29 {
+  top: 8%;
+  left: 68%;
+  width: 30px;
+  height: 25px;
+  transform: rotate(3deg);
+}
+
+.bush-30 {
+  bottom: 38%;
+  right: 35%;
+  width: 25px;
+  height: 20px;
+  transform: rotate(-1deg);
+}
+
+.bush-31 {
+  top: 58%;
+  left: 15%;
+  width: 35px;
+  height: 30px;
+  transform: rotate(2deg);
+}
+
+.bush-32 {
+  bottom: 8%;
+  left: 45%;
+  width: 40px;
+  height: 35px;
+  transform: rotate(-2deg);
+}
+
+.bush-33 {
+  top: 28%;
+  left: 48%;
+  width: 30px;
+  height: 25px;
+  transform: rotate(1deg);
+}
+
+.bush-34 {
+  bottom: 52%;
+  right: 12%;
+  width: 35px;
+  height: 30px;
+  transform: rotate(-1deg);
+}
+
+.bush-35 {
+  top: 82%;
+  left: 38%;
+  width: 25px;
+  height: 20px;
+  transform: rotate(2deg);
+}
+
+.bush-36 {
+  top: 88%;
+  right: 22%;
+  width: 45px;
+  height: 38px;
+  transform: rotate(-2deg);
+}
+
+.bush-37 {
+  top: 42%;
+  left: 8%;
+  width: 40px;
+  height: 35px;
+  transform: rotate(1deg);
+}
+
+.bush-38 {
+  bottom: 22%;
+  left: 65%;
+  width: 30px;
+  height: 25px;
+  transform: rotate(-1deg);
+}
+
+/* Слой 4: Цветы */
+.flowers-layer {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.flower {
+  position: absolute;
+  opacity: 0.8;
+  animation: float 6s ease-in-out infinite;
+  filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+.flower-1 {
+  top: 15%;
+  left: 10%;
+  width: 30px;
+  height: 30px;
+  animation-delay: 0s;
+}
+
+.flower-2 {
+  top: 25%;
+  right: 15%;
+  width: 35px;
+  height: 35px;
+  animation-delay: 2s;
+}
+
+.flower-3 {
+  bottom: 30%;
+  left: 20%;
+  width: 25px;
+  height: 25px;
+  animation-delay: 4s;
+}
+
+.flower-4 {
+  bottom: 20%;
+  right: 25%;
+  width: 30px;
+  height: 30px;
+  animation-delay: 1s;
+}
+
+.flower-5 {
+  top: 45%;
+  left: 5%;
+  width: 28px;
+  height: 28px;
+  animation-delay: 3s;
+}
+
+.flower-6 {
+  top: 65%;
+  right: 8%;
+  width: 32px;
+  height: 32px;
+  animation-delay: 5s;
+}
+
+.flower-7 {
+  top: 35%;
+  left: 60%;
+  width: 26px;
+  height: 26px;
+  animation-delay: 1.5s;
+}
+
+.flower-8 {
+  bottom: 45%;
+  right: 40%;
+  width: 29px;
+  height: 29px;
+  animation-delay: 3.5s;
+}
+
+.flower-9 {
+  top: 20%;
+  left: 30%;
+  width: 27px;
+  height: 27px;
+  animation-delay: 2.5s;
+}
+
+.flower-10 {
+  top: 55%;
+  right: 25%;
+  width: 31px;
+  height: 31px;
+  animation-delay: 4.5s;
+}
+
+.flower-11 {
+  bottom: 40%;
+  left: 10%;
+  width: 26px;
+  height: 26px;
+  animation-delay: 1.2s;
+}
+
+.flower-12 {
+  top: 80%;
+  right: 35%;
+  width: 28px;
+  height: 28px;
+  animation-delay: 3.8s;
+}
+
+.flower-13 {
+  top: 10%;
+  left: 60%;
+  width: 30px;
+  height: 30px;
+  animation-delay: 2.8s;
+}
+
+.flower-14 {
+  bottom: 30%;
+  right: 15%;
+  width: 25px;
+  height: 25px;
+  animation-delay: 4.2s;
+}
+
+.flower-15 {
+  top: 40%;
+  left: 40%;
+  width: 32px;
+  height: 32px;
+  animation-delay: 1.8s;
+}
+
+.flower-16 {
+  bottom: 10%;
+  left: 45%;
+  width: 27px;
+  height: 27px;
+  animation-delay: 3.2s;
+}
+
+.flower-17 {
+  top: 65%;
+  left: 20%;
+  width: 29px;
+  height: 29px;
+  animation-delay: 2.2s;
+}
+
+.flower-18 {
+  bottom: 60%;
+  right: 45%;
+  width: 26px;
+  height: 26px;
+  animation-delay: 4.8s;
+}
+
+.flower-19 {
+  top: 30%;
+  right: 5%;
+  width: 31px;
+  height: 31px;
+  animation-delay: 1.5s;
+}
+
+.flower-20 {
+  bottom: 5%;
+  right: 30%;
+  width: 28px;
+  height: 28px;
+  animation-delay: 3.5s;
+}
+
+.flower-21 {
+  top: 18%;
+  left: 35%;
+  width: 26px;
+  height: 26px;
+  animation-delay: 2.3s;
+}
+
+.flower-22 {
+  top: 48%;
+  right: 28%;
+  width: 30px;
+  height: 30px;
+  animation-delay: 4.3s;
+}
+
+.flower-23 {
+  bottom: 38%;
+  left: 12%;
+  width: 25px;
+  height: 25px;
+  animation-delay: 1.7s;
+}
+
+.flower-24 {
+  top: 78%;
+  right: 18%;
+  width: 27px;
+  height: 27px;
+  animation-delay: 3.7s;
+}
+
+.flower-25 {
+  top: 6%;
+  left: 65%;
+  width: 29px;
+  height: 29px;
+  animation-delay: 2.9s;
+}
+
+.flower-26 {
+  bottom: 32%;
+  right: 38%;
+  width: 24px;
+  height: 24px;
+  animation-delay: 4.1s;
+}
+
+.flower-27 {
+  top: 62%;
+  left: 18%;
+  width: 28px;
+  height: 28px;
+  animation-delay: 1.9s;
+}
+
+.flower-28 {
+  bottom: 12%;
+  left: 48%;
+  width: 31px;
+  height: 31px;
+  animation-delay: 3.3s;
+}
+
+.flower-29 {
+  top: 32%;
+  left: 52%;
+  width: 26px;
+  height: 26px;
+  animation-delay: 2.1s;
+}
+
+.flower-30 {
+  bottom: 48%;
+  right: 15%;
+  width: 29px;
+  height: 29px;
+  animation-delay: 4.5s;
+}
+
+.flower-31 {
+  top: 85%;
+  left: 42%;
+  width: 25px;
+  height: 25px;
+  animation-delay: 2.7s;
+}
+
+.flower-32 {
+  top: 92%;
+  right: 25%;
+  width: 30px;
+  height: 30px;
+  animation-delay: 3.9s;
+}
+
+.flower-33 {
+  top: 38%;
+  left: 12%;
+  width: 27px;
+  height: 27px;
+  animation-delay: 1.3s;
+}
+
+.flower-34 {
+  bottom: 18%;
+  left: 68%;
+  width: 26px;
+  height: 26px;
+  animation-delay: 3.1s;
+}
+
+.flower-35 {
+  top: 52%;
+  left: 25%;
+  width: 28px;
+  height: 28px;
+  animation-delay: 2.5s;
+}
+
+.flower-36 {
+  bottom: 8%;
+  right: 35%;
+  width: 29px;
+  height: 29px;
+  animation-delay: 4.7s;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(3deg);
+  }
 }
 
 /* Система дорог */
@@ -597,17 +1906,19 @@ const closeMarket = () => {
   position: absolute;
   width: 100%;
   height: 100%;
-  z-index: 5;
+  z-index: 3;
   pointer-events: none;
 }
 
 .road {
   position: absolute;
-  background: #8B4513;
-  border: 3px solid #654321;
+  background: linear-gradient(135deg, #E6D3B7 0%, #D2B48C 25%, #DEB887 50%, #F4A460 75%, #D2B48C 100%);
+  border: none;
   box-shadow: 
-    0 2px 4px rgba(0, 0, 0, 0.3),
-    inset 0 1px 2px rgba(255, 255, 255, 0.1);
+    0 4px 8px rgba(0, 0, 0, 0.3),
+    inset 0 2px 4px rgba(255, 255, 255, 0.3),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+  border-radius: 0px;
 }
 
 /* Основная замкнутая дорога */
@@ -616,8 +1927,8 @@ const closeMarket = () => {
   top: 20%;
   left: 33.33%;
   width: 16.67%;
-  height: 8px;
-  transform: translateY(-4px);
+  height: 24px;
+  transform: translateY(-12px);
 }
 
 .road-3-to-4 {
@@ -625,26 +1936,26 @@ const closeMarket = () => {
   top: 20%;
   left: 50%;
   width: 16.66%;
-  height: 8px;
-  transform: translateY(-4px);
+  height: 24px;
+  transform: translateY(-12px);
 }
 
 .road-4-to-9 {
   /* От точки 4 (66.66%, 20%) до точки 9 (66.66%, 40%) */
   top: 20%;
   left: 66.66%;
-  width: 8px;
+  width: 24px;
   height: 20%;
-  transform: translateX(-4px);
+  transform: translateX(-12px);
 }
 
 .road-9-to-14 {
   /* От точки 9 (66.66%, 40%) до точки 14 (66.66%, 60%) */
   top: 40%;
   left: 66.66%;
-  width: 8px;
+  width: 24px;
   height: 20%;
-  transform: translateX(-4px);
+  transform: translateX(-12px);
 }
 
 .road-14-to-13 {
@@ -652,17 +1963,17 @@ const closeMarket = () => {
   top: 60%;
   left: 50%;
   width: 16.66%;
-  height: 8px;
-  transform: translateY(-4px);
+  height: 24px;
+  transform: translateY(-12px);
 }
 
 .road-13-to-18 {
   /* От точки 13 (50%, 60%) до точки 18 (50%, 80%) */
   top: 60%;
   left: 50%;
-  width: 8px;
+  width: 24px;
   height: 20%;
-  transform: translateX(-4px);
+  transform: translateX(-12px);
 }
 
 .road-18-to-17 {
@@ -670,8 +1981,8 @@ const closeMarket = () => {
   top: 80%;
   left: 33.33%;
   width: 16.67%;
-  height: 8px;
-  transform: translateY(-4px);
+  height: 24px;
+  transform: translateY(-12px);
 }
 
 .road-17-to-16 {
@@ -679,17 +1990,17 @@ const closeMarket = () => {
   top: 80%;
   left: 16.66%;
   width: 16.67%;
-  height: 8px;
-  transform: translateY(-4px);
+  height: 24px;
+  transform: translateY(-12px);
 }
 
 .road-16-to-11 {
   /* От точки 16 (16.66%, 80%) до точки 11 (16.66%, 60%) */
   top: 60%;
   left: 16.66%;
-  width: 8px;
+  width: 24px;
   height: 20%;
-  transform: translateX(-4px);
+  transform: translateX(-12px);
 }
 
 .road-11-to-12 {
@@ -697,26 +2008,26 @@ const closeMarket = () => {
   top: 60%;
   left: 16.66%;
   width: 16.67%;
-  height: 8px;
-  transform: translateY(-4px);
+  height: 24px;
+  transform: translateY(-12px);
 }
 
 .road-12-to-7 {
   /* От точки 12 (33.33%, 60%) до точки 7 (33.33%, 40%) */
   top: 40%;
   left: 33.33%;
-  width: 8px;
+  width: 24px;
   height: 20%;
-  transform: translateX(-4px);
+  transform: translateX(-12px);
 }
 
 .road-7-to-2 {
   /* От точки 7 (33.33%, 40%) до точки 2 (33.33%, 20%) */
   top: 20%;
   left: 33.33%;
-  width: 8px;
+  width: 24px;
   height: 20%;
-  transform: translateX(-4px);
+  transform: translateX(-12px);
 }
 
 /* Дороги за пределы карты */
@@ -725,8 +2036,8 @@ const closeMarket = () => {
   top: 40%;
   left: 16.66%;
   width: 16.67%;
-  height: 8px;
-  transform: translateY(-4px);
+  height: 24px;
+  transform: translateY(-12px);
 }
 
 .road-6-exit {
@@ -734,17 +2045,17 @@ const closeMarket = () => {
   top: 40%;
   left: 0%;
   width: 16.66%;
-  height: 8px;
-  transform: translateY(-4px);
+  height: 24px;
+  transform: translateY(-12px);
 }
 
 .road-3-exit {
   /* От точки 3 (50%, 20%) за верхний край экрана */
   top: 0%;
   left: 50%;
-  width: 8px;
+  width: 24px;
   height: 20%;
-  transform: translateX(-4px);
+  transform: translateX(-12px);
 }
 
 .road-9-to-10 {
@@ -752,8 +2063,8 @@ const closeMarket = () => {
   top: 40%;
   left: 66.66%;
   width: 16.67%;
-  height: 8px;
-  transform: translateY(-4px);
+  height: 24px;
+  transform: translateY(-12px);
 }
 
 .road-10-exit {
@@ -761,17 +2072,17 @@ const closeMarket = () => {
   top: 40%;
   left: 83.33%;
   width: 16.67%;
-  height: 8px;
-  transform: translateY(-4px);
+  height: 24px;
+  transform: translateY(-12px);
 }
 
 .road-14-to-19 {
   /* От точки 14 (66.66%, 60%) до точки 19 (83.33%, 80%) */
   top: 60%;
   left: 66.66%;
-  width: 8px;
+  width: 24px;
   height: 20%;
-  transform: translateX(-4px);
+  transform: translateX(-12px);
 }
 
 .road-19-to-20 {
@@ -779,8 +2090,127 @@ const closeMarket = () => {
   top: 80%;
   left: 66.66%;
   width: 16.67%;
-  height: 8px;
-  transform: translateY(-4px);
+  height: 24px;
+  transform: translateY(-12px);
+}
+
+/* Соединительные элементы для плавных стыков дорог */
+.road-junction {
+  position: absolute;
+  background: linear-gradient(135deg, #E6D3B7 0%, #D2B48C 25%, #DEB887 50%, #F4A460 75%, #D2B48C 100%);
+  border: none;
+  box-shadow: 
+    0 4px 8px rgba(0, 0, 0, 0.3),
+    inset 0 2px 4px rgba(255, 255, 255, 0.3),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+  border-radius: 50%;
+  z-index: 4;
+  pointer-events: none;
+}
+
+/* Соединительные элементы на точках пересечения */
+.junction-2 {
+  top: 20%;
+  left: 33.33%;
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+}
+
+.junction-3 {
+  top: 20%;
+  left: 50%;
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+}
+
+.junction-4 {
+  top: 20%;
+  left: 66.66%;
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+}
+
+.junction-7 {
+  top: 40%;
+  left: 33.33%;
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+}
+
+.junction-9 {
+  top: 40%;
+  left: 66.66%;
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+}
+
+.junction-11 {
+  top: 60%;
+  left: 16.66%;
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+}
+
+.junction-12 {
+  top: 60%;
+  left: 33.33%;
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+}
+
+.junction-13 {
+  top: 60%;
+  left: 50%;
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+}
+
+.junction-14 {
+  top: 60%;
+  left: 66.66%;
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+}
+
+.junction-16 {
+  top: 80%;
+  left: 16.66%;
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+}
+
+.junction-17 {
+  top: 80%;
+  left: 33.33%;
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+}
+
+.junction-18 {
+  top: 80%;
+  left: 50%;
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+}
+
+.junction-19 {
+  top: 80%;
+  left: 66.66%;
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
 }
 
 
@@ -801,8 +2231,56 @@ const closeMarket = () => {
 }
 
 .building:hover {
-  transform: translateY(-5px) scale(1.05);
+  transform: scale(1.1);
   z-index: 20;
+  filter: brightness(1.2) drop-shadow(0 0 15px rgba(100, 200, 255, 0.6));
+  transition: all 0.2s ease-out;
+}
+
+.building:hover::before {
+  content: '';
+  position: absolute;
+  top: -20px;
+  left: -20px;
+  right: -20px;
+  bottom: -20px;
+  background: radial-gradient(circle, rgba(100, 200, 255, 0.2) 0%, transparent 60%);
+  border-radius: 50%;
+  animation: particleFloat 2s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.building:hover::after {
+  content: '';
+  position: absolute;
+  top: -15px;
+  left: -15px;
+  right: -15px;
+  bottom: -15px;
+  background: 
+    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.8) 1px, transparent 1px),
+    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.6) 1px, transparent 1px),
+    radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.7) 1px, transparent 1px),
+    radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.5) 1px, transparent 1px),
+    radial-gradient(circle at 50% 10%, rgba(100, 200, 255, 0.6) 1px, transparent 1px),
+    radial-gradient(circle at 10% 50%, rgba(100, 200, 255, 0.5) 1px, transparent 1px),
+    radial-gradient(circle at 90% 50%, rgba(100, 200, 255, 0.4) 1px, transparent 1px),
+    radial-gradient(circle at 50% 90%, rgba(100, 200, 255, 0.7) 1px, transparent 1px);
+  animation: particleFloat 2s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+@keyframes particleFloat {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scale(1.1) rotate(180deg);
+    opacity: 0.8;
+  }
 }
 
 .building-roof {
@@ -849,10 +2327,12 @@ const closeMarket = () => {
   height: 8px;
 }
 
-/* Здания на новых позициях */
+/* Здания на новых позициях - красиво отмасштабированы */
+
+/* Крупные административные здания */
 .bank {
-  width: 100px;
-  height: 100px;
+  width: 160px;
+  height: 140px;
   position: absolute;
   top: 80%;
   left: 33.33%;
@@ -860,26 +2340,28 @@ const closeMarket = () => {
 }
 
 .government {
-  width: 100px;
-  height: 100px;
+  width: 150px;
+  height: 180px;
   position: absolute;
   top: 20%;
   left: 66.66%;
   transform: translate(-50%, -50%);
 }
 
+/* Торговые здания */
 .mall {
-  width: 120px;
-  height: 100px;
+  width: 180px;
+  height: 160px;
   position: absolute;
   top: 40%;
   left: 16.66%;
   transform: translate(-50%, -50%);
 }
 
+/* Жилые дома - красивые пропорции */
 .house-1 {
-  width: 80px;
-  height: 80px;
+  width: 120px;
+  height: 100px; /* 2-этажный дом */
   position: absolute;
   top: 40%;
   left: 33.33%;
@@ -887,8 +2369,8 @@ const closeMarket = () => {
 }
 
 .house-2 {
-  width: 80px;
-  height: 80px;
+  width: 130px;
+  height: 150px; /* 4-этажный дом */
   position: absolute;
   top: 60%;
   left: 33.33%;
@@ -896,17 +2378,18 @@ const closeMarket = () => {
 }
 
 .house-3 {
-  width: 80px;
-  height: 80px;
+  width: 100px;
+  height: 80px; /* 1-этажный дом */
   position: absolute;
   top: 20%;
   left: 50%;
   transform: translate(-50%, -50%);
 }
 
+/* Промышленные здания */
 .workshop {
-  width: 100px;
-  height: 100px;
+  width: 140px;
+  height: 120px;
   position: absolute;
   top: 80%;
   left: 16.66%;
@@ -914,8 +2397,8 @@ const closeMarket = () => {
 }
 
 .office {
-  width: 100px;
-  height: 100px;
+  width: 140px;
+  height: 160px;
   position: absolute;
   top: 60%;
   left: 66.66%;
@@ -923,7 +2406,7 @@ const closeMarket = () => {
 }
 
 .warehouse {
-  width: 100px;
+  width: 160px;
   height: 100px;
   position: absolute;
   top: 80%;
@@ -931,10 +2414,10 @@ const closeMarket = () => {
   transform: translate(-50%, -50%);
 }
 
-/* Дополнительные здания */
+/* Мелкие торговые здания */
 .shop {
-  width: 80px;
-  height: 80px;
+  width: 90px;
+  height: 70px;
   position: absolute;
   top: 20%;
   left: 33.33%;
@@ -942,8 +2425,8 @@ const closeMarket = () => {
 }
 
 .market {
-  width: 100px;
-  height: 80px;
+  width: 150px;
+  height: 90px; /* Широкий рынок */
   position: absolute;
   top: 40%;
   left: 66.66%;
@@ -951,8 +2434,8 @@ const closeMarket = () => {
 }
 
 .atelier {
-  width: 80px;
-  height: 80px;
+  width: 110px;
+  height: 90px;
   position: absolute;
   top: 40%;
   left: 83.33%;
@@ -964,13 +2447,13 @@ const closeMarket = () => {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
+  filter: drop-shadow(3px 3px 6px rgba(0, 0, 0, 0.4));
   transition: all 0.3s ease;
 }
 
 .building-image:hover {
-  transform: scale(1.05);
-  filter: drop-shadow(4px 4px 8px rgba(0, 0, 0, 0.4));
+  transform: scale(1.08);
+  filter: drop-shadow(5px 5px 10px rgba(0, 0, 0, 0.5));
 }
 
 
