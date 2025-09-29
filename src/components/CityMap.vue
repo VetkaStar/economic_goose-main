@@ -234,62 +234,74 @@
          <!-- Точка 1 - Банк -->
         <div class="building bank" @click="openBank">
            <img src="/maps/банк.svg" alt="Банк" class="building-image" />
+           <div class="building-label">Банк</div>
         </div>
 
          <!-- Точка 2 - Торговый центр -->
         <div class="building mall" @click="openMall">
            <img src="/maps/тц стиль.svg" alt="Торговый центр" class="building-image" />
+           <div class="building-label">Торговый центр</div>
         </div>
 
          <!-- Точка 3 - Администрация -->
         <div class="building government" @click="openGovernment">
            <img src="/maps/администрация.svg" alt="Администрация" class="building-image" />
+           <div class="building-label">Администрация</div>
         </div>
 
          <!-- Точка 4 - Жилой дом 1 -->
         <div class="building house-1" @click="openHouse">
            <img src="/maps/дом1.svg" alt="Дом" class="building-image" />
+           <div class="building-label">Жилой дом</div>
         </div>
 
          <!-- Точка 5 - Жилой дом 2 -->
          <div class="building house-2" @click="openHouse">
            <img src="/maps/дом2.svg" alt="Дом" class="building-image" />
+           <div class="building-label">Многоквартирный дом</div>
         </div>
 
          <!-- Точка 6 - Жилой дом 3 -->
          <div class="building house-3" @click="openHouse">
            <img src="/maps/дом3.svg" alt="Дом" class="building-image" />
+           <div class="building-label">Частный дом</div>
         </div>
 
          <!-- Точка 7 - Производственный цех -->
         <div class="building workshop" @click="openWorkshop">
            <img src="/maps/фабрика.svg" alt="Производственный цех" class="building-image" />
+           <div class="building-label">Производственный цех</div>
         </div>
 
          <!-- Точка 8 - Офисное здание -->
         <div class="building office" @click="openOffice">
            <img src="/maps/офис.svg" alt="Офисное здание" class="building-image" />
+           <div class="building-label">Офисное здание</div>
         </div>
 
          <!-- Точка 9 - Склад -->
         <div class="building warehouse" @click="openWarehouse">
            <img src="/maps/склад.svg" alt="Склад" class="building-image" />
+           <div class="building-label">Склад</div>
         </div>
 
          <!-- Дополнительные здания на свободных точках -->
         <!-- Магазин -->
         <div class="building shop" @click="openShop">
            <img src="/maps/магазин.svg" alt="Магазин" class="building-image" />
+           <div class="building-label">Магазин</div>
         </div>
 
         <!-- Рынок -->
         <div class="building market" @click="openMarket">
            <img src="/maps/рынок.svg" alt="Рынок" class="building-image" />
+           <div class="building-label">Рынок</div>
         </div>
 
         <!-- Ателье -->
         <div class="building atelier" @click="openAtelier">
            <img src="/maps/ателье модный дом.svg" alt="Ателье" class="building-image" />
+           <div class="building-label">Ателье</div>
         </div>
       </div>
 
@@ -2228,6 +2240,9 @@ const closeMarket = () => {
   cursor: pointer;
   transition: all 0.3s ease;
   transform-style: preserve-3d;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .building:hover {
@@ -2281,6 +2296,29 @@ const closeMarket = () => {
     transform: scale(1.1) rotate(180deg);
     opacity: 0.8;
   }
+}
+
+/* Подписи зданий */
+.building-label {
+  position: absolute;
+  bottom: -35px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.95);
+  color: #8B4513;
+  padding: 4px 12px;
+  border-radius: 15px;
+  font-family: 'Segoe Print', cursive, sans-serif;
+  font-size: 12px;
+  font-weight: bold;
+  text-align: center;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border: 2px solid #8B4513;
+  z-index: 15;
+  pointer-events: none;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+  letter-spacing: 0.5px;
 }
 
 .building-roof {
