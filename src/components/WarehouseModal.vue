@@ -46,13 +46,33 @@
                 <p>📦 На складе нет материалов</p>
               </div>
               <div v-else class="inventory-grid">
-                <div v-for="material in materialsWithStock" :key="material.id" class="inventory-item">
+                <div v-for="(material, index) in materialsWithStock" :key="`${material.id}-${index}`" class="inventory-item">
                   <div class="item-icon">{{ material.icon }}</div>
                   <div class="item-info">
                     <div class="item-name">{{ material.name }}</div>
-                    <div class="item-quantity">{{ material.quantity }} шт</div>
-                    <div class="item-price">{{ material.price }}₽ за шт</div>
-                    <div class="item-quality">Качество: {{ material.quality }}/5</div>
+                    <div class="item-stats">
+                      <div class="stat-row">
+                        <span class="stat-label">Количество</span>
+                        <span class="stat-value">{{ material.quantity }} м</span>
+                      </div>
+                      <div class="stat-row">
+                        <span class="stat-label">Качество</span>
+                        <span class="stat-value">{{ material.quality }}%</span>
+                      </div>
+                      <div v-if="material.durability" class="stat-row">
+                        <span class="stat-label">🛡️ Прочность</span>
+                        <span class="stat-value">{{ material.durability }}/10</span>
+                      </div>
+                      <div v-if="material.comfort" class="stat-row">
+                        <span class="stat-label">😌 Комфорт</span>
+                        <span class="stat-value">{{ material.comfort }}/10</span>
+                      </div>
+                      <div v-if="material.style" class="stat-row">
+                        <span class="stat-label">✨ Стиль</span>
+                        <span class="stat-value">{{ material.style }}/10</span>
+                      </div>
+                    </div>
+                    <div class="item-price-tag">💰 {{ material.price }}₽/м</div>
                   </div>
                   <div class="item-value">
                     <div class="total-value">{{ (material.quantity * material.price).toLocaleString() }}₽</div>
@@ -785,6 +805,41 @@ const closeModal = () => {
   font-size: 11px;
   color: #888;
   font-style: italic;
+}
+
+.item-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+
+.stat-label {
+  color: #888;
+  font-weight: 500;
+}
+
+.stat-value {
+  color: #333;
+  font-weight: 600;
+}
+
+.item-price-tag {
+  margin-top: 10px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #C85A54 0%, #d4786f 100%);
+  color: white;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
 }
 
 .item-details {

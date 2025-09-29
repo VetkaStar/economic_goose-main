@@ -67,18 +67,83 @@ export const useWarehouseStore = defineStore('warehouse', () => {
     try {
       console.log('📦 Загружаем материалы склада...')
       
-      const { data, error: fetchError } = await supabase
+      // Загружаем ВСЕ материалы из warehouse_materials для справочника
+      const { data: allMaterialsData, error: allMaterialsError } = await supabase
         .from('warehouse_materials')
         .select('*')
         .order('name')
 
-      if (fetchError) {
-        console.error('❌ Ошибка загрузки материалов:', fetchError)
-        throw fetchError
+      if (allMaterialsError) {
+        console.error('❌ Ошибка загрузки справочника материалов:', allMaterialsError)
+        throw allMaterialsError
       }
 
-      console.log('✅ Материалы загружены:', data)
-      materials.value = data || []
+      // Загружаем персональный инвентарь игрока
+      if (authStore.user?.id) {
+        console.log('👤 Загружаем персональный инвентарь для пользователя:', authStore.user.id)
+        
+        const { data: inventoryData, error: inventoryError } = await supabase
+          .from('user_warehouse_inventory')
+          .select(`
+            quantity,
+            material_id,
+            quality,
+            durability,
+            comfort,
+            style,
+            warehouse_materials (
+              id,
+              name,
+              icon,
+              price,
+              description
+            )
+          `)
+          .eq('user_id', authStore.user.id)
+
+        console.log('📊 Результат запроса инвентаря:', { inventoryData, inventoryError })
+
+        if (inventoryError) {
+          console.error('❌ Ошибка загрузки персонального инвентаря:', inventoryError)
+        } else if (inventoryData && inventoryData.length > 0) {
+          // Преобразуем данные: объединяем информацию о материале с количеством
+          const userMaterials = inventoryData.map((item: any) => ({
+            id: item.warehouse_materials.id,
+            name: item.warehouse_materials.name,
+            icon: item.warehouse_materials.icon,
+            quantity: item.quantity,
+            price: item.warehouse_materials.price,
+            quality: item.quality, // Качество из партии, а не из справочника
+            durability: item.durability, // Свойства из партии
+            comfort: item.comfort,
+            style: item.style,
+            description: item.warehouse_materials.description,
+            category: 'material'
+          }))
+          
+          console.log('✅ Персональный инвентарь загружен:', userMaterials)
+          materials.value = userMaterials
+          
+          // Сохраняем полный справочник для использования при закупках
+          if (!(window as any).__warehouseMaterialsCatalog) {
+            (window as any).__warehouseMaterialsCatalog = allMaterialsData
+          }
+          return
+        } else {
+          console.log('📦 Персональный инвентарь пуст (length = 0)')
+        }
+      } else {
+        console.log('❌ Нет авторизованного пользователя')
+      }
+
+      // Если нет авторизации или нет персонального инвентаря, показываем пустой склад
+      console.log('📦 Персональный инвентарь пуст или нет авторизации')
+      materials.value = []
+      
+      // Сохраняем полный справочник
+      if (!(window as any).__warehouseMaterialsCatalog) {
+        (window as any).__warehouseMaterialsCatalog = allMaterialsData || []
+      }
     } catch (err) {
       console.error('❌ Error fetching materials:', err)
       throw err
@@ -415,42 +480,60 @@ export const useWarehouseStore = defineStore('warehouse', () => {
   // Добавление материала на склад игрока (при покупке в магазине)
   const addMaterialToWarehouse = async (materialId: string, quantity: number) => {
     try {
-      const material = materials.value.find(m => m.id === materialId)
-      if (!material) {
-        throw new Error('Материал не найден')
+      if (!authStore.user?.id) {
+        throw new Error('Пользователь не авторизован')
       }
 
-      // Увеличиваем количество на складе игрока
-      const newQuantity = material.quantity + quantity
+      console.log(`📦 Добавляем материал ${materialId} количество: ${quantity}`)
 
-      const { error: updateError } = await supabase
-        .from('warehouse_materials')
-        .update({ quantity: newQuantity })
-        .eq('id', materialId)
+      // Проверяем, есть ли уже этот материал в персональном складе
+      const { data: existingInventory } = await supabase
+        .from('user_warehouse_inventory')
+        .select('quantity')
+        .eq('user_id', authStore.user.id)
+        .eq('material_id', materialId)
+        .single()
 
-      if (updateError) {
-        throw updateError
+      const currentQuantity = existingInventory?.quantity || 0
+      const newQuantity = currentQuantity + quantity
+
+      // Обновляем или создаем запись в персональном складе
+      const { error: upsertError } = await supabase
+        .from('user_warehouse_inventory')
+        .upsert({
+          user_id: authStore.user.id,
+          material_id: materialId,
+          quantity: newQuantity
+        }, {
+          onConflict: 'user_id,material_id'
+        })
+
+      if (upsertError) {
+        throw upsertError
       }
 
-      // Обновляем локальное состояние реактивно - как в authStore
+      console.log(`✅ Материал обновлён: ${currentQuantity} + ${quantity} = ${newQuantity}`)
+
+      // Обновляем локальное состояние
       const materialIndex = materials.value.findIndex(m => m.id === materialId)
       if (materialIndex !== -1) {
-        // Создаем новый массив с обновленным объектом
         const updatedMaterials = [...materials.value]
         updatedMaterials[materialIndex] = {
           ...updatedMaterials[materialIndex],
           quantity: newQuantity
         }
-        // Присваиваем новый массив напрямую (как user.value.money = newAmount)
         materials.value = updatedMaterials
+      } else {
+        // Если материала еще нет в локальном стейте, перезагружаем
+        await fetchMaterials()
       }
       
       // Записываем транзакцию
       await recordTransaction({
         itemType: 'material',
         itemId: materialId,
-        quantityChange: quantity, // Положительное значение - товар приходит
-        reason: `Покупка в магазине (${quantity} шт)`
+        quantityChange: quantity,
+        reason: `Покупка в магазине (${quantity} м)`
       })
 
       return true
