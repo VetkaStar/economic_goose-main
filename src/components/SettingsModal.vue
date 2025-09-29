@@ -66,7 +66,7 @@
               <input 
                 type="checkbox" 
                 v-model="localSettings.fullscreen"
-                @change="saveSettings"
+                @change="toggleFullscreen"
                 class="toggle"
                 id="fullscreen"
               />
@@ -75,26 +75,20 @@
           </div>
         </div>
 
-        <!-- Отладка -->
+        <!-- Дополнительные функции -->
         <div class="settings-section">
           <div class="setting-item">
-            <label>Отладка громкости</label>
-            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-              <button class="btn btn-secondary" @click="forceUpdateVolume">
-                🔧 Принудительно обновить громкость
-              </button>
-              <button class="btn btn-secondary" @click="checkAudioState">
-                🔍 Проверить состояние аудио
-              </button>
-              <button class="btn btn-secondary" @click="forceRestartMusic">
-                🔄 Перезапустить музыку
-              </button>
-              <button class="btn btn-secondary" @click="forcePlayMusic">
-                ▶️ Принудительно запустить
-              </button>
-            </div>
+            <button class="btn btn-secondary settings-action-btn" @click="openHotkeys">
+              ⌨️ Горячие клавиши
+            </button>
+          </div>
+          <div class="setting-item">
+            <button class="btn btn-secondary settings-action-btn" @click="openAccount">
+              👤 Профиль
+            </button>
           </div>
         </div>
+
 
         
       </div>
@@ -106,7 +100,7 @@
         <button class="btn btn-primary" @click="closeModal">
           Сохранить
         </button>
-        <button class="btn btn-exit" @click="exitToMainMenu">
+        <button v-if="props.showExitButton" class="btn btn-exit" @click="exitToMainMenu">
           🏠 Главное меню
         </button>
       </div>
@@ -119,8 +113,8 @@
 import { ref, onMounted } from 'vue'
 import { useMusic } from '@/composables/useMusic'
 
-// Props
-defineProps<{
+// Пропсы
+const props = defineProps<{
   showExitButton?: boolean
 }>()
 
@@ -128,6 +122,8 @@ defineProps<{
 const emit = defineEmits<{
   close: []
   exitToMainMenu: []
+  openHotkeys: []
+  openAccount: []
 }>()
 
 
@@ -238,39 +234,44 @@ const closeModal = () => {
   emit('close')
 }
 
+// Переключение полноэкранного режима
+const toggleFullscreen = async () => {
+  try {
+    if (!document.fullscreenElement) {
+      // Входим в полноэкранный режим
+      await document.documentElement.requestFullscreen()
+      console.log('🖥️ Включен полноэкранный режим')
+    } else {
+      // Выходим из полноэкранного режима
+      await document.exitFullscreen()
+      console.log('🖥️ Выключен полноэкранный режим')
+    }
+    
+    // Сохраняем настройки после успешного переключения
+    saveSettings()
+  } catch (error) {
+    console.error('❌ Ошибка переключения полноэкранного режима:', error)
+    
+    // Если переключение не удалось, возвращаем состояние переключателя
+    localSettings.value.fullscreen = !localSettings.value.fullscreen
+  }
+}
+
+// Открытие горячих клавиш
+const openHotkeys = () => {
+  emit('openHotkeys')
+}
+
+// Открытие профиля
+const openAccount = () => {
+  emit('openAccount')
+}
+
 // Выход в главное меню
 const exitToMainMenu = () => {
   emit('exitToMainMenu')
 }
 
-// Принудительное обновление громкости (для отладки)
-const forceUpdateVolume = async () => {
-  await musicSystem.forceUpdateVolume()
-  console.log('🔧 Принудительное обновление громкости вызвано из настроек')
-}
-
-// Проверка состояния аудио (для отладки)
-const checkAudioState = () => {
-  musicSystem.checkAudioState()
-  console.log('🔍 Проверка состояния аудио вызвана из настроек')
-}
-
-// Принудительный перезапуск музыки (для отладки)
-const forceRestartMusic = async () => {
-  await musicSystem.forceRestartMusic()
-  console.log('🔄 Принудительный перезапуск музыки вызван из настроек')
-}
-
-// Принудительный запуск музыки (для отладки)
-const forcePlayMusic = async () => {
-  console.log('▶️ Принудительный запуск музыки...')
-  try {
-    await musicSystem.play()
-    console.log('✅ Музыка принудительно запущена')
-  } catch (error) {
-    console.error('❌ Ошибка принудительного запуска:', error)
-  }
-}
 
 </script>
 
@@ -296,8 +297,8 @@ const forcePlayMusic = async () => {
 .settings-modal {
   background: var(--color-bg-menu, #F4E6D1);
   border-radius: clamp(15px, 2vw, 30px);
-  max-width: 500px;
-  width: 85%;
+  max-width: 900px;
+  width: 95%;
   max-height: 85vh;
   height: auto;
   overflow-y: auto;
@@ -583,6 +584,24 @@ select:focus {
     transform: translateY(-2px);
     box-shadow: 0 clamp(4px, 0.8vw, 8px) clamp(6px, 1.2vw, 12px) var(--shadow-dark);
   }
+
+/* Кнопки действий в настройках */
+.settings-action-btn {
+  width: 100%;
+  margin: clamp(5px, 1vw, 10px) 0;
+  background: var(--color-buttons, #D4824A);
+  color: white;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(5px, 1vw, 10px);
+}
+
+.settings-action-btn:hover {
+  background: var(--color-highlights, #81C4E7);
+  transform: translateY(-2px);
+}
 
 /* Адаптивность */
 @media (max-width: 768px) {

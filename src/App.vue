@@ -204,20 +204,14 @@ const onAuthSuccess = () => {
       @exit-to-main-menu="backToMainMenu"
     />
     
-    <!-- Кнопки сбоку от настроек -->
-    <div v-if="showSettings" class="settings-side-buttons">
-      <button class="side-btn hotkeys-side-btn" @click="openHotkeys" title="Горячие клавиши">
-        ⌨️
-      </button>
-      <button class="side-btn account-side-btn" @click="openAccount" title="Учетная запись">
-        👤
-      </button>
-    </div>
     
     <!-- Модальные окна -->
     <SettingsModal 
       v-if="showSettings"
+      :show-exit-button="false"
       @close="closeSettings"
+      @open-hotkeys="openHotkeys"
+      @open-account="openAccount"
     />
     
     <GiftModal 
@@ -439,63 +433,6 @@ const onAuthSuccess = () => {
   }
 }
 
-/* Кнопки сбоку от настроек */
-.settings-side-buttons {
-  position: fixed;
-  top: 50%;
-  right: clamp(20px, 3vw, 40px);
-  transform: translateY(-50%);
-  display: flex;
-  flex-direction: column;
-  gap: clamp(15px, 2vw, 25px);
-  z-index: 1002;
-}
-
-.side-btn {
-  width: clamp(50px, 6vw, 80px);
-  height: clamp(50px, 6vw, 80px);
-  border-radius: 50%;
-  background: var(--color-bg-menu, #F4E6D1);
-  border: clamp(2px, 0.3vw, 4px) solid var(--color-text, #5D4037);
-  font-size: clamp(1.5rem, 2.5vw, 2.5rem);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 clamp(4px, 0.8vw, 8px) clamp(8px, 1.6vw, 16px) var(--shadow-medium, rgba(0, 0, 0, 0.2));
-  position: relative;
-  z-index: 1003;
-}
-
-.side-btn:hover {
-  transform: scale(1.1);
-  background: var(--color-buttons, #D4824A);
-  color: white;
-  box-shadow: 0 clamp(6px, 1.2vw, 12px) clamp(12px, 2.4vw, 24px) var(--shadow-dark, rgba(0, 0, 0, 0.3));
-}
-
-.hotkeys-side-btn:hover {
-  background: var(--color-highlights, #81C4E7);
-}
-
-.account-side-btn:hover {
-  background: var(--color-accents, #C85A54);
-}
-
-/* Адаптивность для кнопок сбоку */
-@media (max-width: 768px) {
-  .settings-side-buttons {
-    right: clamp(10px, 2vw, 20px);
-    gap: clamp(10px, 1.5vw, 20px);
-  }
-  
-  .side-btn {
-    width: clamp(40px, 5vw, 60px);
-    height: clamp(40px, 5vw, 60px);
-    font-size: clamp(1.2rem, 2vw, 2rem);
-  }
-}
 
 /* Global button styles */
 button {
