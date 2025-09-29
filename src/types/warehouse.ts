@@ -8,6 +8,10 @@ export interface WarehouseMaterial {
   price: number
   category: string
   quality: number
+  durability?: number // Прочность материала
+  comfort?: number // Комфорт материала
+  style?: number // Стиль материала
+  description?: string // Описание материала
   created_at?: string
   updated_at?: string
 }

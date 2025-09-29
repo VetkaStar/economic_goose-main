@@ -216,6 +216,7 @@ import { useWarehouseStore } from '@/stores/warehouseStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useSuppliers, type Supplier, type SupplierMaterial } from '@/composables/useSuppliers'
 import { getQualityGrade } from '@/data/suppliers'
+import { supabase } from '@/lib/supabase'
 
 const warehouseStore = useWarehouseStore()
 const authStore = useAuthStore()
@@ -458,14 +459,17 @@ async function placeOrder() {
     // Списываем деньги
     await authStore.spendMoney(totalCost.value)
     
+    // Получаем полный справочник материалов
+    const materialsCatalog = (window as any).__warehouseMaterialsCatalog || []
+    
     // Добавляем каждый товар на склад игрока
     for (const material of orderedMaterials) {
       console.log(`🔍 Ищем материал: ${material.name}`)
-      console.log('📋 Доступные материалы в базе:', warehouseStore.materials.map((m: any) => m.name))
+      console.log('📋 Доступные материалы в базе:', materialsCatalog.map((m: any) => m.name))
       
       // Находим соответствующий материал в базе данных склада
       // Сначала ищем точное совпадение
-      let existingMaterial = warehouseStore.materials.find((m: any) => 
+      let existingMaterial = materialsCatalog.find((m: any) => 
         m.name.toLowerCase() === material.name.toLowerCase()
       )
       console.log('🔍 Точное совпадение:', existingMaterial?.name || 'не найдено')
@@ -474,7 +478,7 @@ async function placeOrder() {
       if (!existingMaterial) {
         const keywords = material.name.toLowerCase().split(' ')
         console.log('🔍 Ключевые слова:', keywords)
-        existingMaterial = warehouseStore.materials.find((m: any) => {
+        existingMaterial = materialsCatalog.find((m: any) => {
           const materialName = m.name.toLowerCase()
           const found = keywords.some((keyword: string) => materialName.includes(keyword))
           if (found) console.log(`✅ Найдено по ключевому слову: ${m.name}`)
@@ -486,7 +490,7 @@ async function placeOrder() {
       if (!existingMaterial) {
         const materialWords = material.name.toLowerCase().split(' ')
         console.log('🔍 Поиск по частичному совпадению:', materialWords.filter((w: string) => w.length > 3))
-        existingMaterial = warehouseStore.materials.find((m: any) => {
+        existingMaterial = materialsCatalog.find((m: any) => {
           const materialName = m.name.toLowerCase()
           const found = materialWords.some((word: string) => 
             word.length > 3 && materialName.includes(word)
@@ -499,27 +503,148 @@ async function placeOrder() {
       console.log('📋 Найденный материал:', existingMaterial)
       
       if (existingMaterial) {
-        // Если материал уже есть в базе, добавляем к нему количество
-        console.log(`✅ Добавляем ${material.orderQuantity || 0} шт материала ${existingMaterial.name} (ID: ${existingMaterial.id})`)
-        await warehouseStore.addMaterialToWarehouse(existingMaterial.id, material.orderQuantity || 0)
-        console.log('✅ Материал успешно добавлен на склад')
+        // Если материал уже есть в базе warehouse_materials, добавляем в персональный склад
+        console.log(`✅ Добавляем ${material.orderQuantity || 0} м материала ${existingMaterial.name} (ID: ${existingMaterial.id})`)
+        console.log(`📊 Качество от поставщика: ${material.quality}%`)
+        
+        // Проверяем, есть ли уже партия с таким же качеством
+        const { data: existingInventory } = await supabase
+          .from('user_warehouse_inventory')
+          .select('quantity, quality')
+          .eq('user_id', authStore.user?.id)
+          .eq('material_id', existingMaterial.id)
+          .eq('quality', material.quality)
+          .maybeSingle()
+        
+        if (existingInventory) {
+          // Есть партия с таким же качеством - добавляем к ней
+          const currentQuantity = existingInventory.quantity || 0
+          const newQuantity = currentQuantity + (material.orderQuantity || 0)
+          
+          const { error } = await supabase
+            .from('user_warehouse_inventory')
+            .update({
+              quantity: newQuantity,
+              updated_at: new Date().toISOString()
+            })
+            .eq('user_id', authStore.user?.id)
+            .eq('material_id', existingMaterial.id)
+            .eq('quality', material.quality)
+          
+          if (error) {
+            console.error('❌ Ошибка обновления инвентаря:', error)
+          } else {
+            console.log(`✅ Добавлено к существующей партии: ${currentQuantity} + ${material.orderQuantity} = ${newQuantity} м`)
+          }
+        } else {
+          // Нет партии с таким качеством - создаём новую
+          // Конвертируем свойства из 0-100 в 0-10
+          const convertTo10 = (value: number | undefined) => 
+            value ? Math.round(value / 10) : null
+          
+          const { error } = await supabase
+            .from('user_warehouse_inventory')
+            .insert({
+              user_id: authStore.user?.id,
+              material_id: existingMaterial.id,
+              quantity: material.orderQuantity || 0,
+              quality: material.quality,
+              durability: convertTo10(material.durability),
+              comfort: convertTo10(material.comfort),
+              style: convertTo10(material.style),
+              supplier_id: activeSupplier.value || null
+            })
+          
+          if (error) {
+            console.error('❌ Ошибка создания новой партии:', error)
+          } else {
+            console.log(`✅ Создана новая партия материала с качеством ${material.quality}%: ${material.orderQuantity} м`)
+          }
+        }
       } else {
-        // Если материала нет в базе, создаем новый (пока что просто добавляем в локальное состояние)
-        console.log(`❌ Материал ${material.name} не найден в базе данных склада`)
-        console.log('📋 Доступные материалы:', warehouseStore.materials.map((m: any) => m.name))
-        // TODO: Создать новый материал в базе данных
+        // Если материала нет в базе, создаем новый
+        console.log(`🆕 Создаём новый материал: ${material.name}`)
+        console.log('📊 Свойства материала:', {
+          name: material.name,
+          icon: material.icon,
+          price: material.price,
+          quality: material.quality,
+          durability: material.durability,
+          comfort: material.comfort,
+          style: material.style
+        })
+        
+        // Конвертируем свойства из 0-100 в 0-10
+        const convertTo10 = (value: number | undefined) => 
+          value ? Math.round(value / 10) : null
+        
+        // Сначала создаем материал в warehouse_materials
+        const { data: newMaterial, error: createError } = await supabase
+          .from('warehouse_materials')
+          .insert({
+            name: material.name,
+            icon: material.icon || '🧵',
+            quantity: 0, // В warehouse_materials количество всегда 0 (это справочник)
+            price: Math.round(material.price),
+            quality: material.quality || 50, // Качество в процентах (0-100)
+            durability: convertTo10(material.durability),
+            comfort: convertTo10(material.comfort),
+            style: convertTo10(material.style),
+            description: material.description || null,
+            category: 'material'
+          })
+          .select()
+          .single()
+        
+        if (createError) {
+          console.error('❌ Ошибка создания материала:', createError)
+        } else if (newMaterial) {
+          console.log('✅ Материал создан в справочнике:', newMaterial)
+          
+          // Добавляем в персональный склад игрока
+          const { error: inventoryError } = await supabase
+            .from('user_warehouse_inventory')
+            .insert({
+              user_id: authStore.user?.id,
+              material_id: newMaterial.id,
+              quantity: material.orderQuantity || 0,
+              quality: material.quality,
+              durability: convertTo10(material.durability),
+              comfort: convertTo10(material.comfort),
+              style: convertTo10(material.style),
+              supplier_id: activeSupplier.value || null
+            })
+          
+          if (inventoryError) {
+            console.error('❌ Ошибка добавления в персональный склад:', inventoryError)
+          } else {
+            console.log(`✅ Материал добавлен в персональный склад: ${material.orderQuantity} м`)
+            
+            // Обновляем справочник
+            if ((window as any).__warehouseMaterialsCatalog) {
+              (window as any).__warehouseMaterialsCatalog.push(newMaterial)
+            }
+          }
+        }
       }
     }
+    
+    // Сохраняем сумму до сброса количества
+    const spentAmount = totalCost.value
     
     // Очищаем количества заказа
     orderedMaterials.forEach(material => {
       material.orderQuantity = 0
     })
     
-    // TODO: Записать в статистику расходов
-    console.log(`💰 Потрачено на материалы: ${totalCost.value}₽`)
+    // Обновляем склад после покупки
+    await warehouseStore.fetchMaterials()
+    console.log('🔄 Склад обновлён после покупки')
     
-    console.log(`Заказано материалов на ₽${totalCost.value}`)
+    // TODO: Записать в статистику расходов
+    console.log(`💰 Потрачено на материалы: ${spentAmount}₽`)
+    
+    console.log(`✅ Заказано материалов на ₽${spentAmount}`)
     close()
   } else {
     console.log('placeOrder - заказ не может быть выполнен!')
@@ -531,6 +656,16 @@ async function placeOrder() {
 
 // Загружаем инвентарь при открытии модального окна
 onMounted(async () => {
+  // Загружаем справочник материалов для поиска
+  if (!(window as any).__warehouseMaterialsCatalog) {
+    const { data } = await supabase
+      .from('warehouse_materials')
+      .select('*')
+      .order('name');
+    (window as any).__warehouseMaterialsCatalog = data || []
+    console.log('📚 Справочник материалов загружен:', data?.length)
+  }
+  
   // Загружаем поставщиков из базы данных
   await fetchSuppliers()
   

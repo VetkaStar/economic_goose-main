@@ -148,12 +148,19 @@
       @close="closeAuthModal"
       @success="onAuthSuccess"
     />
+
+    <!-- Игра аукциона -->
+    <AuctionGame
+      v-if="showAuctionGame"
+      @close="closeAuctionGame"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import AuthModal from './AuthModal.vue'
+import AuctionGame from './AuctionGame.vue'
 import { useAuthGuard } from '@/composables/useAuthGuard'
 
 // Эмиты
@@ -169,6 +176,7 @@ const onlinePlayers = ref(127)
 const gamesPlayed = ref(15)
 const gamesWon = ref(12)
 const totalEarned = ref(2500)
+const showAuctionGame = ref(false)
 
 // Список всех игр
 const allGames = ref([
@@ -347,12 +355,24 @@ const playGame = (game: any) => {
 
 // Функция запуска игры
 const startGame = (game: any) => {
+  // Если это аукцион материалов, открываем компонент игры
+  if (game.id === 'material_auction') {
+    showAuctionGame.value = true
+    return
+  }
+  
+  // Для остальных игр показываем заглушку
   const gameInfo = game.onlinePlayers > 0 
     ? `🎮 Запускаем "${game.name}"\n👥 Онлайн: ${game.onlinePlayers} игроков\n⏱️ Время: ${game.duration}`
     : `🎮 Запускаем "${game.name}"\n⏱️ Время: ${game.duration}\n🎯 Режим: Одиночная игра`
   
   alert(gameInfo)
   console.log('Запуск игры:', game)
+}
+
+// Закрыть аукцион
+const closeAuctionGame = () => {
+  showAuctionGame.value = false
 }
 
 // Закрытие модального окна
