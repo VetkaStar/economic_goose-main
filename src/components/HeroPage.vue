@@ -30,10 +30,17 @@
             <div class="character-info">
               <h3 class="character-name">{{ character.name }}</h3>
               <p class="character-title">{{ character.title }}</p>
-              <div class="character-level">
-                <span>Уровень {{ character.level }}</span>
-                <div class="level-bar">
-                  <div class="level-progress" :style="{ width: character.levelProgress + '%' }"></div>
+              <div class="character-details">
+                <div class="character-capital">
+                  <span class="capital-label">Стартовый капитал:</span>
+                  <span class="capital-value">{{ character.startCapital.toLocaleString() }} ₽</span>
+                </div>
+                <div class="character-location">
+                  <span class="location-label">Локация:</span>
+                  <span class="location-value">{{ character.location }}</span>
+                </div>
+                <div v-if="!character.isUnlocked" class="character-locked">
+                  <span class="locked-text">Требуется уровень {{ character.requiredLevel }}</span>
                 </div>
               </div>
             </div>
@@ -41,20 +48,39 @@
         </div>
       </div>
 
-      <!-- Центральная панель - Выбранный персонаж -->
-      <div class="selected-character-display">
-        <div v-if="selectedCharacter" class="character-showcase">
-          <div class="character-large">
-            <div class="character-avatar-large">
-              <img :src="selectedCharacter.image" :alt="selectedCharacter.name" class="character-image-large" />
-            </div>
-            <div class="character-glow"></div>
+      <!-- Центральная панель - Информация о персонаже -->
+      <div class="character-info-panel">
+        <div v-if="selectedCharacter" class="character-display">
+          <div class="character-avatar-display">
+            <img :src="selectedCharacter.image" :alt="selectedCharacter.name" class="character-img" />
           </div>
-          <div class="character-details">
-            <h2 class="character-name-large">{{ selectedCharacter.name }}</h2>
-            <p class="character-title-large">{{ selectedCharacter.title }}</p>
-            <div class="character-description">
-              {{ selectedCharacter.description }}
+          <h3 class="character-name-display">{{ selectedCharacter.name }}</h3>
+          <div class="character-stats">
+            <div class="stat-item">
+              <span class="stat-label">💰 Капитал:</span>
+              <span class="stat-value">{{ selectedCharacter.startCapital.toLocaleString() }} ₽</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">📍 Локация:</span>
+              <span class="stat-value">{{ selectedCharacter.location }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">⭐ Уровень:</span>
+              <span class="stat-value">{{ selectedCharacter.level }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">🎓 Очки навыков:</span>
+              <span class="stat-value">{{ selectedCharacter.skillPoints }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">📊 Прогресс:</span>
+              <div class="progress-bar-container">
+                <div class="progress-bar-fill" :style="{ width: selectedCharacter.levelProgress + '%' }"></div>
+            </div>
+          </div>
+            <div class="stat-item">
+              <span class="stat-label">🛠️ Оборудование:</span>
+              <span class="stat-value equipment-value">{{ selectedCharacter.equipment.join(', ') }}</span>
             </div>
           </div>
         </div>
@@ -81,6 +107,14 @@
               <div class="skill-info">
                 <h4 class="skill-name">{{ skill.name }}</h4>
                 <p class="skill-description">{{ skill.description }}</p>
+                <div class="skill-explanation">
+                  <div class="game-effect">
+                    <strong>Эффект в игре:</strong> {{ skill.gameEffect }}
+                  </div>
+                  <div class="real-explanation">
+                    <strong>Реальное объяснение:</strong> {{ skill.realExplanation }}
+                  </div>
+                </div>
                 <div class="skill-level-bar">
                   <div class="skill-level-progress" :style="{ width: (skill.level / skill.maxLevel) * 100 + '%' }"></div>
                 </div>
@@ -92,10 +126,26 @@
                   >
                     Улучшить ({{ skill.cost }} очков)
                   </button>
+                  <button 
+                    class="skill-tutorial-btn"
+                    @click="openTutorial(skill)"
+                  >
+                    {{ getTutorialButtonText(skill.tutorialType) }}
+                  </button>
                 </div>
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Подсказка наставника -->
+    <div class="mentor-tip" v-if="selectedCharacter">
+      <div class="tip-content">
+        <div class="tip-icon">🎓</div>
+        <div class="tip-text">
+          <strong>Наставник:</strong> {{ getMentorTip(selectedCharacter) }}
         </div>
       </div>
     </div>
@@ -127,6 +177,29 @@ const upgradeSkill = (skill: any) => {
     characterStore.upgradeSkill(selectedCharacter.value, skill)
     characterStore.saveSelectedCharacter()
   }
+}
+
+const openTutorial = (skill: any) => {
+  console.log(`📚 Открываем обучалку для навыка: ${skill.name}`)
+  // TODO: Реализовать открытие обучающих материалов
+}
+
+const getTutorialButtonText = (tutorialType: string) => {
+  switch (tutorialType) {
+    case 'video': return '📹 Видео'
+    case 'text': return '📖 Текст'
+    case 'case': return '📋 Кейс'
+    default: return '📚 Обучалка'
+  }
+}
+
+const getMentorTip = (character: any) => {
+  const tips: Record<number, string> = {
+    1: 'Этот гусь может начать с простых вещей - рубашки, платья. Сначала изучи основы дизайна, а потом переходи к работе с тканью.',
+    2: 'Этот гусь уже знает основы, но нужно развивать организацию труда. Найми помощника, когда будет готов к дополнительным расходам.',
+    3: 'Этот гусь готов к большим делам! Сосредоточься на управлении брендом и работе с персоналом для масштабирования бизнеса.'
+  }
+  return tips[character.id] || 'Выберите персонажа для получения совета.'
 }
 
 // Инициализация при монтировании
@@ -187,63 +260,78 @@ const goBack = () => {
 
 .hero-content {
   display: grid;
-  grid-template-columns: 280px 1fr 320px;
-  gap: clamp(15px, 2vw, 25px);
-  padding: clamp(60px, 8vw, 80px) clamp(15px, 2vw, 25px) clamp(15px, 2vw, 25px);
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: auto 1fr auto;
+  gap: 12px;
+  padding: 60px 15px 15px;
   height: 100vh;
   box-sizing: border-box;
   overflow: hidden;
 }
 
 .character-selection {
+  grid-column: 1 / 2;
+  grid-row: 1 / 3;
   background: var(--color-bg-menu-light);
-  border-radius: clamp(8px, 1.2vw, 15px);
-  padding: clamp(12px, 1.8vw, 20px);
-  border: clamp(1px, 0.2vw, 2px) solid var(--color-buttons);
+  border-radius: 12px;
+  padding: 15px;
+  border: 2px solid var(--color-buttons);
   backdrop-filter: blur(5px);
-  box-shadow: 0 clamp(4px, 0.8vw, 8px) clamp(8px, 1.6vw, 16px) var(--shadow-medium);
-  overflow-y: auto;
-  height: fit-content;
-  max-height: calc(100vh - 120px);
+  box-shadow: 0 8px 16px var(--shadow-medium);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .skills-section {
+  grid-column: 4 / 6;
+  grid-row: 1 / 3;
   background: var(--color-bg-menu-light);
-  border-radius: clamp(8px, 1.2vw, 15px);
-  padding: clamp(12px, 1.8vw, 20px);
-  border: clamp(1px, 0.2vw, 2px) solid var(--color-buttons);
+  border-radius: 12px;
+  padding: 15px;
+  border: 2px solid var(--color-buttons);
   backdrop-filter: blur(5px);
-  box-shadow: 0 clamp(4px, 0.8vw, 8px) clamp(8px, 1.6vw, 16px) var(--shadow-medium);
-  overflow-y: auto;
-  height: 100%;
+  box-shadow: 0 8px 16px var(--shadow-medium);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .section-title {
-  font-size: clamp(1rem, 1.8vw, 1.4rem);
+  font-size: clamp(0.9rem, 1.3vw, 1.1rem);
   font-weight: 700;
   color: var(--color-text);
   text-shadow: 1px 1px 0px var(--shadow-light);
-  margin: 0 0 clamp(12px, 2vw, 18px) 0;
+  margin: 0 0 10px 0;
   text-align: center;
-  border-bottom: clamp(1px, 0.2vw, 2px) solid var(--color-buttons);
-  padding-bottom: clamp(6px, 1vw, 10px);
+  border-bottom: 2px solid var(--color-buttons);
+  padding-bottom: 8px;
+  flex-shrink: 0;
 }
 
 .characters-list {
   display: flex;
   flex-direction: column;
-  gap: clamp(8px, 1.2vw, 12px);
+  gap: 8px;
+  flex: 1;
+  overflow: hidden;
+  padding-right: 0;
+  justify-content: space-evenly;
 }
 
 .character-card {
   background: var(--color-bg-menu);
-  border-radius: clamp(6px, 1vw, 10px);
-  padding: clamp(8px, 1.2vw, 12px);
-  border: clamp(1px, 0.2vw, 2px) solid transparent;
+  border-radius: 10px;
+  padding: 8px;
+  border: 2px solid transparent;
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .character-card:hover {
@@ -255,7 +343,8 @@ const goBack = () => {
 .character-card.selected {
   border-color: var(--color-highlights);
   background: var(--color-bg-menu-light);
-  box-shadow: 0 0 clamp(20px, 4vw, 40px) rgba(129, 196, 231, 0.3);
+  box-shadow: 0 0 clamp(20px, 4vw, 40px) rgba(129, 196, 231, 0.5);
+  transform: scale(1.02);
 }
 
 .character-portrait {
@@ -308,135 +397,168 @@ const goBack = () => {
 }
 
 .character-name {
-  font-size: clamp(0.8rem, 1.4vw, 1.1rem);
+  font-size: clamp(0.75rem, 1.2vw, 0.95rem);
   font-weight: 700;
   color: var(--color-text);
   text-shadow: 1px 1px 0px var(--shadow-light);
-  margin: 0 0 clamp(3px, 0.5vw, 5px) 0;
+  margin: 0 0 3px 0;
 }
 
 .character-title {
-  font-size: clamp(0.7rem, 1.1vw, 0.9rem);
+  font-size: clamp(0.65rem, 1vw, 0.8rem);
   color: var(--color-accents);
   text-shadow: 1px 1px 0px var(--shadow-light);
-  margin: 0 0 clamp(6px, 1vw, 8px) 0;
-}
-
-.character-level {
-  display: flex;
-  flex-direction: column;
-  gap: clamp(5px, 1vw, 8px);
-}
-
-.character-level span {
-  font-size: clamp(0.7rem, 1.2vw, 1rem);
-  color: var(--color-highlights);
-  font-weight: 600;
-}
-
-.level-bar {
-  width: 100%;
-  height: clamp(6px, 1vw, 10px);
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: clamp(3px, 0.5vw, 5px);
-  overflow: hidden;
-}
-
-.level-progress {
-  height: 100%;
-  background: var(--gradient-highlights);
-  border-radius: clamp(3px, 0.5vw, 5px);
-  transition: width 0.5s ease;
-}
-
-.selected-character-display {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-bg-menu-light);
-  border-radius: clamp(8px, 1.2vw, 15px);
-  padding: clamp(15px, 2vw, 25px);
-  border: clamp(1px, 0.2vw, 2px) solid var(--color-buttons);
-  backdrop-filter: blur(5px);
-  box-shadow: 0 clamp(4px, 0.8vw, 8px) clamp(8px, 1.6vw, 16px) var(--shadow-medium);
-  position: relative;
-  overflow: hidden;
-  height: 100%;
-}
-
-.character-showcase {
-  text-align: center;
-  position: relative;
-}
-
-.character-large {
-  position: relative;
-  margin-bottom: clamp(20px, 3vw, 30px);
-}
-
-.character-avatar-large {
-  width: clamp(120px, 15vw, 200px);
-  height: clamp(120px, 15vw, 200px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  z-index: 2;
-  overflow: hidden;
-  margin: 0 auto;
-}
-
-.character-image-large {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.character-glow {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: clamp(150px, 18vw, 250px);
-  height: clamp(150px, 18vw, 250px);
-  background: radial-gradient(circle, rgba(255, 165, 0, 0.3) 0%, transparent 70%);
-  border-radius: 50%;
-  z-index: 1;
-  animation: glow 3s ease-in-out infinite;
-}
-
-@keyframes glow {
-  0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
-  50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.1); }
+  margin: 0 0 5px 0;
+  line-height: 1.2;
 }
 
 .character-details {
-  color: white;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
 }
 
-.character-name-large {
-  font-size: clamp(1.5rem, 3vw, 2.5rem);
-  font-weight: 900;
+.character-capital,
+.character-location {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(2px, 0.5vw, 4px);
+}
+
+.capital-label,
+.location-label {
+  font-size: clamp(0.55rem, 0.9vw, 0.7rem);
   color: var(--color-accents);
-  text-shadow: 2px 2px 0px var(--shadow-light);
-  margin: 0 0 clamp(10px, 2vw, 20px) 0;
+  font-weight: 600;
 }
 
-.character-title-large {
-  font-size: clamp(1rem, 2vw, 1.5rem);
-  color: var(--color-text);
-  text-shadow: 1px 1px 0px var(--shadow-light);
-  margin: 0 0 clamp(15px, 2.5vw, 25px) 0;
+.capital-value,
+.location-value {
+  font-size: clamp(0.7rem, 1.2vw, 1rem);
+  color: var(--color-highlights);
+  font-weight: 700;
 }
 
-.character-description {
-  font-size: clamp(0.9rem, 1.6vw, 1.2rem);
-  line-height: 1.5;
+.character-locked {
+  margin-top: clamp(5px, 1vw, 8px);
+  padding: clamp(4px, 0.8vw, 8px);
+  background: rgba(255, 0, 0, 0.1);
+  border: 1px solid rgba(255, 0, 0, 0.3);
+  border-radius: clamp(4px, 0.8vw, 8px);
+  text-align: center;
+}
+
+.locked-text {
+  font-size: clamp(0.6rem, 1vw, 0.8rem);
+  color: #ff6b6b;
+  font-weight: 600;
+}
+
+/* Центральная панель - Информация о персонаже */
+.character-info-panel {
+  grid-column: 2 / 4;
+  grid-row: 1 / 3;
+  background: var(--color-bg-menu-light);
+  border-radius: 12px;
+  padding: 15px;
+  border: 2px solid var(--color-buttons);
+  backdrop-filter: blur(5px);
+  box-shadow: 0 8px 16px var(--shadow-medium);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.character-display {
+  text-align: center;
+  width: 100%;
+}
+
+.character-avatar-display {
+  width: clamp(200px, 25vw, 280px);
+  height: clamp(200px, 25vw, 280px);
+  margin: 0 auto 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.character-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+}
+
+.character-name-display {
+  font-size: clamp(0.95rem, 1.4vw, 1.15rem);
+  font-weight: 700;
   color: var(--color-text);
   text-shadow: 1px 1px 0px var(--shadow-light);
-  max-width: clamp(200px, 25vw, 300px);
-  margin: 0 auto;
+  margin: 0 0 8px 0;
+}
+
+.character-stats {
+  background: var(--color-bg-menu);
+  border-radius: 10px;
+  padding: 10px;
+  border: 2px solid var(--color-buttons);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stat-item:last-child {
+  border-bottom: none;
+}
+
+.stat-label {
+  font-size: clamp(0.7rem, 1.1vw, 0.85rem);
+  color: var(--color-accents);
+  font-weight: 600;
+  text-shadow: 1px 1px 0px var(--shadow-light);
+}
+
+.stat-value {
+  font-size: clamp(0.75rem, 1.2vw, 0.9rem);
+  color: var(--color-highlights);
+  font-weight: 700;
+  text-shadow: 1px 1px 0px var(--shadow-light);
+}
+
+.equipment-value {
+  font-size: clamp(0.65rem, 1vw, 0.8rem);
+  text-align: right;
+  max-width: 200px;
+  line-height: 1.2;
+}
+
+.progress-bar-container {
+  flex: 1;
+  height: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-left: 8px;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: var(--gradient-highlights);
+  border-radius: 6px;
+  transition: width 0.5s ease;
 }
 
 .skills-content {
@@ -468,17 +590,25 @@ const goBack = () => {
 }
 
 .skills-list {
-  display: flex;
-  flex-direction: column;
-  gap: clamp(15px, 2vw, 25px);
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 10px;
+  flex: 1;
+  overflow: hidden;
+  padding-right: 0;
 }
 
 .skill-item {
   background: var(--color-bg-menu);
-  border-radius: clamp(10px, 1.5vw, 20px);
-  padding: clamp(15px, 2vw, 25px);
-  border: clamp(1px, 0.2vw, 2px) solid var(--color-buttons);
+  border-radius: 10px;
+  padding: 10px;
+  border: 2px solid var(--color-buttons);
   transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
 }
 
 .skill-item:hover {
@@ -491,13 +621,14 @@ const goBack = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: clamp(40px, 6vw, 60px);
-  height: clamp(40px, 6vw, 60px);
+  width: clamp(30px, 4vw, 45px);
+  height: clamp(30px, 4vw, 45px);
   background: var(--gradient-buttons);
   border-radius: 50%;
-  margin-bottom: clamp(10px, 1.5vw, 15px);
+  margin-bottom: clamp(6px, 1vw, 10px);
   border: clamp(2px, 0.3vw, 4px) solid var(--color-text);
   box-shadow: 0 clamp(2px, 0.4vw, 4px) clamp(4px, 0.8vw, 8px) var(--shadow-medium);
+  align-self: center;
 }
 
 .skill-number {
@@ -508,32 +639,65 @@ const goBack = () => {
 }
 
 .skill-info {
-  text-align: left;
+  text-align: center;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .skill-name {
-  font-size: clamp(1rem, 1.8vw, 1.3rem);
+  font-size: clamp(0.75rem, 1.2vw, 0.9rem);
   font-weight: 700;
   color: var(--color-text);
   text-shadow: 1px 1px 0px var(--shadow-light);
-  margin: 0 0 clamp(8px, 1.2vw, 12px) 0;
+  margin: 0 0 5px 0;
 }
 
 .skill-description {
-  font-size: clamp(0.8rem, 1.4vw, 1.1rem);
+  font-size: clamp(0.65rem, 1.1vw, 0.8rem);
   color: var(--color-text);
   text-shadow: 1px 1px 0px var(--shadow-light);
-  line-height: 1.4;
-  margin: 0 0 clamp(10px, 1.5vw, 15px) 0;
+  line-height: 1.3;
+  margin: 0 0 5px 0;
+}
+
+.skill-explanation {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 8px;
+  margin-bottom: 6px;
+  border-left: 3px solid var(--color-accents);
+  flex: 1;
+  min-height: 0;
+}
+
+.game-effect,
+.real-explanation {
+  font-size: clamp(0.6rem, 1vw, 0.75rem);
+  color: var(--color-text);
+  text-shadow: 1px 1px 0px var(--shadow-light);
+  line-height: 1.2;
+  margin-bottom: 3px;
+}
+
+.game-effect:last-child,
+.real-explanation:last-child {
+  margin-bottom: 0;
+}
+
+.game-effect strong,
+.real-explanation strong {
+  color: var(--color-highlights);
+  font-weight: 700;
 }
 
 .skill-level-bar {
   width: 100%;
-  height: clamp(6px, 1vw, 10px);
+  height: clamp(4px, 0.8vw, 8px);
   background: rgba(0, 0, 0, 0.3);
-  border-radius: clamp(3px, 0.5vw, 5px);
+  border-radius: clamp(2px, 0.4vw, 4px);
   overflow: hidden;
-  margin-bottom: clamp(10px, 1.5vw, 15px);
+  margin-bottom: clamp(6px, 1vw, 10px);
 }
 
 .skill-level-progress {
@@ -544,21 +708,26 @@ const goBack = () => {
 }
 
 .skill-actions {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(6px, 1vw, 10px);
   text-align: center;
+  margin-top: auto;
+  flex-shrink: 0;
 }
 
 .skill-upgrade-btn {
   background: var(--gradient-buttons);
   color: white;
-  border: clamp(1px, 0.2vw, 2px) solid var(--color-text);
-  border-radius: clamp(6px, 1vw, 12px);
-  padding: clamp(8px, 1.5vw, 15px) clamp(15px, 2.5vw, 25px);
-  font-size: clamp(0.8rem, 1.4vw, 1.1rem);
+  border: clamp(2px, 0.3vw, 3px) solid var(--color-text);
+  border-radius: clamp(6px, 1vw, 10px);
+  padding: clamp(8px, 1.2vw, 12px) clamp(15px, 2vw, 20px);
+  font-size: clamp(0.8rem, 1.3vw, 1rem);
   font-weight: 700;
   font-family: 'Orbitron', sans-serif;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 clamp(2px, 0.4vw, 4px) clamp(4px, 0.8vw, 8px) var(--shadow-medium);
+  box-shadow: 0 clamp(3px, 0.5vw, 6px) clamp(6px, 1vw, 10px) var(--shadow-medium);
   text-shadow: 1px 1px 0px var(--shadow-light);
 }
 
@@ -576,54 +745,133 @@ const goBack = () => {
   box-shadow: none;
 }
 
+.skill-tutorial-btn {
+  background: var(--gradient-accents);
+  color: white;
+  border: clamp(2px, 0.3vw, 3px) solid var(--color-text);
+  border-radius: clamp(6px, 1vw, 10px);
+  padding: clamp(6px, 1vw, 10px) clamp(12px, 1.5vw, 15px);
+  font-size: clamp(0.7rem, 1.2vw, 0.9rem);
+  font-weight: 700;
+  font-family: 'Orbitron', sans-serif;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 clamp(2px, 0.4vw, 4px) clamp(4px, 0.8vw, 8px) var(--shadow-medium);
+  text-shadow: 1px 1px 0px var(--shadow-light);
+}
+
+.skill-tutorial-btn:hover {
+  background: var(--gradient-highlights);
+  transform: translateY(-1px);
+  box-shadow: 0 clamp(3px, 0.6vw, 6px) clamp(6px, 1.2vw, 12px) var(--shadow-dark);
+}
+
+/* Подсказка наставника */
+.mentor-tip {
+  grid-column: 1 / 6;
+  grid-row: 3 / 4;
+  background: var(--color-bg-menu-light);
+  border-radius: 12px;
+  padding: 12px;
+  border: 2px solid var(--color-buttons);
+  backdrop-filter: blur(5px);
+  box-shadow: 0 6px 12px var(--shadow-medium);
+  z-index: 10;
+}
+
+.tip-content {
+  display: flex;
+  align-items: center;
+  gap: clamp(10px, 1.5vw, 15px);
+}
+
+.tip-icon {
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  flex-shrink: 0;
+}
+
+.tip-text {
+  font-size: clamp(0.8rem, 1.4vw, 1.1rem);
+  color: var(--color-text);
+  text-shadow: 1px 1px 0px var(--shadow-light);
+  line-height: 1.4;
+}
+
+.tip-text strong {
+  color: var(--color-highlights);
+  font-weight: 700;
+}
+
 /* Адаптивность */
 @media (max-width: 1400px) {
   .hero-content {
-    grid-template-columns: 260px 1fr 300px;
-    gap: clamp(12px, 1.5vw, 20px);
+    gap: 10px;
+    padding: 55px 12px 12px;
   }
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1200px) {
   .hero-content {
     grid-template-columns: 1fr;
-    gap: clamp(8px, 1vw, 12px);
-    padding: clamp(50px, 6vw, 70px) clamp(10px, 1.5vw, 20px) clamp(10px, 1.5vw, 20px);
+    grid-template-rows: auto auto auto auto;
+    gap: 12px;
+    padding: 50px 12px 12px;
+    overflow-y: auto;
   }
   
-  .selected-character-display {
-    order: -1;
+  .character-selection {
+    grid-column: 1 / 2;
+    grid-row: 1 / 2;
     height: auto;
     min-height: 200px;
   }
   
-  .character-selection,
-  .skills-section {
+  .character-info-panel {
+    grid-column: 1 / 2;
+    grid-row: 2 / 3;
     height: auto;
-    min-height: 300px;
+    min-height: 250px;
+  }
+  
+  .skills-section {
+    grid-column: 1 / 2;
+    grid-row: 3 / 4;
+    height: auto;
+    min-height: 400px;
+  }
+  
+  .mentor-tip {
+    grid-column: 1 / 2;
+    grid-row: 4 / 5;
+  }
+  
+  .skills-list {
+    overflow-y: visible;
   }
 }
 
 @media (max-width: 768px) {
   .hero-content {
-    padding: clamp(45px, 5vw, 60px) clamp(8px, 1vw, 15px) clamp(8px, 1vw, 15px);
-    gap: clamp(6px, 1vw, 10px);
+    padding: 45px 10px 10px;
+    gap: 10px;
   }
   
   .character-selection,
+  .character-info-panel,
   .skills-section {
-    padding: clamp(8px, 1.2vw, 15px);
-  }
-  
-  .selected-character-display {
-    padding: clamp(10px, 1.5vw, 20px);
+    padding: 12px;
   }
   
   .back-btn {
-    top: clamp(10px, 1.5vw, 20px);
-    left: clamp(10px, 1.5vw, 20px);
-    padding: clamp(6px, 1vw, 12px) clamp(12px, 2vw, 20px);
-    font-size: clamp(0.7rem, 1.2vw, 1rem);
+    top: 10px;
+    left: 10px;
+    padding: 6px 12px;
+    font-size: 0.7rem;
+  }
+  
+  .skills-list {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
   }
 }
 </style>
