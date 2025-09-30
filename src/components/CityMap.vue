@@ -6,7 +6,7 @@
       <div class="hud-card money-card" @mouseenter="showMoneyDetails = true" @mouseleave="showMoneyDetails = false">
         <div class="hud-header">
           <span class="hud-icon">💰</span>
-          <span class="hud-value">₽{{ 0 }}</span>
+          <span class="hud-value">₽{{ (authStore.user?.money || 0).toLocaleString() }}</span>
       </div>
         
         <!-- Детали баланса -->
@@ -18,7 +18,7 @@
           <div class="details-content">
             <div class="summary-item">
               <span class="summary-label">Баланс:</span>
-              <span class="summary-value">₽{{ 0 }}</span>
+              <span class="summary-value">₽{{ (authStore.user?.money || 0).toLocaleString() }}</span>
             </div>
             <div class="summary-item">
               <span class="summary-label">Аренда (месяц):</span>
@@ -513,7 +513,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
-// import { useAuthStore } from '@/stores/authStore' // Пока не используется
+import { useAuthStore } from '@/stores/authStore'
 import { useCompanyStore } from '@/stores/companyStore'
 import { useCharacterStore } from '@/stores/characterStore'
 // import { useTraderStore } from '@/stores/traderStore' // Пока не используется
@@ -534,7 +534,7 @@ const emit = defineEmits<{
 }>()
 
 // Инициализация auth store
-// const authStore = useAuthStore() // Пока не используется
+const authStore = useAuthStore()
 
 // Состояние модальных окон
 const showSettings = ref(false)
