@@ -100,28 +100,7 @@
             </div>
           </div>
 
-          <!-- Одиночные игры -->
-          <div class="section">
-            <h3 class="section-title">🎯 Одиночные игры</h3>
-            <div class="games-list">
-              <div 
-                v-for="game in soloGames" 
-                :key="game.id"
-                class="game-card"
-                @click="playGame(game)"
-              >
-                <div class="game-icon">{{ game.icon }}</div>
-                <div class="game-info">
-                  <div class="game-name">{{ game.name }}</div>
-                  <div class="game-description">{{ game.description }}</div>
-                  <div class="game-meta">
-                    <span class="meta-item">👤 Одиночная</span>
-                    <span class="meta-item">⏱️ {{ game.duration }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          
         </div>
 
         <!-- Статистика игрока (фиксированная панель) -->
@@ -268,29 +247,7 @@ const allGames = ref([
     eventType: 'monthly'
   },
   
-  // Одиночные игры
-  {
-    id: 'design_master',
-    name: 'Мастер дизайна',
-    description: 'Создавайте уникальные дизайны одежды',
-    icon: '✏️',
-    category: 'solo',
-    players: '1',
-    duration: '6 мин',
-    onlinePlayers: 0,
-    type: 'solo'
-  },
-  {
-    id: 'business_simulator',
-    name: 'Бизнес-симулятор',
-    description: 'Управляйте своим модным бизнесом',
-    icon: '📊',
-    category: 'solo',
-    players: '1',
-    duration: '15 мин',
-    onlinePlayers: 0,
-    type: 'solo'
-  }
+  
 ])
 
 // Фильтрованные игры по категориям
@@ -302,9 +259,7 @@ const cooperativeGames = computed(() =>
   allGames.value.filter(game => game.category === 'cooperative')
 )
 
-const soloGames = computed(() => 
-  allGames.value.filter(game => game.category === 'solo')
-)
+// удалены одиночные игры и связанные вычисления
 
 const activeEvents = computed(() => 
   allGames.value.filter(game => game.eventType)
