@@ -517,6 +517,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { useCompanyStore } from '@/stores/companyStore'
 import { useCharacterStore } from '@/stores/characterStore'
 import { useTraderStore } from '@/stores/traderStore'
+import { useAtelierStore } from '@/stores/atelierStore'
 import SettingsModal from './SettingsModal.vue'
 import HotkeysModal from './HotkeysModal.vue'
 import AccountModal from './AccountModal.vue'
@@ -546,6 +547,7 @@ const showShop = ref(false)
 const showHome = ref(false)
 const company = useCompanyStore()
 const traderStore = useTraderStore()
+const atelierStore = useAtelierStore()
 
 // Состояние деталей
 const showMoneyDetails = ref(false)
@@ -596,9 +598,16 @@ async function confirmRent() {
   const ok = await company.rent(place)
   // после успешной аренды открываем соответствующее окно
   if (ok) {
-    if (place === 'warehouse' && company.canUseWarehouse()) showWarehouse.value = true
-    if (place === 'atelier' && company.canUseAtelier()) showAtelier.value = true
-    if (place === 'market' && company.canUseMarket()) showMarket.value = true
+    if (place === 'warehouse' && company.canUseWarehouse()) {
+      showWarehouse.value = true
+    } else if (place === 'atelier' && company.canUseAtelier()) {
+      // Арендуем ателье через atelierStore
+      await atelierStore.rentAtelier()
+      await atelierStore.loadAtelierState()
+      showAtelier.value = true
+    } else if (place === 'market' && company.canUseMarket()) {
+      showMarket.value = true
+    }
     rentDialog.value = null
   } else {
     // Недостаточно средств — оставляем диалог открытым и показываем цену красным
@@ -744,8 +753,9 @@ const openWarehouse = () => {
 
 const openOffice = () => {}
 
-const openAtelier = () => {
+const openAtelier = async () => {
   if (!company.canUseAtelier()) {
+    // Показываем диалог аренды
     rentDialog.value = {
       place: 'atelier',
       title: 'Аренда ателье',
@@ -755,6 +765,9 @@ const openAtelier = () => {
     }
     return
   }
+  
+  // Загружаем данные ателье
+  await atelierStore.loadAtelierState()
   showAtelier.value = true
 }
 

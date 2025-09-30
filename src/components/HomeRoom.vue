@@ -6,34 +6,34 @@
         <button class="close-btn" @click="$emit('close')">✕</button>
       </div>
 
-      <div class="room-content">
-        <!-- Сцена комнаты -->
-        <div class="scene">
-          <div class="machine" @click="showConstructor = true">Швейная машинка</div>
-          <div class="laptop" @click="showSocial = true">Компьютер</div>
-          <div class="shelves" @click="showPantry = true">Кладовая</div>
+      <!-- Сцена комнаты с фоновым изображением -->
+      <div class="scene">
+        <!-- Фоновое изображение комнаты -->
+        <img src="/home_goose/фон комната гуся.svg" alt="Комната гуся" class="room-background" />
+        
+        <!-- Статичный стол на картинке -->
+        <div class="static-table">
+          <img src="/home_goose/стол.svg" alt="Стол" class="table-image" />
         </div>
 
-        <!-- Правая панель статусов -->
-        <div class="side-panel">
-          <div class="card">
-            <div class="card-title">Состояние</div>
-            <div class="row">
-              <span>Деньги</span>
-              <strong>₽{{ money.toLocaleString() }}</strong>
-            </div>
-            <div class="row">
-              <span>Уровень компании</span>
-              <strong>{{ companyLevel }}</strong>
-            </div>
-            <div class="row">
-              <span>Материалы</span>
-              <strong>{{ materialsTotal }}</strong>
-            </div>
+        <!-- Интерактивные элементы -->
+        <div class="interactive-elements">
+          <!-- Швейная машинка на столе (слева) - конструктор одежды -->
+          <div class="interactive-item sewing-machine" @click="showConstructor = true" title="Конструктор одежды">
+            <img src="/home_goose/машинка.svg" alt="Швейная машинка" class="item-image" />
+            <div class="item-label">швейная машинка</div>
           </div>
 
-          <div class="actions">
-            <button class="btn primary" @click="showConstructor = true">Открыть конструктор</button>
+          <!-- Компьютер на столе (справа) - социальная сеть -->
+          <div class="interactive-item computer" @click="showSocial = true" title="Социальная сеть">
+            <img src="/home_goose/комп.svg" alt="Компьютер" class="item-image" />
+            <div class="item-label">компьютер</div>
+          </div>
+
+          <!-- Коробки в нижнем углу (Кладовая) -->
+          <div class="interactive-item boxes" @click="showPantry = true" title="Кладовая">
+            <img src="/home_goose/коробки.svg" alt="Коробки" class="item-image" />
+            <div class="item-label">кладовая</div>
           </div>
         </div>
       </div>
@@ -46,21 +46,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { useAuthStore } from '@/stores/authStore'
-import { useCompanyStore } from '@/stores/companyStore'
-import { useWarehouseStore } from '@/stores/warehouseStore'
+import { ref } from 'vue'
 import ClothesConstructor from './ClothesConstructor.vue'
 import PantryModal from './PantryModal.vue'
 import SocialNetworkModal from './SocialNetworkModal.vue'
-
-const auth = useAuthStore()
-const company = useCompanyStore()
-const warehouse = useWarehouseStore()
-
-const money = computed(() => auth.user?.money ?? 0)
-const companyLevel = computed(() => company.state.progress.level)
-const materialsTotal = computed(() => warehouse.materialsTotal)
 
 const showConstructor = ref(false)
 const showPantry = ref(false)
@@ -68,6 +57,7 @@ const showSocial = ref(false)
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
 @import '@/styles/colors.css';
 
 .modal-overlay {
@@ -80,6 +70,7 @@ const showSocial = ref(false)
   z-index: 1000;
   backdrop-filter: blur(5px);
 }
+
 .room-modal {
   width: 1000px;
   height: 700px;
@@ -89,7 +80,9 @@ const showSocial = ref(false)
   box-shadow: 0 8px 16px var(--shadow-medium);
   display: flex;
   flex-direction: column;
+  font-family: 'Orbitron', sans-serif;
 }
+
 .room-header {
   display: flex;
   justify-content: space-between;
@@ -99,36 +92,164 @@ const showSocial = ref(false)
   border-bottom: 2px solid var(--color-buttons);
   border-radius: 15px 15px 0 0;
 }
-.title { color: var(--color-text); font-weight: 700; text-shadow: 2px 2px 0 var(--shadow-light); }
+
+.title { 
+  color: var(--color-text); 
+  font-weight: 700; 
+  text-shadow: 2px 2px 0 var(--shadow-light);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.4rem;
+}
+
 .close-btn {
   background: var(--color-buttons);
   border: 2px solid var(--color-accents);
   border-radius: 12px;
   color: var(--color-text);
   padding: 8px 12px;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
-.room-content { display: flex; flex: 1; }
+
+.close-btn:hover {
+  background: var(--color-accents);
+  transform: scale(1.05);
+}
+
 .scene {
   flex: 1;
-  background: linear-gradient(180deg, #e9efe9 0%, #dfe6d0 100%);
   position: relative;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.machine, .laptop, .shelves {
-  position: absolute; padding: 10px 14px; border: 2px solid var(--color-buttons);
-  background: var(--color-bg-menu); color: var(--color-text);
-  border-radius: 12px; cursor: pointer; box-shadow: 0 2px 4px var(--shadow-light);
+
+.room-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
 }
-.machine { left: 80px; bottom: 120px; }
-.laptop { right: 120px; bottom: 140px; }
-.shelves { left: 180px; top: 120px; }
-.side-panel { width: 320px; padding: 16px; background: var(--color-bg-menu-light); border-left: 2px solid var(--color-buttons); }
-.card { background: var(--color-bg-menu); border: 2px solid var(--color-buttons); border-radius: 12px; padding: 12px; margin-bottom: 12px; }
-.card-title { color: var(--color-text); font-weight: 700; margin-bottom: 8px; }
-.row { display: flex; justify-content: space-between; color: var(--color-text); margin: 4px 0; }
-.actions { display: grid; gap: 8px; }
-.btn { background: var(--color-bg-menu); border: 2px solid var(--color-buttons); color: var(--color-text); padding: 10px; border-radius: 10px; }
-.btn.primary { background: var(--color-accents); border-color: var(--color-highlights); }
+
+/* Статичный стол как элемент фона */
+.static-table {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  pointer-events: none; /* Стол не кликабельный */
+  width: 80%;
+  height: 40%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+}
+
+.table-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3));
+}
+
+.interactive-elements {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  height: 100%;
+  pointer-events: none; /* Отключаем события для контейнера */
+}
+
+.interactive-item {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 10px;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(5px);
+  border: 2px solid transparent;
+  pointer-events: auto; /* Включаем события для элементов */
+}
+
+.interactive-item:hover {
+  transform: scale(1.1);
+  background: rgba(255, 255, 255, 0.2);
+  border-color: var(--color-accents);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+.item-image {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+  transition: all 0.3s ease;
+}
+
+/* Размеры для элементов на столе */
+.sewing-machine .item-image,
+.computer .item-image {
+  width: 90px;
+  height: 90px;
+}
+
+
+/* Размеры для коробок в нижнем углу */
+.boxes .item-image {
+  width: 100px;
+  height: 100px;
+}
+
+.interactive-item:hover .item-image {
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.4));
+}
+
+.item-label {
+  margin-top: 10px;
+  color: white;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 400;
+  font-size: 0.9rem;
+  text-align: center;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.3);
+  padding: 4px 8px;
+  border-radius: 8px;
+  backdrop-filter: blur(5px);
+}
+
+/* Позиционирование элементов */
+.sewing-machine {
+  /* Швейная машинка на столе слева */
+  bottom: 25%;
+  left: 35%;
+  transform: translateX(-50%);
+}
+
+.computer {
+  /* Компьютер на столе справа */
+  bottom: 25%;
+  right: 35%;
+  transform: translateX(50%);
+}
+
+.boxes {
+  /* Коробки в нижнем углу */
+  bottom: 20px;
+  left: 20px;
+  transform: none;
+}
 </style>
 
 
