@@ -19,7 +19,7 @@ export interface AuctionBid {
   player_id: string
   player_name: string
   amount: number
-  timestamp: string
+  created_at: string
 }
 
 export interface AuctionParticipant {
