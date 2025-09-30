@@ -260,28 +260,28 @@ onUnmounted(() => {
 }
 
 .btn-icon {
-  font-size: clamp(1rem, 1.8vw, 1.3rem);
+  font-size: clamp(1.2rem, 2.2vw, 1.6rem);
 }
 
 /* Информация о сезоне */
 .season-info {
   display: flex;
   align-items: center;
-  gap: clamp(4px, 0.8vw, 6px);
-  padding: clamp(6px, 1vw, 8px) clamp(8px, 1.2vw, 12px);
+  gap: clamp(6px, 1.2vw, 10px);
+  padding: clamp(8px, 1.5vw, 12px) clamp(12px, 2vw, 16px);
   background: var(--color-bg-menu-light, #F9F1E8);
-  border-radius: clamp(4px, 0.6vw, 6px);
+  border-radius: clamp(6px, 1vw, 8px);
   border: clamp(1px, 0.2vw, 2px) solid var(--color-buttons-light, #D4824A);
   white-space: nowrap;
   min-width: fit-content;
 }
 
 .info-icon {
-  font-size: clamp(0.9rem, 1.6vw, 1.1rem);
+  font-size: clamp(1.1rem, 2vw, 1.4rem);
 }
 
 .info-text {
-  font-size: clamp(0.8rem, 1.4vw, 1rem);
+  font-size: clamp(1rem, 1.8vw, 1.3rem);
   font-weight: 600;
   color: var(--color-text, #5D4037);
 }

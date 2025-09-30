@@ -3015,7 +3015,8 @@ const closeShop = () => {
   
   .time-controls-strip {
     top: 10px;
-    right: 10px;
+    left: 50%;
+    transform: translateX(-50%);
     max-width: calc(100vw - 20px);
   }
   
