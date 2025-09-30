@@ -450,8 +450,9 @@ onMounted(async () => {
 }
 
 .material-stats {
-  display: flex;
-  gap: clamp(20px, 3vw, 30px);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: clamp(8px, 1.2vw, 12px);
   margin-bottom: clamp(15px, 2vw, 20px);
   padding: clamp(10px, 1.5vw, 15px);
   background: var(--color-bg-menu-light, #F9F1E8);
@@ -464,17 +465,22 @@ onMounted(async () => {
   flex-direction: column;
   align-items: center;
   gap: clamp(4px, 0.8vw, 6px);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .stat-label {
-  font-size: clamp(0.8rem, 1.4vw, 1rem);
+  font-size: clamp(0.7rem, 1.2vw, 0.9rem);
   color: var(--color-text, #5D4037);
   opacity: 0.7;
   font-family: 'Orbitron', sans-serif;
+  text-align: center;
+  line-height: 1.2;
 }
 
 .stat-value {
-  font-size: clamp(1rem, 1.8vw, 1.2rem);
+  font-size: clamp(0.9rem, 1.6vw, 1.1rem);
   font-weight: 700;
   color: var(--color-text, #5D4037);
   font-family: 'Orbitron', sans-serif;

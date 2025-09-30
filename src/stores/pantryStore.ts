@@ -55,8 +55,22 @@ export const usePantryStore = defineStore('pantry', () => {
       const raw = localStorage.getItem(STORAGE_KEY.value)
       if (raw) {
         const parsed = JSON.parse(raw)
-        materials.value = parsed.materials || []
+        
+        // Миграция: добавляем недостающие поля к существующим материалам
+        const migratedMaterials = (parsed.materials || []).map((material: any) => ({
+          ...material,
+          durability: material.durability ?? null,
+          comfort: material.comfort ?? null,
+          style: material.style ?? null,
+        }))
+        
+        materials.value = migratedMaterials
         products.value = parsed.products || []
+        
+        console.log('📦 Материалы кладовой загружены:', migratedMaterials.length)
+        if (migratedMaterials.length > 0) {
+          console.log('📊 Пример материала:', migratedMaterials[0])
+        }
       }
     } catch {}
   }
@@ -121,8 +135,16 @@ export const usePantryStore = defineStore('pantry', () => {
     try {
       const material = materials.value.find(m => m.id === materialId)
       if (!material || material.quantity < quantity) {
+        console.log('❌ Материал не найден или недостаточно количества:', { materialId, material, quantity })
         return false
       }
+
+      console.log('🔄 Переносим материал:', { 
+        id: material.id, 
+        name: material.name, 
+        quantity,
+        isUuid: material.id && material.id.length === 36 && material.id.includes('-')
+      })
 
       // Импортируем warehouseStore для добавления на склад
       const { useWarehouseStore } = await import('@/stores/warehouseStore')
@@ -130,6 +152,7 @@ export const usePantryStore = defineStore('pantry', () => {
 
       // Если материал уже имеет UUID (из базы данных), используем его напрямую
       if (material.id && material.id.length === 36 && material.id.includes('-')) {
+        console.log('✅ Используем UUID напрямую:', material.id)
         // Это UUID, используем его напрямую
         const success = await warehouseStore.addMaterialToWarehouse(material.id, quantity)
         
@@ -153,6 +176,7 @@ export const usePantryStore = defineStore('pantry', () => {
       }
 
       // Если это старый ID, ищем материал в базе данных по имени
+      console.log('🔍 Ищем материал в базе данных по имени:', material.name)
       const { supabase } = await import('@/lib/supabase')
       
       const { data: materialInDb, error } = await supabase
@@ -162,10 +186,11 @@ export const usePantryStore = defineStore('pantry', () => {
         .single()
 
       if (error || !materialInDb) {
-        console.error('Материал не найден в базе данных:', material.name, error)
+        console.error('❌ Материал не найден в базе данных:', material.name, error)
         return false
       }
 
+      console.log('✅ Найден материал в базе данных:', materialInDb.id)
       // Добавляем материал на склад с правильным UUID
       const success = await warehouseStore.addMaterialToWarehouse(materialInDb.id, quantity)
       

@@ -641,6 +641,13 @@ export const useWarehouseStore = defineStore('warehouse', () => {
           .single()
         
         if (materialInfo) {
+          console.log('📦 Добавляем материал в кладовую из базы данных:', {
+            name: materialInfo.name,
+            quality: materialInfo.quality,
+            durability: materialInfo.durability,
+            comfort: materialInfo.comfort,
+            style: materialInfo.style
+          })
           return pantryStore.addMaterial({
             id: materialId, // Сохраняем UUID для корректного переноса
             name: materialInfo.name,
@@ -654,6 +661,13 @@ export const useWarehouseStore = defineStore('warehouse', () => {
           })
         } else if (materialData) {
           // Если материал новый, используем переданные данные
+          console.log('📦 Добавляем материал в кладовую из переданных данных:', {
+            name: materialData.name,
+            quality: materialData.quality,
+            durability: materialData.durability,
+            comfort: materialData.comfort,
+            style: materialData.style
+          })
           return pantryStore.addMaterial({
             id: materialId, // Сохраняем UUID для корректного переноса
             name: materialData.name,
