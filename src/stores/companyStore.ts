@@ -152,6 +152,30 @@ export const useCompanyStore = defineStore('company', () => {
       state.value.capacities.warehouse.slots += 20
       saveState()
       return true
+    },
+
+    // Сброс состояния компании к начальному
+    resetState() {
+      state.value = {
+        location: {
+          currentPointId: 7, // дом гуся — старт
+          discoveredPoints: [7],
+        },
+        rent: {
+          isRented: { warehouse: false, atelier: false, market: false },
+          rentCosts: { ...DEFAULT_RENT_COST },
+          dailyFees: { ...DEFAULT_DAILY_FEES },
+        },
+        progress: {
+          level: 1,
+          experience: 0,
+        },
+        capacities: {
+          homePantry: { materialsSlots: 10, productsSlots: 10 },
+          warehouse: { level: 0, slots: 0 },
+        },
+      }
+      saveState()
     }
   }
 })

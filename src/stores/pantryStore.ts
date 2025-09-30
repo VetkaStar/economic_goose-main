@@ -156,6 +156,11 @@ export const usePantryStore = defineStore('pantry', () => {
     removeMaterialByNameContains,
     getQuantityByNameContains,
     load,
+    resetState() {
+      materials.value = []
+      products.value = []
+      save()
+    }
   }
 })
 

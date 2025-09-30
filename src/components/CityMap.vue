@@ -395,6 +395,11 @@
       @close="closePhone"
     />
 
+    <!-- Компактная панель управления временем -->
+    <div class="time-controls-strip">
+      <TimeControls />
+    </div>
+
     <!-- Кнопка настроек -->
     <button class="settings-btn" @click="openSettings" title="Настройки">
       <img src="/main-menu/шестерня.svg" alt="Настройки" class="settings-icon">
@@ -490,6 +495,7 @@ import AtelierModal from './AtelierModal.vue'
 import MarketModal from './MarketModal.vue'
 import ShopModal from './ShopModal.vue'
 import PhoneInterface from './PhoneInterface.vue'
+import TimeControls from './TimeControls.vue'
 import HomeRoom from './HomeRoom.vue'
 
 const emit = defineEmits<{
@@ -969,6 +975,16 @@ const closeShop = () => {
 
 .summary-value.negative {
   color: #C62828;
+}
+
+/* Компактная полоска управления временем */
+.time-controls-strip {
+  position: fixed;
+  bottom: 20px;
+  left: 120px; /* Рядом с телефоном */
+  z-index: 1001;
+  max-width: 500px;
+  width: auto;
 }
 
 /* Кастомная модалка аренды */
@@ -2953,9 +2969,14 @@ const closeShop = () => {
     right: 20px;
   }
   
+  .time-controls-strip {
+    bottom: 10px;
+    left: 80px;
+    max-width: calc(100vw - 100px);
+  }
+  
   .building {
     transform: scale(0.8);
   }
-
 }
 </style>

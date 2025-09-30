@@ -8,7 +8,10 @@
       
       <div class="modal-content">
         <div v-if="!report" class="no-report">
-          <p>Отчёт за день {{ day }} не найден</p>
+          <div class="no-report-icon">📊</div>
+          <h3>Отчёт за день {{ day }}</h3>
+          <p>Дневные отчёты пока не реализованы</p>
+          <p class="no-report-note">Экономическая система будет добавлена в следующих обновлениях</p>
         </div>
         
         <div v-else class="report-content">
@@ -174,12 +177,14 @@ const getBarHeight = (profit: number) => {
 .daily-report-modal {
   background: var(--color-bg-menu, #F4E6D1);
   border-radius: clamp(15px, 2vw, 30px);
-  max-width: 800px;
+  max-width: 900px;
   width: 95%;
-  height: 90vh;
+  max-height: 85vh;
   overflow-y: auto;
-  box-shadow: 0 clamp(10px, 2vw, 20px) clamp(30px, 6vw, 60px) var(--shadow-dark, rgba(0, 0, 0, 0.3));
-  border: clamp(2px, 0.3vw, 4px) solid var(--color-text, #5D4037);
+  box-shadow: 0 clamp(15px, 3vw, 30px) clamp(40px, 8vw, 80px) var(--shadow-dark, rgba(0, 0, 0, 0.4));
+  border: clamp(3px, 0.5vw, 5px) solid var(--color-text, #5D4037);
+  position: relative;
+  z-index: 10001;
 }
 
 .modal-content {
@@ -401,8 +406,32 @@ const getBarHeight = (profit: number) => {
   text-align: center;
   padding: clamp(40px, 6vw, 60px);
   color: var(--color-text, #5D4037);
-  font-size: clamp(1rem, 2vw, 1.4rem);
   font-family: 'Orbitron', sans-serif;
+}
+
+.no-report-icon {
+  font-size: clamp(3rem, 6vw, 4rem);
+  margin-bottom: clamp(20px, 3vw, 30px);
+  opacity: 0.7;
+}
+
+.no-report h3 {
+  margin: 0 0 clamp(15px, 2vw, 20px) 0;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 900;
+  color: var(--color-text, #5D4037);
+}
+
+.no-report p {
+  margin: 0 0 clamp(10px, 1.5vw, 15px) 0;
+  font-size: clamp(1rem, 2vw, 1.4rem);
+  opacity: 0.8;
+}
+
+.no-report-note {
+  font-size: clamp(0.8rem, 1.4vw, 1.1rem) !important;
+  opacity: 0.6 !important;
+  font-style: italic;
 }
 
 /* Адаптивность */

@@ -40,13 +40,13 @@ export const useEconomyStore = defineStore('economy', () => {
   const dailyReports = ref<DailyReport[]>([])
   const isProcessing = ref(false)
 
-  // Настройки экономики
+  // Настройки экономики (пока отключены)
   const economySettings = ref({
-    baseSalesPerDay: 1000,
-    dailyRentCost: 2500,
-    materialCostPerItem: 50,
-    taxRate: 0.15,
-    itemsPerDay: 5
+    baseSalesPerDay: 0, // Пока нет продаж
+    dailyRentCost: 0, // Пока нет аренды
+    materialCostPerItem: 0, // Пока нет производства
+    taxRate: 0, // Пока нет налогов
+    itemsPerDay: 0 // Пока нет производства
   })
 
   // Вычисляемые свойства

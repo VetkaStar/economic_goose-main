@@ -477,6 +477,18 @@ export const useSocialStore = defineStore('social', () => {
     respondToPost,
     acceptResponse,
     rejectResponse,
-    deletePost
+    deletePost,
+    resetState() {
+      posts.value = []
+      responses.value = []
+      demoQueue.value = []
+      visibleOrders.value = []
+      takenOrders.value = []
+      if (spawnerTimer) {
+        clearInterval(spawnerTimer)
+        spawnerTimer = null
+      }
+      saveState()
+    }
   }
 })

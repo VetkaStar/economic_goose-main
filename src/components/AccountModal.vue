@@ -64,6 +64,48 @@
         </button>
       </div>
     </div>
+
+    <!-- Модальное окно подтверждения сброса прогресса -->
+    <div v-if="showResetConfirm" class="modal-overlay" @click.self="cancelReset">
+      <div class="confirm-modal">
+        <div class="confirm-header">
+          <h3>⚠️ Сброс прогресса компании</h3>
+        </div>
+        <div class="confirm-body">
+          <div class="warning-icon">🚨</div>
+          <p class="warning-text">
+            Вы уверены, что хотите сбросить весь прогресс компании?
+          </p>
+          <div class="warning-details">
+            <p><strong>Будет сброшено:</strong></p>
+            <ul>
+              <li>Уровень и опыт компании</li>
+              <li>Все материалы и готовая одежда</li>
+              <li>Арендованные помещения</li>
+              <li>Деньги (сброс до 5000₽)</li>
+              <li>Все заказы и социальные посты</li>
+            </ul>
+            <p><strong>НЕ будет затронуто:</strong></p>
+            <ul>
+              <li>Ваш аккаунт и данные входа</li>
+              <li>Позиция в лидерборде мультиплеера</li>
+              <li>Достижения и награды</li>
+            </ul>
+          </div>
+          <p class="final-warning">
+            <strong>Это действие нельзя отменить!</strong>
+          </p>
+        </div>
+        <div class="confirm-footer">
+          <button class="btn btn-cancel" @click="cancelReset">
+            Отмена
+          </button>
+          <button class="btn btn-danger" @click="confirmReset">
+            Да, сбросить прогресс
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -88,6 +130,9 @@ const userInfo = ref({
   email: authStore.user?.email || ''
 })
 
+// Состояние модального окна подтверждения сброса
+const showResetConfirm = ref(false)
+
 
 // Вычисляемые свойства
 const experiencePercentage = computed(() => {
@@ -107,11 +152,42 @@ const saveAccount = async () => {
 }
 
 const resetAccount = () => {
-  if (confirm('Вы уверены, что хотите сбросить весь прогресс? Это действие нельзя отменить!')) {
-    // Здесь будет логика сброса прогресса
-    console.log('Сброс прогресса аккаунта')
-    closeModal()
+  showResetConfirm.value = true
+}
+
+const confirmReset = async () => {
+  try {
+    // Сбрасываем только прогресс компании, НЕ удаляем из лидерборда
+    const success = await authStore.resetCompanyProgress()
+    if (success) {
+      // Обновляем локальные данные пользователя
+      userInfo.value.money = 5000
+      userInfo.value.level = 1
+      userInfo.value.experience = 0
+      
+      console.log('✅ Локальные данные пользователя обновлены:', {
+        money: userInfo.value.money,
+        level: userInfo.value.level,
+        experience: userInfo.value.experience
+      })
+      
+      showResetConfirm.value = false
+      closeModal()
+      
+      // Принудительно перезагружаем страницу для обновления всех компонентов
+      setTimeout(() => {
+        window.location.reload()
+      }, 1000)
+    } else {
+      console.error('Ошибка при сбросе прогресса')
+    }
+  } catch (error) {
+    console.error('Ошибка при сбросе прогресса:', error)
   }
+}
+
+const cancelReset = () => {
+  showResetConfirm.value = false
 }
 
 const closeModal = () => {
@@ -364,5 +440,163 @@ const logout = async () => {
   border-top: clamp(2px, 0.3vw, 4px) solid var(--color-text);
   background: var(--gradient-bg);
   border-radius: 0 0 clamp(15px, 2vw, 30px) clamp(15px, 2vw, 30px);
+}
+
+/* Стили для модального окна подтверждения */
+.confirm-modal {
+  background: var(--color-bg-menu-light);
+  border: 3px solid var(--color-danger);
+  border-radius: clamp(15px, 2vw, 20px);
+  box-shadow: 0 clamp(8px, 1.5vw, 15px) clamp(15px, 3vw, 30px) rgba(0, 0, 0, 0.3);
+  max-width: clamp(400px, 50vw, 600px);
+  width: 90vw;
+  max-height: 80vh;
+  overflow-y: auto;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.confirm-header {
+  background: linear-gradient(135deg, var(--color-danger), #c62828);
+  color: white;
+  padding: clamp(15px, 2vw, 25px);
+  border-radius: clamp(12px, 1.5vw, 18px) clamp(12px, 1.5vw, 18px) 0 0;
+  text-align: center;
+}
+
+.confirm-header h3 {
+  margin: 0;
+  font-size: clamp(1.2rem, 2.2vw, 1.8rem);
+  font-weight: 700;
+  font-family: 'Orbitron', sans-serif;
+  text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.3);
+}
+
+.confirm-body {
+  padding: clamp(20px, 3vw, 30px);
+  text-align: center;
+}
+
+.warning-icon {
+  font-size: clamp(3rem, 6vw, 5rem);
+  margin-bottom: clamp(15px, 2vw, 20px);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.warning-text {
+  font-size: clamp(1.1rem, 2vw, 1.4rem);
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: clamp(20px, 3vw, 25px);
+  font-family: 'Orbitron', sans-serif;
+}
+
+.warning-details {
+  background: var(--gradient-bg);
+  border: 2px solid var(--color-buttons);
+  border-radius: clamp(10px, 1.5vw, 15px);
+  padding: clamp(15px, 2vw, 20px);
+  margin-bottom: clamp(15px, 2vw, 20px);
+  text-align: left;
+}
+
+.warning-details p {
+  margin: 0 0 clamp(8px, 1vw, 12px) 0;
+  font-weight: 600;
+  color: var(--color-text);
+  font-size: clamp(0.9rem, 1.6vw, 1.1rem);
+}
+
+.warning-details ul {
+  margin: 0 0 clamp(12px, 2vw, 15px) clamp(15px, 2vw, 20px);
+  padding: 0;
+}
+
+.warning-details li {
+  margin-bottom: clamp(4px, 0.8vw, 6px);
+  color: var(--color-text);
+  font-size: clamp(0.8rem, 1.4vw, 1rem);
+}
+
+.final-warning {
+  background: var(--color-danger);
+  color: white;
+  padding: clamp(10px, 1.5vw, 15px);
+  border-radius: clamp(8px, 1.2vw, 12px);
+  font-size: clamp(1rem, 1.8vw, 1.3rem);
+  font-weight: 700;
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+  text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.3);
+  animation: warningGlow 2s infinite;
+}
+
+@keyframes warningGlow {
+  0%, 100% { box-shadow: 0 0 10px rgba(244, 67, 54, 0.3); }
+  50% { box-shadow: 0 0 20px rgba(244, 67, 54, 0.6); }
+}
+
+.confirm-footer {
+  display: flex;
+  gap: clamp(10px, 1.5vw, 15px);
+  padding: clamp(15px, 2vw, 25px);
+  justify-content: center;
+}
+
+.btn-cancel {
+  background: var(--color-buttons);
+  color: var(--color-text);
+  border: 2px solid var(--color-buttons);
+  padding: clamp(10px, 1.5vw, 15px) clamp(20px, 3vw, 30px);
+  border-radius: clamp(8px, 1.2vw, 12px);
+  font-size: clamp(0.9rem, 1.6vw, 1.2rem);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Orbitron', sans-serif;
+  text-shadow: 1px 1px 0px var(--shadow-light);
+  box-shadow: 0 clamp(2px, 0.4vw, 4px) clamp(4px, 0.8vw, 8px) var(--shadow-light);
+}
+
+.btn-cancel:hover {
+  background: var(--color-buttons-light);
+  transform: translateY(-2px);
+  box-shadow: 0 clamp(4px, 0.6vw, 6px) clamp(6px, 1vw, 10px) var(--shadow-medium);
+}
+
+.btn-danger {
+  background: var(--color-danger);
+  color: white;
+  border: 2px solid var(--color-danger);
+  padding: clamp(10px, 1.5vw, 15px) clamp(20px, 3vw, 30px);
+  border-radius: clamp(8px, 1.2vw, 12px);
+  font-size: clamp(0.9rem, 1.6vw, 1.2rem);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Orbitron', sans-serif;
+  text-shadow: 1px 1px 0px var(--shadow-light);
+  box-shadow: 0 clamp(2px, 0.4vw, 4px) clamp(4px, 0.8vw, 8px) var(--shadow-light);
+}
+
+.btn-danger:hover {
+  background: var(--color-danger-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 clamp(4px, 0.6vw, 6px) clamp(6px, 1vw, 10px) var(--shadow-medium);
 }
 </style>

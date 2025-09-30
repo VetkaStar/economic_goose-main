@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 
 export const useTimeStore = defineStore('time', () => {
+  const STORAGE_KEY = 'eg_time_state_v1'
   // Игровое время
   const gameTime = ref({
     day: 1,
@@ -18,9 +19,9 @@ export const useTimeStore = defineStore('time', () => {
     workEndHour: 18 // Конец рабочего дня
   })
 
-  // Состояние ускорения времени
-  const timeAcceleration = ref(1) // 1x, 2x, 4x, 8x
-  const isFastForward = ref(false)
+  // Состояние ускорения времени (1x или 2x)
+  const timeAcceleration = ref(1)
+  const isFastForward = computed(() => timeAcceleration.value > 1)
 
   // Вычисляемые свойства
   const currentTime = computed(() => {
@@ -79,16 +80,8 @@ export const useTimeStore = defineStore('time', () => {
     }
   }
 
-  const fastForwardDay = () => {
-    isFastForward.value = true
-    timeAcceleration.value = 8
-    
-    // Симулируем быстрый переход к следующему дню
-    setTimeout(() => {
-      nextDay()
-      isFastForward.value = false
-      timeAcceleration.value = 1
-    }, 1000) // 1 секунда для анимации
+  const toggleAccelerationX2 = () => {
+    timeAcceleration.value = timeAcceleration.value === 1 ? 2 : 1
   }
 
   const pauseTime = () => {
@@ -103,7 +96,6 @@ export const useTimeStore = defineStore('time', () => {
       isPaused: false
     }
     timeAcceleration.value = 1
-    isFastForward.value = false
   }
 
   // Автоматическое продвижение времени (если не на паузе)
@@ -163,6 +155,40 @@ export const useTimeStore = defineStore('time', () => {
     return 'sunny'
   }
 
+  // Persistence
+  const saveState = () => {
+    try {
+      const payload = {
+        gameTime: gameTime.value,
+        timeAcceleration: timeAcceleration.value
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))
+    } catch {}
+  }
+
+  const loadState = () => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY)
+      if (!raw) return
+      const parsed = JSON.parse(raw)
+      if (parsed?.gameTime) {
+        gameTime.value = {
+          day: Number(parsed.gameTime.day) || 1,
+          hour: Number(parsed.gameTime.hour) || 9,
+          minute: Number(parsed.gameTime.minute) || 0,
+          isPaused: Boolean(parsed.gameTime.isPaused)
+        }
+      }
+      if (parsed?.timeAcceleration) {
+        const acc = Number(parsed.timeAcceleration)
+        timeAcceleration.value = acc === 2 ? 2 : 1
+      }
+    } catch {}
+  }
+
+  loadState()
+  watch([gameTime, timeAcceleration], saveState, { deep: true })
+
   return {
     // Состояние
     gameTime,
@@ -178,7 +204,7 @@ export const useTimeStore = defineStore('time', () => {
     // Методы
     addTime,
     nextDay,
-    fastForwardDay,
+    toggleAccelerationX2,
     pauseTime,
     resetTime,
     tick,

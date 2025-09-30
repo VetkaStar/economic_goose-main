@@ -6,7 +6,7 @@ export const GAME_CONFIG = {
   VERSION: '1.0.0',
   
   // Игровые константы
-  STARTING_MONEY: 1000,
+  STARTING_MONEY: 5000,
   STARTING_REPUTATION: 0,
   MAX_LEVEL: 100,
   EXPERIENCE_PER_LEVEL: 1000,

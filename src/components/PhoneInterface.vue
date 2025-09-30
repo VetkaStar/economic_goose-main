@@ -33,12 +33,6 @@
         <div class="tab-content">
           <!-- Главный экран -->
           <div v-if="activeTab === 'home'" class="apps">
-            <!-- Управление временем -->
-            <div class="time-controls-container">
-              <TimeControls />
-            </div>
-            
-            <!-- Приложения -->
             <div class="app" v-for="app in apps" :key="app.id" @click="openApp(app.id)">
               <div class="app-icon" :class="app.class">
                 <div v-if="app.badge" class="badge">{{ app.badge }}</div>
@@ -210,7 +204,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useTimeStore } from '@/stores/timeStore'
-import TimeControls from './TimeControls.vue'
 
 interface PhoneInterfaceProps {
   show: boolean
@@ -358,13 +351,25 @@ const closePhone = () => {
   emit('close')
 }
 
+// Интервал для автоматического тика времени
+let timeInterval: NodeJS.Timeout | null = null
+
 // Жизненный цикл (время теперь управляется timeStore)
 onMounted(() => {
-  // Время автоматически обновляется в timeStore
+  // Запускаем автоматический тик времени
+  if (!timeInterval) {
+    timeInterval = setInterval(() => {
+      timeStore.tick()
+    }, 1000) // Каждую секунду
+  }
 })
 
 onUnmounted(() => {
-  // Очистка не нужна, так как timeStore управляет временем
+  // Очищаем интервал
+  if (timeInterval) {
+    clearInterval(timeInterval)
+    timeInterval = null
+  }
 })
 </script>
 
@@ -511,11 +516,6 @@ onUnmounted(() => {
   grid-template-columns: 1fr 1fr;
   gap: 35px;
   row-gap: 45px;
-}
-
-.time-controls-container {
-  grid-column: 1 / -1;
-  margin-bottom: 20px;
 }
 
 .app {

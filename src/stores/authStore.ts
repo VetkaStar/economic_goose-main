@@ -271,6 +271,117 @@ export const useAuthStore = defineStore('auth', () => {
     return await updateMoney(amount)
   }
 
+  // Сброс прогресса компании (НЕ удаляет из лидерборда)
+  const resetCompanyProgress = async () => {
+    if (!user.value) {
+      console.error('❌ Пользователь не авторизован')
+      return false
+    }
+
+    try {
+      loading.value = true
+      error.value = null
+
+      console.log('🔄 Сбрасываем прогресс компании для пользователя:', user.value.id)
+
+      // Сбрасываем только игровой прогресс, оставляем базовые данные аккаунта
+      const { error: updateError } = await supabase
+        .from('user_profiles')
+        .update({
+          money: 5000, // Начальные деньги (как у нового персонажа)
+          level: 1,    // Начальный уровень
+          experience: 0, // Начальный опыт
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.value.id)
+
+      if (updateError) {
+        console.error('❌ Ошибка при сбросе прогресса:', updateError)
+        throw updateError
+      }
+
+      // Очищаем данные склада в базе данных
+      const { error: warehouseError } = await supabase
+        .from('user_warehouse_inventory')
+        .delete()
+        .eq('user_id', user.value.id)
+
+      if (warehouseError) {
+        console.warn('⚠️ Ошибка при очистке склада:', warehouseError)
+      }
+
+      const { error: clothingError } = await supabase
+        .from('user_clothing_inventory')
+        .delete()
+        .eq('user_id', user.value.id)
+
+      if (clothingError) {
+        console.warn('⚠️ Ошибка при очистке одежды:', clothingError)
+      }
+
+      // Обновляем локальное состояние
+      user.value.money = 5000
+      user.value.level = 1
+      user.value.experience = 0
+      
+      console.log('✅ Локальное состояние обновлено:', {
+        money: user.value.money,
+        level: user.value.level,
+        experience: user.value.experience
+      })
+
+      // Очищаем локальные данные игры
+      localStorage.removeItem(`home_pantry_${user.value.id}`)
+      localStorage.removeItem('social_posts')
+      localStorage.removeItem('social_responses')
+      localStorage.removeItem('social_demo_queue')
+      localStorage.removeItem('social_visible_orders')
+      localStorage.removeItem('social_taken_orders')
+      localStorage.removeItem('warehouse_materials')
+      localStorage.removeItem('warehouse_clothing')
+      localStorage.removeItem('company_state')
+      localStorage.removeItem('character_state')
+
+      // Сбрасываем состояние всех stores
+      // Импортируем stores для сброса их состояния
+      const { useCompanyStore } = await import('@/stores/companyStore')
+      const { useWarehouseStore } = await import('@/stores/warehouseStore')
+      const { usePantryStore } = await import('@/stores/pantryStore')
+      const { useSocialStore } = await import('@/stores/socialStore')
+
+      // Сбрасываем состояние stores
+      const companyStore = useCompanyStore()
+      const warehouseStore = useWarehouseStore()
+      const pantryStore = usePantryStore()
+      const socialStore = useSocialStore()
+
+      // Сбрасываем состояния
+      if (companyStore.resetState) companyStore.resetState()
+      if (warehouseStore.resetWarehouse) warehouseStore.resetWarehouse()
+      if (pantryStore.resetState) pantryStore.resetState()
+      if (socialStore.resetState) socialStore.resetState()
+
+      // Принудительно обновляем все данные из базы
+      await loadUserProfile(user.value.id)
+      
+      console.log('✅ Данные из базы перезагружены:', {
+        money: user.value?.money,
+        level: user.value?.level,
+        experience: user.value?.experience
+      })
+
+      console.log('✅ Прогресс компании успешно сброшен')
+      return true
+
+    } catch (err) {
+      console.error('❌ Ошибка при сбросе прогресса компании:', err)
+      error.value = 'Ошибка при сбросе прогресса'
+      return false
+    } finally {
+      loading.value = false
+    }
+  }
+
   return {
     // Состояние
     user,
@@ -285,6 +396,7 @@ export const useAuthStore = defineStore('auth', () => {
     initAuth,
     updateMoney,
     spendMoney,
-    addMoney
+    addMoney,
+    resetCompanyProgress
   }
 })
