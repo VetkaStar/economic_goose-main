@@ -93,24 +93,12 @@ export const useSocialStore = defineStore('social', () => {
     if (demoQueue.value.length > 0 || visibleOrders.value.length > 0) return
     const names = ['Лилия','Мия','София','Максим','Арсений','Алиса','Ева','Никита','Матвей','Даша','Кира','Илья','Оля','Варя','Гриша']
     const items = [
-      { name: 'Футболки школьные', icon: '👕', type: 'tshirt' },
-      { name: 'Футболки спортивные', icon: '👕', type: 'tshirt' },
-      { name: 'Футболки с принтом', icon: '👕', type: 'tshirt' },
-      { name: 'Рубашки белые', icon: '👔', type: 'shirt' },
-      { name: 'Рубашки в клетку', icon: '👔', type: 'shirt' },
-      { name: 'Рубашки офисные', icon: '👔', type: 'shirt' },
-      { name: 'Платья летние', icon: '👗', type: 'dress' },
-      { name: 'Платья вечерние', icon: '👗', type: 'dress' },
-      { name: 'Платья повседневные', icon: '👗', type: 'dress' },
-      { name: 'Худи тёплые', icon: '🧥', type: 'hoodie' },
-      { name: 'Худи с капюшоном', icon: '🧥', type: 'hoodie' },
-      { name: 'Худи спортивные', icon: '🧥', type: 'hoodie' },
-      { name: 'Брюки джинсовые', icon: '👖', type: 'pants' },
-      { name: 'Брюки классические', icon: '👖', type: 'pants' },
-      { name: 'Брюки спортивные', icon: '👖', type: 'pants' },
-      { name: 'Юбки мини', icon: '👗', type: 'skirt' },
-      { name: 'Юбки макси', icon: '👗', type: 'skirt' },
-      { name: 'Юбки в складку', icon: '👗', type: 'skirt' }
+      { name: 'Футболка', icon: '👕', type: 'tshirt' },
+      { name: 'Рубашка', icon: '👔', type: 'shirt' },
+      { name: 'Платье', icon: '👗', type: 'dress' },
+      { name: 'Худи', icon: '🧥', type: 'hoodie' },
+      { name: 'Брюки', icon: '👖', type: 'pants' },
+      { name: 'Юбка', icon: '👗', type: 'skirt' }
     ]
     const colors = ['красный', 'синий', 'зелёный', 'жёлтый', 'розовый', 'фиолетовый', 'оранжевый', 'чёрный', 'белый']
     const patterns = ['plain', 'dots', 'stripes', 'flowers']
@@ -509,7 +497,6 @@ export const useSocialStore = defineStore('social', () => {
         clearInterval(spawnerTimer)
         spawnerTimer = null
       }
-      saveState()
     }
   }
 })

@@ -128,8 +128,46 @@ export const usePantryStore = defineStore('pantry', () => {
       const { useWarehouseStore } = await import('@/stores/warehouseStore')
       const warehouseStore = useWarehouseStore()
 
-      // Добавляем материал на склад
-      const success = await warehouseStore.addMaterialToWarehouse(materialId, quantity)
+      // Если материал уже имеет UUID (из базы данных), используем его напрямую
+      if (material.id && material.id.length === 36 && material.id.includes('-')) {
+        // Это UUID, используем его напрямую
+        const success = await warehouseStore.addMaterialToWarehouse(material.id, quantity)
+        
+        if (success) {
+          // Уменьшаем количество в кладовой
+          material.quantity -= quantity
+          
+          // Если материала не осталось, удаляем его из кладовой
+          if (material.quantity <= 0) {
+            const index = materials.value.findIndex(m => m.id === materialId)
+            if (index !== -1) {
+              materials.value.splice(index, 1)
+            }
+          }
+          
+          save()
+          console.log(`📦 Перенесено ${quantity} единиц материала "${material.name}" на склад`)
+          return true
+        }
+        return false
+      }
+
+      // Если это старый ID, ищем материал в базе данных по имени
+      const { supabase } = await import('@/lib/supabase')
+      
+      const { data: materialInDb, error } = await supabase
+        .from('warehouse_materials')
+        .select('id')
+        .eq('name', material.name)
+        .single()
+
+      if (error || !materialInDb) {
+        console.error('Материал не найден в базе данных:', material.name, error)
+        return false
+      }
+
+      // Добавляем материал на склад с правильным UUID
+      const success = await warehouseStore.addMaterialToWarehouse(materialInDb.id, quantity)
       
       if (success) {
         // Уменьшаем количество в кладовой
@@ -147,7 +185,7 @@ export const usePantryStore = defineStore('pantry', () => {
         console.log(`📦 Перенесено ${quantity} единиц материала "${material.name}" на склад`)
         return true
       }
-      
+
       return false
     } catch (error) {
       console.error('Ошибка при переносе материала на склад:', error)

@@ -14,7 +14,12 @@
               <div class="icon">{{ m.icon || '🧵' }}</div>
               <div class="name">{{ m.name }}</div>
               <div class="qty">x{{ m.quantity }}</div>
-              <div class="meta" v-if="m.quality">{{ m.quality }}%</div>
+              <div class="stats">
+                <div v-if="m.quality" class="stat">Качество: {{ m.quality }}%</div>
+                <div v-if="m.durability" class="stat">🛡️ Прочность: {{ m.durability }}/10</div>
+                <div v-if="m.comfort" class="stat">😌 Комфорт: {{ m.comfort }}/10</div>
+                <div v-if="m.style" class="stat">✨ Стиль: {{ m.style }}/10</div>
+              </div>
               <button 
                 v-if="company.isWarehouseAvailable" 
                 class="transfer-btn" 
@@ -96,12 +101,25 @@ const transferMaterial = async (materialId: string, quantity: number) => {
 .section-title { color: var(--color-text); font-weight: 700; margin-bottom: 8px; }
 .empty { color: var(--color-text); opacity: .8; font-style: italic; border: 2px dashed var(--color-buttons); border-radius: 10px; padding: 16px; text-align: center; }
 .grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; }
-.slot { display:flex; align-items:center; gap:8px; background: var(--color-bg-menu-light); border: 2px solid var(--color-buttons); border-radius: 10px; padding: 8px; }
+.slot { display:flex; flex-direction: column; align-items:center; gap:8px; background: var(--color-bg-menu-light); border: 2px solid var(--color-buttons); border-radius: 10px; padding: 8px; }
 .icon { font-size: 20px; width: 28px; text-align:center; }
 .name { color: var(--color-text); font-weight:600; flex:1; }
 .qty { color:#555; font-weight:600; }
-.meta { color:#777; font-size: 12px; }
-.transfer-btn { background: var(--color-accents); border: 2px solid var(--color-buttons); border-radius: 8px; color: var(--color-text); padding: 4px 8px; font-size: 16px; cursor: pointer; transition: all 0.2s; }
+.stats {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: #666;
+}
+
+.stat {
+  margin-bottom: 0.25rem;
+  line-height: 1.2;
+}
+
+.stat:last-child {
+  margin-bottom: 0;
+}
+.transfer-btn { background: var(--color-accents); border: 2px solid var(--color-buttons); border-radius: 8px; color: var(--color-text); padding: 4px 8px; font-size: 16px; cursor: pointer; transition: all 0.2s; margin-top: 0.5rem; }
 .transfer-btn:hover:not(:disabled) { background: var(--color-buttons); transform: scale(1.05); }
 .transfer-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .footer { padding: 10px 12px; border-top: 2px solid var(--color-buttons); color: var(--color-text); border-radius: 0 0 14px 14px; background: var(--color-bg-menu); }
