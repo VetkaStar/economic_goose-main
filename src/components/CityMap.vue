@@ -7,7 +7,7 @@
         <div class="hud-header">
           <span class="hud-icon">💰</span>
           <span class="hud-value">₽{{ (authStore.user?.money || 0).toLocaleString() }}</span>
-        </div>
+      </div>
         
         <!-- Детали баланса -->
         <div v-if="showMoneyDetails" class="hud-details money-details">
@@ -27,8 +27,8 @@
             <div class="summary-item">
               <span class="summary-label">Доходы (день):</span>
               <span class="summary-value positive">+₽{{ dailyIncome.toLocaleString() }}</span>
-            </div>
-            
+    </div>
+
             <!-- Статистика заказов -->
             <div class="stats-section">
               <h4>📋 Заказы</h4>
@@ -1023,10 +1023,11 @@ const closeShop = () => {
 /* Компактная полоска управления временем */
 .time-controls-strip {
   position: fixed;
-  bottom: 20px;
-  left: 120px; /* Рядом с телефоном */
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 1001;
-  max-width: 500px;
+  max-width: 800px;
   width: auto;
 }
 
@@ -3013,9 +3014,9 @@ const closeShop = () => {
   }
   
   .time-controls-strip {
-    bottom: 10px;
-    left: 80px;
-    max-width: calc(100vw - 100px);
+    top: 10px;
+    right: 10px;
+    max-width: calc(100vw - 20px);
   }
   
   .building {

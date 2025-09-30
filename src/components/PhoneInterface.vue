@@ -220,8 +220,14 @@ const emit = defineEmits<{
 
 // Время и дата (игровое время)
 const timeStore = useTimeStore()
-const currentTime = computed(() => timeStore.currentTime.time)
-const currentDate = computed(() => timeStore.gameDate)
+const currentTime = computed(() => {
+  console.log('🕐 Phone time update:', timeStore.currentTime.time)
+  return timeStore.currentTime.time
+})
+const currentDate = computed(() => {
+  console.log('📅 Phone date update:', timeStore.gameDate)
+  return timeStore.gameDate
+})
 
 // Состояние
 const activeTab = ref('home')
@@ -356,9 +362,11 @@ let timeInterval: NodeJS.Timeout | null = null
 
 // Жизненный цикл (время теперь управляется timeStore)
 onMounted(() => {
+  console.log('📱 PhoneInterface mounted, starting time tick')
   // Запускаем автоматический тик времени
   if (!timeInterval) {
     timeInterval = setInterval(() => {
+      console.log('⏰ PhoneInterface tick interval')
       timeStore.tick()
     }, 1000) // Каждую секунду
   }

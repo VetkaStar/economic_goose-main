@@ -103,7 +103,9 @@ export const useTimeStore = defineStore('time', () => {
     if (gameTime.value.isPaused) return
 
     // Добавляем время в зависимости от ускорения
+    // Каждую секунду добавляем 1 минуту * ускорение
     const timeStep = timeAcceleration.value
+    console.log('⏰ TimeStore tick:', { timeStep, currentTime: gameTime.value })
     addTime(timeStep)
   }
 

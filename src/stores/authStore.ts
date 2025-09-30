@@ -301,6 +301,8 @@ export const useAuthStore = defineStore('auth', () => {
       }
 
       // Очищаем данные склада в базе данных
+      console.log('🗑️ Очищаем данные склада для пользователя:', user.value.id)
+      
       const { error: warehouseError } = await supabase
         .from('user_warehouse_inventory')
         .delete()
@@ -308,6 +310,8 @@ export const useAuthStore = defineStore('auth', () => {
 
       if (warehouseError) {
         console.warn('⚠️ Ошибка при очистке склада:', warehouseError)
+      } else {
+        console.log('✅ Данные склада очищены')
       }
 
       const { error: clothingError } = await supabase
@@ -317,6 +321,20 @@ export const useAuthStore = defineStore('auth', () => {
 
       if (clothingError) {
         console.warn('⚠️ Ошибка при очистке одежды:', clothingError)
+      } else {
+        console.log('✅ Данные одежды очищены')
+      }
+
+      // Очищаем транзакции склада
+      const { error: transactionsError } = await supabase
+        .from('warehouse_transactions')
+        .delete()
+        .eq('user_id', user.value.id)
+
+      if (transactionsError) {
+        console.warn('⚠️ Ошибка при очистке транзакций:', transactionsError)
+      } else {
+        console.log('✅ Транзакции склада очищены')
       }
 
       // Обновляем локальное состояние
@@ -331,6 +349,7 @@ export const useAuthStore = defineStore('auth', () => {
       })
 
       // Очищаем локальные данные игры
+      console.log('🗑️ Очищаем localStorage...')
       localStorage.removeItem(`home_pantry_${user.value.id}`)
       localStorage.removeItem('social_posts')
       localStorage.removeItem('social_responses')
@@ -339,8 +358,32 @@ export const useAuthStore = defineStore('auth', () => {
       localStorage.removeItem('social_taken_orders')
       localStorage.removeItem('warehouse_materials')
       localStorage.removeItem('warehouse_clothing')
-      localStorage.removeItem('company_state')
-      localStorage.removeItem('character_state')
+      localStorage.removeItem('warehouse_stats')
+      localStorage.removeItem('warehouse_transactions')
+      localStorage.removeItem(`company_state_${user.value.id}`)
+      localStorage.removeItem(`character_state_${user.value.id}`)
+      
+      // Очищаем все ключи, связанные с пользователем
+      Object.keys(localStorage).forEach(key => {
+        if (key.includes(user.value.id)) {
+          localStorage.removeItem(key)
+        }
+      })
+      
+      // Очищаем кэш в window объекте
+      if ((window as any).__warehouseMaterialsCatalog) {
+        delete (window as any).__warehouseMaterialsCatalog
+        console.log('✅ Кэш материалов очищен из window')
+      }
+      
+      // Очищаем все возможные кэши
+      Object.keys(window).forEach(key => {
+        if (key.includes('warehouse') || key.includes('material') || key.includes('clothing')) {
+          delete (window as any)[key]
+        }
+      })
+      
+      console.log('✅ localStorage и кэш очищены')
 
       // Сбрасываем состояние всех stores
       // Импортируем stores для сброса их состояния
@@ -360,6 +403,16 @@ export const useAuthStore = defineStore('auth', () => {
       if (warehouseStore.resetWarehouse) warehouseStore.resetWarehouse()
       if (pantryStore.resetState) pantryStore.resetState()
       if (socialStore.resetState) socialStore.resetState()
+
+      // Принудительно обновляем данные склада из базы (должно быть пусто)
+      if (warehouseStore.fetchMaterials) {
+        await warehouseStore.fetchMaterials()
+        console.log('✅ Данные материалов склада обновлены после сброса:', warehouseStore.materials)
+      }
+      if (warehouseStore.fetchClothing) {
+        await warehouseStore.fetchClothing()
+        console.log('✅ Данные одежды склада обновлены после сброса:', warehouseStore.clothing)
+      }
 
       // Принудительно обновляем все данные из базы
       await loadUserProfile(user.value.id)

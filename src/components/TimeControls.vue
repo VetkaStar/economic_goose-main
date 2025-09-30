@@ -63,7 +63,7 @@
     <div v-if="showReportModal" class="report-modal-overlay" @click.self="showReportModal = false">
       <div class="report-modal-center">
         <DailyReportModal 
-          :day="timeStore.currentDay || 1"
+          :day="timeStore.gameTime.day || 1"
           @close="showReportModal = false"
         />
       </div>
@@ -72,14 +72,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useTimeStore } from '@/stores/timeStore'
-import { useEconomyStore } from '@/stores/economyStore'
 import DailyReportModal from './DailyReportModal.vue'
 
 // Сторы
 const timeStore = useTimeStore()
-const economyStore = useEconomyStore()
 
 const showReportModal = ref(false)
 
@@ -128,11 +126,9 @@ const processDailyCalculations = async () => {
     console.log('🔄 Обработка дневных расчётов...')
     
     // Пока просто переходим к следующему дню без расчётов
-    addNotification('info', '🌅', 'Наступил новый день!')
     
   } catch (error) {
     console.error('❌ Ошибка при обработке дневных расчётов:', error)
-    addNotification('warning', '⚠️', 'Ошибка при обработке расчётов')
   }
 }
 
@@ -170,16 +166,18 @@ onUnmounted(() => {
 
 .time-controls {
   background: var(--color-bg-menu, #F4E6D1);
-  border-radius: clamp(8px, 1.2vw, 12px);
-  padding: clamp(8px, 1.2vw, 12px);
+  border-radius: clamp(8px, 1.2vw, 15px);
+  padding: clamp(12px, 2vw, 18px) clamp(18px, 2.5vw, 25px);
   border: clamp(2px, 0.3vw, 3px) solid var(--color-text, #5D4037);
   box-shadow: 0 clamp(4px, 0.8vw, 8px) clamp(8px, 1.6vw, 16px) var(--shadow-medium, rgba(0,0,0,0.2));
   font-family: 'Orbitron', sans-serif;
   display: flex;
   align-items: center;
-  gap: clamp(8px, 1.5vw, 16px);
+  gap: clamp(12px, 2vw, 20px);
   flex-wrap: nowrap;
-  overflow-x: auto;
+  min-width: 700px;
+  height: fit-content;
+  backdrop-filter: blur(5px);
 }
 
 /* Информация о дате */
@@ -189,7 +187,7 @@ onUnmounted(() => {
 }
 
 .date-value {
-  font-size: clamp(0.9rem, 1.6vw, 1.1rem);
+  font-size: clamp(1.1rem, 2vw, 1.4rem);
   font-weight: 700;
   color: var(--color-text, #5D4037);
   white-space: nowrap;
@@ -198,15 +196,15 @@ onUnmounted(() => {
 .time-progress {
   display: flex;
   align-items: center;
-  gap: clamp(6px, 1vw, 8px);
-  min-width: clamp(80px, 12vw, 120px);
+  gap: clamp(8px, 1.5vw, 12px);
+  min-width: clamp(140px, 20vw, 200px);
 }
 
 .progress-bar {
   flex: 1;
-  height: clamp(6px, 1vw, 8px);
+  height: clamp(8px, 1.5vw, 12px);
   background: var(--color-bg-menu-light, #E6D3B7);
-  border-radius: clamp(4px, 0.6vw, 6px);
+  border-radius: clamp(6px, 1vw, 8px);
   overflow: hidden;
   border: clamp(1px, 0.2vw, 2px) solid var(--color-text, #5D4037);
 }
@@ -234,10 +232,10 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: clamp(32px, 5vw, 40px);
-  height: clamp(32px, 5vw, 40px);
+  width: clamp(40px, 6vw, 50px);
+  height: clamp(40px, 6vw, 50px);
   border: clamp(2px, 0.3vw, 3px) solid var(--color-text, #5D4037);
-  border-radius: clamp(6px, 1vw, 8px);
+  border-radius: clamp(8px, 1.2vw, 10px);
   background: var(--color-bg-menu-light, #F9F1E8);
   color: var(--color-text, #5D4037);
   cursor: pointer;
@@ -262,7 +260,7 @@ onUnmounted(() => {
 }
 
 .btn-icon {
-  font-size: clamp(1rem, 1.8vw, 1.2rem);
+  font-size: clamp(1rem, 1.8vw, 1.3rem);
 }
 
 /* Информация о сезоне */
@@ -270,11 +268,12 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: clamp(4px, 0.8vw, 6px);
-  padding: clamp(4px, 0.8vw, 6px) clamp(8px, 1.2vw, 12px);
+  padding: clamp(6px, 1vw, 8px) clamp(8px, 1.2vw, 12px);
   background: var(--color-bg-menu-light, #F9F1E8);
   border-radius: clamp(4px, 0.6vw, 6px);
   border: clamp(1px, 0.2vw, 2px) solid var(--color-buttons-light, #D4824A);
   white-space: nowrap;
+  min-width: fit-content;
 }
 
 .info-icon {
@@ -282,7 +281,7 @@ onUnmounted(() => {
 }
 
 .info-text {
-  font-size: clamp(0.7rem, 1.2vw, 0.9rem);
+  font-size: clamp(0.8rem, 1.4vw, 1rem);
   font-weight: 600;
   color: var(--color-text, #5D4037);
 }
@@ -315,17 +314,32 @@ onUnmounted(() => {
 
 /* Адаптивность */
 @media (max-width: 768px) {
+  .time-controls {
+    min-width: auto;
+    width: 100%;
+    gap: clamp(8px, 1.5vw, 12px);
+    padding: clamp(8px, 1.5vw, 12px);
+  }
+  
   .time-buttons {
-    flex-direction: column;
+    gap: clamp(4px, 0.8vw, 6px);
   }
   
   .time-btn {
-    flex: none;
+    width: clamp(36px, 5.5vw, 44px);
+    height: clamp(36px, 5.5vw, 44px);
   }
   
-  .environment-info {
-    flex-direction: column;
-    gap: clamp(8px, 1.2vw, 12px);
+  .btn-icon {
+    font-size: clamp(1rem, 1.8vw, 1.3rem);
+  }
+  
+  .season-info {
+    padding: clamp(6px, 1.2vw, 8px) clamp(8px, 1.5vw, 12px);
+  }
+  
+  .info-text {
+    font-size: clamp(0.8rem, 1.4vw, 1rem);
   }
   
   .report-modal-center {

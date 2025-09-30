@@ -162,18 +162,66 @@ export const useWarehouseStore = defineStore('warehouse', () => {
   // Действия для работы с одеждой
   const fetchClothing = async () => {
     try {
-      const { data, error: fetchError } = await supabase
-        .from('warehouse_clothing')
-        .select('*')
-        .order('name')
+      console.log('👕 Загружаем одежду склада...')
+      
+      // Загружаем персональный инвентарь одежды игрока
+      if (authStore.user?.id) {
+        console.log('👤 Загружаем персональную одежду для пользователя:', authStore.user.id)
+        
+        const { data: inventoryData, error: inventoryError } = await supabase
+          .from('user_clothing_inventory')
+          .select(`
+            quantity,
+            clothing_id,
+            quality,
+            durability,
+            comfort,
+            style,
+            warehouse_clothing (
+              id,
+              name,
+              icon,
+              price,
+              description
+            )
+          `)
+          .eq('user_id', authStore.user.id)
 
-      if (fetchError) {
-        throw fetchError
+        console.log('📊 Результат запроса одежды:', { inventoryData, inventoryError })
+
+        if (inventoryError) {
+          console.error('❌ Ошибка загрузки персональной одежды:', inventoryError)
+        } else if (inventoryData && inventoryData.length > 0) {
+          // Преобразуем данные: объединяем информацию об одежде с количеством
+          const userClothing = inventoryData.map((item: any) => ({
+            id: item.warehouse_clothing.id,
+            name: item.warehouse_clothing.name,
+            icon: item.warehouse_clothing.icon,
+            quantity: item.quantity,
+            price: item.warehouse_clothing.price,
+            quality: item.quality,
+            durability: item.durability,
+            comfort: item.comfort,
+            style: item.style,
+            description: item.warehouse_clothing.description,
+            category: 'clothing'
+          }))
+          
+          console.log('✅ Персональная одежда загружена:', userClothing)
+          clothing.value = userClothing
+          return
+        } else {
+          console.log('👕 Персональная одежда пуста (length = 0)')
+        }
+      } else {
+        console.log('❌ Нет авторизованного пользователя')
       }
 
-      clothing.value = data || []
+      // Если нет авторизации или нет персонального инвентаря, показываем пустой склад
+      console.log('👕 Персональная одежда пуста или нет авторизации')
+      clothing.value = []
     } catch (err) {
-      console.error('Error fetching clothing:', err)
+      console.error('❌ Error fetching clothing:', err)
       throw err
     }
   }
