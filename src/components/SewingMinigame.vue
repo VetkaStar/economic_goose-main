@@ -74,9 +74,6 @@
     </div>
 
     <div class="game-controls">
-      <button @click="startGame" :disabled="isPlaying" class="start-btn">
-        {{ isPlaying ? 'В процессе...' : 'Начать работу' }}
-      </button>
       <button @click="pauseGame" :disabled="!isPlaying" class="pause-btn">
         Пауза
       </button>
@@ -90,10 +87,36 @@
         <span>Время: {{ formatTime(gameTime) }}</span>
       </div>
       <div class="stat">
-        <span>Качество: {{ quality }}%</span>
+        <span>Качество: {{ Math.round(quality) }}%</span>
       </div>
       <div class="stat">
         <span>Скорость: {{ averageSpeed }}/мин</span>
+      </div>
+      <div class="stat" v-if="gameMode === 'clicker'">
+        <span>Автоклик: {{ autoClicker }}/сек</span>
+      </div>
+    </div>
+
+    <!-- Панель улучшений -->
+    <div v-if="gameMode === 'clicker'" class="upgrades-panel">
+      <h4>Улучшения</h4>
+      <div class="upgrade-item">
+        <span>Сила клика: {{ clickPower }}x</span>
+        <button @click="upgradeClickPower" class="upgrade-btn">
+          Улучшить ({{ getUpgradeCost('clickPower') }}р)
+        </button>
+      </div>
+      <div class="upgrade-item">
+        <span>Автоклик: {{ autoClicker }}/сек</span>
+        <button @click="upgradeAutoClicker" class="upgrade-btn">
+          Улучшить ({{ getUpgradeCost('autoClicker') }}р)
+        </button>
+      </div>
+      <div class="upgrade-item">
+        <span>Уровень машинки: {{ machineLevel }}</span>
+        <button @click="upgradeMachine" class="upgrade-btn">
+          Улучшить ({{ getUpgradeCost('machine') }}р)
+        </button>
       </div>
     </div>
   </div>
@@ -130,20 +153,28 @@ const emit = defineEmits<{
 }>()
 
 // Игровое состояние
-const isPlaying = ref(false)
+const isPlaying = ref(true) // Игра всегда активна
 const gameTime = ref(0)
 const currentProgress = ref(0)
 const quality = ref(100)
-const currentSpeed = ref(0)
-const averageSpeed = ref(0)
+const currentSpeed = ref(30)
+const averageSpeed = ref(30)
 const isClicking = ref(false)
 const threadOpacity = ref(1)
 
+// Кликер механики
+const clickPower = ref(1) // Сила клика
+const autoClicker = ref(0) // Автоклик (кликов в секунду)
+const machineLevel = ref(1) // Уровень машинки
+const speedBonus = ref(1) // Бонус к скорости
+const qualityBonus = ref(1) // Бонус к качеству
+
 // Режим кликера
 const minSpeed = ref(30)
-const speedDecay = ref(2) // скорость падения в секунду
-const speedGain = ref(5) // прирост при клике
+const speedDecay = ref(1) // скорость падения в секунду
+const speedGain = ref(3) // прирост при клике
 const speedInterval = ref<NodeJS.Timeout | null>(null)
+const autoClickInterval = ref<NodeJS.Timeout | null>(null)
 
 // Режим точности
 const targets = ref<Target[]>([])
@@ -167,8 +198,12 @@ const accuracy = computed(() => {
 
 // Методы
 const startGame = () => {
-  if (isPlaying.value) return
-  
+  // Игра автоматически запускается при загрузке
+  console.log('🎮 Мини-игра запущена автоматически')
+}
+
+// Автоматический запуск игры
+const initGame = () => {
   isPlaying.value = true
   gameTime.value = 0
   currentProgress.value = 0
@@ -232,33 +267,53 @@ const updateGame = () => {
 }
 
 const startClickerMode = () => {
+  // Интервал падения скорости
   speedInterval.value = setInterval(() => {
     if (isPlaying.value) {
       currentSpeed.value = Math.max(0, currentSpeed.value - speedDecay.value)
       averageSpeed.value = Math.round((averageSpeed.value + currentSpeed.value) / 2)
     }
   }, 1000)
+  
+  // Автокликер
+  if (autoClicker.value > 0) {
+    autoClickInterval.value = setInterval(() => {
+      if (isPlaying.value) {
+        for (let i = 0; i < autoClicker.value; i++) {
+          performClick()
+        }
+      }
+    }, 1000)
+  }
 }
 
 const updateClickerProgress = () => {
   if (currentSpeed.value >= minSpeed.value) {
-    const progressGain = Math.min(2, currentSpeed.value / minSpeed.value)
+    // Прогресс зависит от скорости и бонусов
+    const baseProgress = Math.min(3, currentSpeed.value / minSpeed.value)
+    const progressGain = baseProgress * speedBonus.value * machineLevel.value
     currentProgress.value = Math.min(100, currentProgress.value + progressGain)
     
-    // Качество зависит от стабильности скорости
-    const speedStability = Math.min(1, currentSpeed.value / (minSpeed.value * 1.5))
-    quality.value = Math.max(50, quality.value - (1 - speedStability) * 2)
+    // Качество зависит от стабильности скорости и бонусов
+    const speedStability = Math.min(1, currentSpeed.value / (minSpeed.value * 1.2))
+    const qualityChange = (speedStability - 0.5) * 2 * qualityBonus.value
+    quality.value = Math.max(20, Math.min(100, quality.value + qualityChange))
   } else {
     // Штраф за низкую скорость
-    quality.value = Math.max(30, quality.value - 3)
+    quality.value = Math.max(20, quality.value - 2)
   }
+  
+  // Округляем значения для красивого отображения
+  currentProgress.value = Math.round(currentProgress.value * 100) / 100
+  quality.value = Math.round(quality.value * 100) / 100
 }
 
-const handleClick = () => {
+const performClick = () => {
   if (!isPlaying.value) return
   
   isClicking.value = true
-  currentSpeed.value = Math.min(100, currentSpeed.value + speedGain.value)
+  const clickEffect = speedGain.value * clickPower.value * speedBonus.value
+  currentSpeed.value = Math.min(100, currentSpeed.value + clickEffect)
   
   // Анимация клика
   setTimeout(() => {
@@ -270,6 +325,10 @@ const handleClick = () => {
   setTimeout(() => {
     threadOpacity.value = 1
   }, 200)
+}
+
+const handleClick = () => {
+  performClick()
 }
 
 const startPrecisionMode = () => {
@@ -285,12 +344,13 @@ const spawnTarget = () => {
     id: Date.now().toString(),
     x: Math.random() * 80 + 10, // 10-90%
     y: Math.random() * 60 + 20, // 20-80%
-    size: 40 + Math.random() * 20, // 40-60px
+    size: Math.max(25, 60 - gameTime.value * 3), // Уменьшаем размер со временем
     icon: ['🎯', '⭐', '💎', '🔸', '🔹'][Math.floor(Math.random() * 5)],
     isActive: true,
     isHit: false,
     isMissed: false,
-    timeout: targetTimeout.value
+    timeout: Math.max(1500, targetTimeout.value - gameTime.value * 100), // Уменьшаем время
+    spawnTime: Date.now()
   }
   
   targets.value.push(target)
@@ -301,8 +361,10 @@ const spawnTarget = () => {
     if (targetIndex !== -1 && targets.value[targetIndex].isActive) {
       targets.value[targetIndex].isMissed = true
       targets.value[targetIndex].isActive = false
+      // Штраф за промах
+      quality.value = Math.max(20, quality.value - 3)
     }
-  }, targetTimeout.value)
+  }, target.timeout)
 }
 
 const hitTarget = (targetId: string) => {
@@ -313,8 +375,22 @@ const hitTarget = (targetId: string) => {
   target.isActive = false
   hits.value++
   
-  // Обновляем качество
-  quality.value = Math.min(100, quality.value + 2)
+  // Прогресс зависит от размера цели (меньше = больше прогресса)
+  const sizeBonus = Math.max(0.5, (80 - target.size) / 40)
+  const progressGain = 2 + sizeBonus * qualityBonus.value
+  currentProgress.value = Math.min(100, currentProgress.value + progressGain)
+  
+  // Качество зависит от скорости попадания
+  const timeElapsed = Date.now() - target.spawnTime
+  const timeBonus = Math.max(0.5, 1 - timeElapsed / target.timeout)
+  const qualityGain = timeBonus * 8 * qualityBonus.value
+  quality.value = Math.min(100, quality.value + qualityGain)
+  
+  // Округляем значения
+  currentProgress.value = Math.round(currentProgress.value * 100) / 100
+  quality.value = Math.round(quality.value * 100) / 100
+  
+  console.log('🎯 Попадание! Прогресс:', currentProgress.value, 'Качество:', quality.value)
 }
 
 const updatePrecisionProgress = () => {
@@ -348,6 +424,92 @@ const formatTime = (seconds: number) => {
   return `${mins}:${secs.toString().padStart(2, '0')}`
 }
 
+// Система прокачки
+const getUpgradeCost = (type: string) => {
+  switch (type) {
+    case 'clickPower':
+      return clickPower.value * 1000
+    case 'autoClicker':
+      return (autoClicker.value + 1) * 2000
+    case 'machine':
+      return machineLevel.value * 5000
+    default:
+      return 1000
+  }
+}
+
+const upgradeClickPower = async () => {
+  const cost = getUpgradeCost('clickPower')
+  const { useAuthStore } = await import('@/stores/authStore')
+  const authStore = useAuthStore()
+  
+  if (!authStore.user || authStore.user.money < cost) {
+    console.log('❌ Недостаточно денег для улучшения силы клика')
+    return
+  }
+  
+  const success = await authStore.spendMoney(cost)
+  if (success) {
+    clickPower.value++
+    console.log('✅ Улучшена сила клика:', clickPower.value)
+  }
+}
+
+const upgradeAutoClicker = async () => {
+  const cost = getUpgradeCost('autoClicker')
+  const { useAuthStore } = await import('@/stores/authStore')
+  const authStore = useAuthStore()
+  
+  if (!authStore.user || authStore.user.money < cost) {
+    console.log('❌ Недостаточно денег для автокликера')
+    return
+  }
+  
+  const success = await authStore.spendMoney(cost)
+  if (success) {
+    autoClicker.value++
+    console.log('✅ Куплен автокликер:', autoClicker.value)
+    
+    // Перезапускаем автокликер
+    if (autoClickInterval.value) {
+      clearInterval(autoClickInterval.value)
+    }
+    if (autoClicker.value > 0) {
+      autoClickInterval.value = setInterval(() => {
+        if (isPlaying.value) {
+          for (let i = 0; i < autoClicker.value; i++) {
+            performClick()
+          }
+        }
+      }, 1000)
+    }
+  }
+}
+
+const upgradeMachine = async () => {
+  const cost = getUpgradeCost('machine')
+  const { useAuthStore } = await import('@/stores/authStore')
+  const authStore = useAuthStore()
+  
+  if (!authStore.user || authStore.user.money < cost) {
+    console.log('❌ Недостаточно денег для улучшения машинки')
+    return
+  }
+  
+  const success = await authStore.spendMoney(cost)
+  if (success) {
+    machineLevel.value++
+    speedBonus.value += 0.2
+    qualityBonus.value += 0.1
+    console.log('✅ Улучшена машинка:', machineLevel.value)
+  }
+}
+
+// Автоматический запуск при монтировании
+onMounted(() => {
+  initGame()
+})
+
 // Очистка при размонтировании
 onUnmounted(() => {
   stopIntervals()
@@ -356,8 +518,6 @@ onUnmounted(() => {
 
 <style scoped>
 .sewing-minigame {
-  background: var(--color-bg-menu, #F4E6D1);
-  border-radius: 15px;
   padding: 20px;
   max-width: 600px;
   margin: 0 auto;
@@ -638,5 +798,54 @@ onUnmounted(() => {
 
 .click-instructions p {
   margin: 5px 0;
+}
+
+/* Панель улучшений */
+.upgrades-panel {
+  margin-top: 20px;
+  padding: 15px;
+  background: var(--color-bg-menu);
+  border-radius: 12px;
+  border: 2px solid var(--color-accent);
+}
+
+.upgrades-panel h4 {
+  margin: 0 0 15px 0;
+  color: var(--color-accent);
+  font-size: 16px;
+}
+
+.upgrade-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  margin-bottom: 10px;
+  background: var(--color-bg-secondary);
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.upgrade-btn {
+  padding: 6px 12px;
+  background: var(--color-accent);
+  color: var(--color-text-inverse);
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.upgrade-btn:hover {
+  background: var(--color-accent-dark);
+  transform: translateY(-1px);
+}
+
+.upgrade-btn:disabled {
+  background: var(--color-text-light);
+  cursor: not-allowed;
+  transform: none;
 }
 </style>

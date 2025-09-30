@@ -149,6 +149,7 @@ const closeRating = () => {
   showRating.value = false
 }
 
+
 const openHotkeys = () => {
   console.log('Opening hotkeys modal')
   showHotkeys.value = true
