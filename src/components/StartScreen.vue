@@ -98,6 +98,28 @@ const startGame = () => {
   justify-content: center;
   align-items: center;
   margin-bottom: 4rem;
+  position: relative;
+  padding: clamp(2rem, 4vw, 3rem) clamp(3rem, 6vw, 5rem);
+}
+
+
+.game-title::before {
+  content: '';
+  position: absolute;
+  top: -25px;
+  left: -40px;
+  right: -40px;
+  bottom: -20px;
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.9) 0%, 
+    rgba(255, 255, 255, 0.8) 50%, 
+    rgba(255, 255, 255, 0.9) 100%);
+  border: 4px solid rgba(139, 69, 19, 0.8);
+  border-radius: clamp(25px, 4vw, 40px);
+  box-shadow: 
+    0 8px 30px rgba(0, 0, 0, 0.3),
+    inset 0 2px 8px rgba(255, 255, 255, 0.6);
+  z-index: -1;
 }
 
 .welcome-text {
@@ -111,7 +133,9 @@ const startGame = () => {
     -1px -1px 0px rgba(255, 255, 255, 0.9),
     1px -1px 0px rgba(255, 255, 255, 0.9),
     -1px 1px 0px rgba(255, 255, 255, 0.9),
-    0 3px 8px rgba(0, 0, 0, 0.3);
+    0 3px 8px rgba(0, 0, 0, 1),
+    0 5px 15px rgba(0, 0, 0, 1),
+    0 8px 25px rgba(0, 0, 0, 0.8);
 }
 
 .title-main {
@@ -126,7 +150,9 @@ const startGame = () => {
     -2px -2px 0px rgba(255, 255, 255, 0.9),
     2px -2px 0px rgba(255, 255, 255, 0.9),
     -2px 2px 0px rgba(255, 255, 255, 0.9),
-    0 4px 12px rgba(0, 0, 0, 0.4);
+    0 4px 10px rgba(0, 0, 0, 1),
+    0 6px 20px rgba(0, 0, 0, 1),
+    0 10px 30px rgba(0, 0, 0, 0.9);
 }
 
 .title-subtitle {
@@ -140,7 +166,9 @@ const startGame = () => {
     -1px -1px 0px rgba(255, 255, 255, 0.9),
     1px -1px 0px rgba(255, 255, 255, 0.9),
     -1px 1px 0px rgba(255, 255, 255, 0.9),
-    0 3px 8px rgba(0, 0, 0, 0.3);
+    0 3px 8px rgba(0, 0, 0, 1),
+    0 5px 15px rgba(0, 0, 0, 1),
+    0 8px 25px rgba(0, 0, 0, 0.8);
 }
 
 /* Кнопка начать */
