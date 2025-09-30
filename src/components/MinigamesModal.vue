@@ -46,38 +46,12 @@
                 </div>
               </div>
               
-          <!-- Социальные игры -->
+          <!-- Социальные и кооперативные игры (объединены) -->
           <div class="section">
-            <h3 class="section-title">● Социальные игры</h3>
+            <h3 class="section-title">● Совместные игры</h3>
             <div class="games-list">
               <div 
-                v-for="game in socialGames" 
-                :key="game.id"
-                class="game-card"
-                @click="playGame(game)"
-              >
-                <div class="game-icon">{{ game.icon }}</div>
-                <div class="game-info">
-                  <div class="game-name">{{ game.name }}</div>
-                  <div class="game-description">{{ game.description }}</div>
-                  <div class="game-meta">
-                    <span class="meta-item">▲ {{ game.players }}</span>
-                    <span class="meta-item">◉ {{ game.duration }}</span>
-                    <span class="meta-item online" v-if="game.onlinePlayers > 0">
-                      ● {{ game.onlinePlayers }} онлайн
-                  </span>
-                </div>
-              </div>
-              </div>
-              </div>
-            </div>
-            
-          <!-- Кооперативные игры -->
-          <div class="section">
-            <h3 class="section-title">◆ Кооперативные игры</h3>
-            <div class="games-list">
-              <div 
-                v-for="game in cooperativeGames" 
+                v-for="game in combinedGroupGames" 
                 :key="game.id"
                 class="game-card"
                 :class="{ locked: game.locked }"
@@ -88,6 +62,9 @@
                   <div class="game-name">{{ game.name }}</div>
                   <div class="game-description">{{ game.description }}</div>
                   <div class="game-meta">
+                    <span class="meta-item tag" :class="game.category">
+                      {{ game.category === 'cooperative' ? 'кооперативная' : 'социальная' }}
+                    </span>
                     <span class="meta-item">▲ {{ game.players }}</span>
                     <span class="meta-item">◉ {{ game.duration }}</span>
                     <span class="meta-item" v-if="game.locked">■ {{ game.unlockRequirement }}</span>
@@ -97,36 +74,10 @@
                   </div>
                 </div>
               </div>
-          </div>
-<<<<<<< HEAD
-
-          
-=======
-        </div>
-        
-          <!-- Одиночные игры -->
-          <div class="section">
-            <h3 class="section-title">▲ Одиночные игры</h3>
-            <div class="games-list">
-              <div 
-                v-for="game in soloGames" 
-              :key="game.id"
-                class="game-card"
-              @click="playGame(game)"
-            >
-                <div class="game-icon">{{ game.icon }}</div>
-                <div class="game-info">
-                  <div class="game-name">{{ game.name }}</div>
-                  <div class="game-description">{{ game.description }}</div>
-                  <div class="game-meta">
-                    <span class="meta-item">● Одиночная</span>
-                    <span class="meta-item">◉ {{ game.duration }}</span>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
->>>>>>> 2b3aa131958cdd34f3127d5e926dc9786a129b1e
+
+
         </div>
         
         <!-- Статистика игрока (фиксированная панель) -->
@@ -273,42 +224,16 @@ const allGames = ref([
     eventType: 'monthly'
   },
   
-<<<<<<< HEAD
   
-=======
-  // Одиночные игры
-  {
-    id: 'design_master',
-    name: 'Мастер дизайна',
-    description: 'Создавайте уникальные дизайны одежды',
-    icon: '■',
-    category: 'solo',
-    players: '1',
-    duration: '6 мин',
-    onlinePlayers: 0,
-    type: 'solo'
-  },
-  {
-    id: 'business_simulator',
-    name: 'Бизнес-симулятор',
-    description: 'Управляйте своим модным бизнесом',
-    icon: '◉',
-    category: 'solo',
-    players: '1',
-    duration: '15 мин',
-    onlinePlayers: 0,
-    type: 'solo'
-  }
->>>>>>> 2b3aa131958cdd34f3127d5e926dc9786a129b1e
 ])
 
-// Фильтрованные игры по категориям
-const socialGames = computed(() => 
-  allGames.value.filter(game => game.category === 'social')
-)
+// Фильтрованные игры по категориям (объединены ниже)
 
-const cooperativeGames = computed(() => 
-  allGames.value.filter(game => game.category === 'cooperative')
+// Объединённая категория: социальные + кооперативные с сортировкой по онлайну
+const combinedGroupGames = computed(() =>
+  allGames.value
+    .filter(game => game.category === 'social' || game.category === 'cooperative')
+    .sort((a, b) => (b.onlinePlayers || 0) - (a.onlinePlayers || 0))
 )
 
 // удалены одиночные игры и связанные вычисления
@@ -319,7 +244,7 @@ const activeEvents = computed(() =>
 
 // Быстрое подключение к игре
 const quickJoinGame = () => {
-  const isAuthenticated = requireAuth('quick-join', () => {
+  const isAuthenticated = requireAuth('minigames', () => {
     const popularGame = allGames.value
       .filter(game => game.onlinePlayers > 0)
       .sort((a, b) => b.onlinePlayers - a.onlinePlayers)[0]
@@ -707,6 +632,23 @@ const close = () => {
 .meta-item.online {
   color: var(--color-accents);
   font-weight: 600;
+}
+
+/* Теги категорий */
+.meta-item.tag {
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--color-buttons);
+  background: var(--color-bg-menu-light);
+  text-transform: lowercase;
+}
+
+.meta-item.tag.cooperative {
+  color: var(--color-highlights);
+}
+
+.meta-item.tag.social {
+  color: var(--color-accents);
 }
 
 /* Статистика */
