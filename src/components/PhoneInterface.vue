@@ -33,6 +33,12 @@
         <div class="tab-content">
           <!-- Главный экран -->
           <div v-if="activeTab === 'home'" class="apps">
+            <!-- Управление временем -->
+            <div class="time-controls-container">
+              <TimeControls />
+            </div>
+            
+            <!-- Приложения -->
             <div class="app" v-for="app in apps" :key="app.id" @click="openApp(app.id)">
               <div class="app-icon" :class="app.class">
                 <div v-if="app.badge" class="badge">{{ app.badge }}</div>
@@ -203,6 +209,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useTimeStore } from '@/stores/timeStore'
+import TimeControls from './TimeControls.vue'
 
 interface PhoneInterfaceProps {
   show: boolean
@@ -217,10 +225,10 @@ const emit = defineEmits<{
   close: []
 }>()
 
-// Время и дата
-const currentTime = ref('')
-const currentDate = ref('')
-let timeInterval: NodeJS.Timeout | null = null
+// Время и дата (игровое время)
+const timeStore = useTimeStore()
+const currentTime = computed(() => timeStore.currentTime.time)
+const currentDate = computed(() => timeStore.gameDate)
 
 // Состояние
 const activeTab = ref('home')
@@ -291,22 +299,17 @@ const tasks = ref([
 
 const balance = ref('125,750')
 
-// Функции времени
-const updateTime = () => {
-  const now = new Date()
-  currentTime.value = now.getHours().toString().padStart(2, '0') + ':' + 
-                     now.getMinutes().toString().padStart(2, '0')
-  
-  const options: Intl.DateTimeFormatOptions = { 
-    day: 'numeric', 
-    month: 'short' 
-  }
-  currentDate.value = now.toLocaleDateString('ru-RU', options)
-}
+// Функции времени (теперь используются из timeStore)
 
 const currentMonth = computed(() => {
-  const now = new Date()
-  return now.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })
+  const season = timeStore.getSeason()
+  const seasonNames = {
+    spring: 'Весна',
+    summer: 'Лето', 
+    autumn: 'Осень',
+    winter: 'Зима'
+  }
+  return seasonNames[season as keyof typeof seasonNames] || 'Весна'
 })
 
 const calendarDays = computed(() => {
@@ -355,16 +358,13 @@ const closePhone = () => {
   emit('close')
 }
 
-// Жизненный цикл
+// Жизненный цикл (время теперь управляется timeStore)
 onMounted(() => {
-  updateTime()
-  timeInterval = setInterval(updateTime, 1000)
+  // Время автоматически обновляется в timeStore
 })
 
 onUnmounted(() => {
-  if (timeInterval) {
-    clearInterval(timeInterval)
-  }
+  // Очистка не нужна, так как timeStore управляет временем
 })
 </script>
 
@@ -511,6 +511,11 @@ onUnmounted(() => {
   grid-template-columns: 1fr 1fr;
   gap: 35px;
   row-gap: 45px;
+}
+
+.time-controls-container {
+  grid-column: 1 / -1;
+  margin-bottom: 20px;
 }
 
 .app {

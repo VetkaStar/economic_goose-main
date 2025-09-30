@@ -5,10 +5,6 @@
       <div class="warehouse-header">
         <div class="header-left">
           <h2>📦 Мой склад</h2>
-          <div class="player-balance">
-            <span class="balance-label">Баланс:</span>
-            <span class="balance-amount">{{ authStore.user?.money?.toLocaleString() || '0' }}₽</span>
-          </div>
         </div>
         <button class="close-btn" @click="closeModal">×</button>
       </div>
@@ -37,7 +33,10 @@
         <template v-else>
           <!-- Левая панель - Инвентарь -->
           <div class="inventory-panel">
-            <h3>📦 Содержимое склада ({{ materials.value?.length || 0 }} материалов, {{ clothing.value?.length || 0 }} одежды)</h3>
+            <h3>📦 Содержимое склада ({{ materials?.value?.length || 0 }} материалов, {{ clothing?.value?.length || 0 }} одежды)</h3>
+            <div class="table-skeleton" v-if="!materials || !clothing">
+              <div class="row" v-for="i in 5" :key="i"></div>
+            </div>
             
             <!-- Материалы -->
             <div class="inventory-section">
@@ -271,9 +270,7 @@ onMounted(async () => {
   
   // Загружаем данные БЕЗ использования loading из store
   try {
-    await warehouseStore.fetchMaterials()
-    await warehouseStore.fetchClothing()
-    await warehouseStore.fetchStats()
+    await warehouseStore.loadWarehouseData()
     console.log('🏭 WarehouseModal: Данные склада загружены, материалы:', materials.value?.length || 0)
     console.log('🏭 WarehouseModal: Одежда:', clothing.value?.length || 0)
   } catch (error) {

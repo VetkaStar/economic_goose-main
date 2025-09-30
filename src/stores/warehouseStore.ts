@@ -45,11 +45,22 @@ export const useWarehouseStore = defineStore('warehouse', () => {
   })
 
   const warehouseCapacity = computed(() => {
-    return stats.value?.capacity_percent || 0
+    // Если нет таблицы статистики — считаем по слотам из companyStore
+    const company = require('@/stores/companyStore') as any
+    const useCompanyStore = company.useCompanyStore
+    const c = useCompanyStore?.()
+    const slots = c?.state.capacities?.warehouse?.slots || c?.state.capacities?.homePantry?.materialsSlots || 0
+    const used = materialsTotal.value + clothingTotal.value
+    return slots > 0 ? Math.min(100, Math.round((used / slots) * 100)) : 0
   })
 
   const freeSpace = computed(() => {
-    return stats.value?.free_space || 0
+    const company = require('@/stores/companyStore') as any
+    const useCompanyStore = company.useCompanyStore
+    const c = useCompanyStore?.()
+    const slots = c?.state.capacities?.warehouse?.slots || c?.state.capacities?.homePantry?.materialsSlots || 0
+    const used = materialsTotal.value + clothingTotal.value
+    return Math.max(0, slots - used)
   })
 
   const summary = computed<WarehouseSummary>(() => ({
@@ -204,11 +215,12 @@ export const useWarehouseStore = defineStore('warehouse', () => {
         throw new Error('Недостаточно материала на складе')
       }
 
-      // Обновляем в базе данных
+      // Обновляем в базе данных персональную запись пользователя
       const { error: updateError } = await supabase
-        .from('warehouse_materials')
+        .from('user_warehouse_inventory')
         .update({ quantity: newQuantity })
-        .eq('id', materialId)
+        .eq('user_id', authStore.user?.id || '')
+        .eq('material_id', materialId)
 
       if (updateError) {
         throw updateError
@@ -367,9 +379,10 @@ export const useWarehouseStore = defineStore('warehouse', () => {
       console.log(`📦 Новое количество должно быть: ${newQuantity}`)
 
       const { error: updateError } = await supabase
-        .from('warehouse_materials')
+        .from('user_warehouse_inventory')
         .update({ quantity: newQuantity })
-        .eq('id', materialId)
+        .eq('user_id', authStore.user?.id || '')
+        .eq('material_id', materialId)
 
       if (updateError) {
         console.error('❌ Ошибка обновления в базе:', updateError)

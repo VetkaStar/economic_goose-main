@@ -27,51 +27,6 @@
           <span class="progress-text">{{ experiencePercentage }}%</span>
         </div>
         
-        <!-- Статистика -->
-        <div class="stats-section">
-          <h3>📊 Статистика</h3>
-          <div class="stats-grid">
-            <div class="stat-item">
-              <span class="stat-icon">🏢</span>
-              <span class="stat-label">Компании создано:</span>
-              <span class="stat-value">{{ userStats.companiesCreated }}</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-icon">💰</span>
-              <span class="stat-label">Заработано:</span>
-              <span class="stat-value">{{ formatMoney(userStats.totalEarned) }}</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-icon">🎯</span>
-              <span class="stat-label">Мини-игр сыграно:</span>
-              <span class="stat-value">{{ userStats.minigamesPlayed }}</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-icon">⏱️</span>
-              <span class="stat-label">Время в игре:</span>
-              <span class="stat-value">{{ userStats.playTime }}</span>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Достижения -->
-        <div class="achievements-section">
-          <h3>🏆 Достижения</h3>
-          <div class="achievements-grid">
-            <div 
-              v-for="achievement in achievements" 
-              :key="achievement.id"
-              class="achievement-item"
-              :class="{ 'unlocked': achievement.unlocked }"
-            >
-              <div class="achievement-icon">{{ achievement.icon }}</div>
-              <div class="achievement-info">
-                <h4>{{ achievement.title }}</h4>
-                <p>{{ achievement.description }}</p>
-              </div>
-            </div>
-          </div>
-        </div>
         
         <!-- Настройки аккаунта -->
         <div class="account-settings-section">
@@ -126,67 +81,29 @@ const authStore = useAuthStore()
 
 // Информация о пользователе
 const userInfo = ref({
-  username: 'Гусь-Предприниматель',
-  level: 5,
-  experience: 1250,
-  nextLevelExp: 2000,
-  email: 'goose@fashion-empire.com'
+  username: authStore.user?.username || '',
+  level: authStore.user?.level || 1,
+  experience: authStore.user?.experience || 0,
+  nextLevelExp: 1000,
+  email: authStore.user?.email || ''
 })
 
-// Статистика пользователя
-const userStats = ref({
-  companiesCreated: 3,
-  totalEarned: 125000,
-  minigamesPlayed: 47,
-  playTime: '12ч 34м'
-})
-
-// Достижения
-const achievements = ref([
-  {
-    id: 1,
-    icon: '🎯',
-    title: 'Первый шаг',
-    description: 'Создайте свою первую компанию',
-    unlocked: true
-  },
-  {
-    id: 2,
-    icon: '💰',
-    title: 'Миллионер',
-    description: 'Заработайте 1,000,000 монет',
-    unlocked: false
-  },
-  {
-    id: 3,
-    icon: '🏆',
-    title: 'Чемпион',
-    description: 'Займите 1 место в рейтинге',
-    unlocked: false
-  },
-  {
-    id: 4,
-    icon: '⏰',
-    title: 'Трудоголик',
-    description: 'Играйте 24 часа подряд',
-    unlocked: false
-  }
-])
 
 // Вычисляемые свойства
 const experiencePercentage = computed(() => {
   return Math.round((userInfo.value.experience / userInfo.value.nextLevelExp) * 100)
 })
 
-// Функции
-const formatMoney = (amount: number) => {
-  return new Intl.NumberFormat('ru-RU').format(amount) + ' ₽'
-}
 
-const saveAccount = () => {
-  // Здесь будет логика сохранения данных аккаунта
-  console.log('Сохранение данных аккаунта:', userInfo.value)
-  closeModal()
+const saveAccount = async () => {
+  try {
+    if (!authStore.user) return
+    // Здесь можно обновить username/full_name/email при необходимости
+    console.log('Сохранение данных аккаунта:', userInfo.value)
+    closeModal()
+  } catch (e) {
+    console.error(e)
+  }
 }
 
 const resetAccount = () => {
@@ -202,12 +119,8 @@ const closeModal = () => {
 }
 
 const logout = async () => {
-  if (confirm('Вы уверены, что хотите выйти из аккаунта?')) {
-    const success = await authStore.signOut()
-    if (success) {
-      closeModal()
-    }
-  }
+  const success = await authStore.signOut()
+  if (success) closeModal()
 }
 </script>
 
@@ -310,11 +223,11 @@ const logout = async () => {
   text-shadow: 1px 1px 0px var(--shadow-light);
 }
 
-.stats-section, .achievements-section, .account-settings-section {
+.account-settings-section {
   margin-bottom: clamp(25px, 4vw, 40px);
 }
 
-.stats-section h3, .achievements-section h3, .account-settings-section h3 {
+.account-settings-section h3 {
   margin: 0 0 clamp(15px, 2vw, 25px) 0;
   color: var(--color-text);
   font-size: clamp(1.1rem, 2.2vw, 1.6rem);
@@ -325,103 +238,6 @@ const logout = async () => {
   text-shadow: 1px 1px 0px var(--shadow-light);
 }
 
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: clamp(15px, 2vw, 20px);
-}
-
-.stat-item {
-  display: flex;
-  align-items: center;
-  gap: clamp(10px, 1.5vw, 15px);
-  padding: clamp(12px, 2vw, 20px);
-  background: var(--gradient-bg);
-  border-radius: clamp(8px, 1.5vw, 15px);
-  border: clamp(1px, 0.2vw, 2px) solid var(--color-buttons);
-  box-shadow: 0 clamp(2px, 0.4vw, 4px) clamp(4px, 0.8vw, 8px) var(--shadow-light);
-  transition: all 0.3s ease;
-}
-
-.stat-item:hover {
-  background: var(--color-bg-menu-light);
-  transform: translateY(-2px);
-  box-shadow: 0 clamp(4px, 0.8vw, 8px) clamp(6px, 1.2vw, 12px) var(--shadow-medium);
-}
-
-.stat-icon {
-  font-size: clamp(1.5rem, 2.5vw, 2rem);
-}
-
-.stat-label {
-  flex: 1;
-  color: var(--color-text);
-  font-family: 'Orbitron', sans-serif;
-  font-size: clamp(0.9rem, 1.6vw, 1.3rem);
-  font-weight: 500;
-  text-shadow: 1px 1px 0px var(--shadow-light);
-}
-
-.stat-value {
-  color: var(--color-accents);
-  font-family: 'Orbitron', sans-serif;
-  font-size: clamp(0.9rem, 1.6vw, 1.3rem);
-  font-weight: 700;
-  text-shadow: 1px 1px 0px var(--shadow-light);
-}
-
-.achievements-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: clamp(15px, 2vw, 20px);
-}
-
-.achievement-item {
-  display: flex;
-  align-items: center;
-  gap: clamp(12px, 2vw, 20px);
-  padding: clamp(15px, 2vw, 25px);
-  background: var(--gradient-bg);
-  border-radius: clamp(10px, 1.5vw, 15px);
-  border: clamp(1px, 0.2vw, 2px) solid var(--color-buttons);
-  box-shadow: 0 clamp(2px, 0.4vw, 4px) clamp(4px, 0.8vw, 8px) var(--shadow-light);
-  transition: all 0.3s ease;
-  opacity: 0.6;
-}
-
-.achievement-item.unlocked {
-  opacity: 1;
-  background: var(--color-bg-menu-light);
-  border-color: var(--color-highlights);
-}
-
-.achievement-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 clamp(4px, 0.8vw, 8px) clamp(6px, 1.2vw, 12px) var(--shadow-medium);
-}
-
-.achievement-icon {
-  font-size: clamp(2rem, 3vw, 2.5rem);
-}
-
-.achievement-info h4 {
-  margin: 0 0 clamp(4px, 0.8vw, 8px) 0;
-  color: var(--color-text);
-  font-size: clamp(1rem, 1.8vw, 1.4rem);
-  font-family: 'Orbitron', sans-serif;
-  font-weight: 700;
-  text-shadow: 1px 1px 0px var(--shadow-light);
-}
-
-.achievement-info p {
-  margin: 0;
-  color: var(--color-text);
-  font-size: clamp(0.8rem, 1.4vw, 1.1rem);
-  font-family: 'Orbitron', sans-serif;
-  font-weight: 400;
-  text-shadow: 1px 1px 0px var(--shadow-light);
-  opacity: 0.8;
-}
 
 .setting-item {
   display: flex;
@@ -479,9 +295,6 @@ const logout = async () => {
     text-align: center;
   }
   
-  .stats-grid, .achievements-grid {
-    grid-template-columns: 1fr;
-  }
   
   .setting-item {
     flex-direction: column;

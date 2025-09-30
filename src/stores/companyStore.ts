@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { CompanyState, RentablePlace } from '@/types/company'
 import { useGameStore } from '@/stores/gameStore'
+import { useAuthStore } from '@/stores/authStore'
 
 const DEFAULT_RENT_COST: Record<RentablePlace, number> = {
   warehouse: 3000,
@@ -17,6 +18,7 @@ const DEFAULT_DAILY_FEES: Record<RentablePlace, number> = {
 
 export const useCompanyStore = defineStore('company', () => {
   const game = useGameStore()
+  const auth = useAuthStore()
 
   const state = ref<CompanyState>({
     location: {
@@ -32,7 +34,29 @@ export const useCompanyStore = defineStore('company', () => {
       level: 1,
       experience: 0,
     },
+    // Емкости: мини-склад дома и арендованный склад
+    capacities: {
+      homePantry: { materialsSlots: 10, productsSlots: 10 },
+      warehouse: { level: 0, slots: 0 },
+    },
   })
+
+  // -- Персист состояния (localStorage пока; позже перенесем в Supabase) --
+  const STORAGE_KEY = computed(() => `company_state_${auth.user?.id || 'guest'}`)
+  function saveState() {
+    try { localStorage.setItem(STORAGE_KEY.value, JSON.stringify(state.value)) } catch {}
+  }
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY.value)
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        state.value = { ...state.value, ...parsed }
+      }
+    } catch {}
+  }
+  // Загружаем при инициализации
+  loadState()
 
   // Компьютед-доступ к арендам
   const isWarehouseAvailable = computed(() => state.value.rent.isRented.warehouse)
@@ -40,11 +64,18 @@ export const useCompanyStore = defineStore('company', () => {
   const isMarketAvailable = computed(() => state.value.rent.isRented.market)
 
   // Аренда места: списывает деньги через gameStore
-  function rent(place: RentablePlace): boolean {
+  async function rent(place: RentablePlace): Promise<boolean> {
     if (state.value.rent.isRented[place]) return true
     const cost = state.value.rent.rentCosts[place]
-    if (game.spendMoney(cost)) {
+    const paid = auth.isAuthenticated ? await auth.spendMoney(cost) : game.spendMoney(cost)
+    if (paid) {
       state.value.rent.isRented[place] = true
+      if (place === 'warehouse') {
+        // Базовая емкость склада при первой аренде
+        state.value.capacities.warehouse.level = 1
+        state.value.capacities.warehouse.slots = 20
+      }
+      saveState()
       return true
     }
     return false
@@ -61,7 +92,10 @@ export const useCompanyStore = defineStore('company', () => {
     for (const p of Object.keys(state.value.rent.isRented) as RentablePlace[]) {
       if (state.value.rent.isRented[p]) total += state.value.rent.dailyFees[p]
     }
-    if (total > 0) game.spendMoney(total)
+    if (total > 0) {
+      if (auth.isAuthenticated) { auth.spendMoney(total) } else { game.spendMoney(total) }
+      saveState()
+    }
   }
 
   // Перемещение по карте
@@ -70,12 +104,14 @@ export const useCompanyStore = defineStore('company', () => {
     if (!state.value.location.discoveredPoints.includes(pointId)) {
       state.value.location.discoveredPoints.push(pointId)
     }
+    saveState()
   }
 
   // Прогрессия компании
   function addCompanyExp(amount: number) {
     state.value.progress.experience += amount
     checkCompanyLevelUp()
+    saveState()
   }
 
   function checkCompanyLevelUp() {
@@ -106,6 +142,17 @@ export const useCompanyStore = defineStore('company', () => {
     canUseWarehouse,
     canUseAtelier,
     canUseMarket,
+    // апгрейд склада (+20 слотов за уровень, цена та же, можно вынести в баланс)
+    async upgradeWarehouse() {
+      if (!state.value.rent.isRented.warehouse) return false
+      const cost = state.value.rent.rentCosts.warehouse
+      const paid = auth.isAuthenticated ? await auth.spendMoney(cost) : game.spendMoney(cost)
+      if (!paid) return false
+      state.value.capacities.warehouse.level += 1
+      state.value.capacities.warehouse.slots += 20
+      saveState()
+      return true
+    }
   }
 })
 

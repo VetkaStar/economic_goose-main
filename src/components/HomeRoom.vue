@@ -1,17 +1,17 @@
 <template>
-  <div class="modal-overlay" @click.self="emit('close')">
+  <div class="modal-overlay" @click.self="$emit('close')">
     <div class="room-modal">
       <div class="room-header">
         <h2 class="title">▲ Дом гуся</h2>
-        <button class="close-btn" @click="emit('close')">✕</button>
+        <button class="close-btn" @click="$emit('close')">✕</button>
       </div>
 
       <div class="room-content">
         <!-- Сцена комнаты -->
         <div class="scene">
-          <div class="machine" @click="openConstructor">Швейная машинка</div>
-          <div class="laptop" @click="openSupplies">Компьютер</div>
-          <div class="shelves" @click="openWarehouse">Коробки ткани</div>
+          <div class="machine" @click="showConstructor = true">Швейная машинка</div>
+          <div class="laptop" @click="showSocial = true">Компьютер</div>
+          <div class="shelves" @click="showPantry = true">Кладовая</div>
         </div>
 
         <!-- Правая панель статусов -->
@@ -33,38 +33,43 @@
           </div>
 
           <div class="actions">
-            <button class="btn primary" @click="openConstructor">Открыть конструктор</button>
-            <button class="btn" @click="openWarehouse">Мини‑склад</button>
-            <button class="btn" @click="openSupplies">Купить материалы</button>
+            <button class="btn primary" @click="showConstructor = true">Открыть конструктор</button>
           </div>
         </div>
       </div>
+
+      <ClothesConstructor v-if="showConstructor" @close="showConstructor = false" />
+      <PantryModal v-if="showPantry" @close="showPantry = false" />
+      <SocialNetworkModal v-if="showSocial" @close="showSocial = false" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useGameStore } from '@/stores/gameStore'
+import { computed, ref } from 'vue'
+import { useAuthStore } from '@/stores/authStore'
 import { useCompanyStore } from '@/stores/companyStore'
 import { useWarehouseStore } from '@/stores/warehouseStore'
+import ClothesConstructor from './ClothesConstructor.vue'
+import PantryModal from './PantryModal.vue'
+import SocialNetworkModal from './SocialNetworkModal.vue'
 
-const emit = defineEmits<{ close: []; openConstructor: []; openWarehouse: []; openSupplies: [] }>()
-
-const game = useGameStore()
+const auth = useAuthStore()
 const company = useCompanyStore()
 const warehouse = useWarehouseStore()
 
-const money = computed(() => game.money)
+const money = computed(() => auth.user?.money ?? 0)
 const companyLevel = computed(() => company.state.progress.level)
 const materialsTotal = computed(() => warehouse.materialsTotal)
 
-function openConstructor() { emit('openConstructor') }
-function openWarehouse() { emit('openWarehouse') }
-function openSupplies() { emit('openSupplies') }
+const showConstructor = ref(false)
+const showPantry = ref(false)
+const showSocial = ref(false)
 </script>
 
 <style scoped>
+@import '@/styles/colors.css';
+
 .modal-overlay {
   position: fixed;
   inset: 0;

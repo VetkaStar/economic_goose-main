@@ -1,7 +1,70 @@
 <template>
   <div class="city-map">
-    <!-- Игровая статистика -->
-    <GameStats />
+    <!-- Мини-HUD: красивые карточки с деталями при наведении -->
+    <div class="mini-hud">
+      <!-- Баланс с деталями -->
+      <div class="hud-card money-card" @mouseenter="showMoneyDetails = true" @mouseleave="showMoneyDetails = false">
+        <div class="hud-header">
+          <span class="hud-icon">💰</span>
+          <span class="hud-value">₽{{ (authStore.user?.money || 0).toLocaleString() }}</span>
+        </div>
+        
+        <!-- Детали баланса -->
+        <div v-if="showMoneyDetails" class="hud-details money-details">
+          <div class="details-header">
+            <h3>💰 Финансы</h3>
+            <button class="close-details" @click="showMoneyDetails = false">×</button>
+          </div>
+          <div class="details-content">
+            <div class="summary-item">
+              <span class="summary-label">Баланс:</span>
+              <span class="summary-value">₽{{ (authStore.user?.money || 0).toLocaleString() }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Аренда (месяц):</span>
+              <span class="summary-value negative">-₽{{ totalRentCost.toLocaleString() }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Доходы (день):</span>
+              <span class="summary-value positive">+₽{{ dailyIncome.toLocaleString() }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Прогресс компании с деталями -->
+      <div class="hud-card progress-card" @mouseenter="showProgressDetails = true" @mouseleave="showProgressDetails = false">
+        <div class="hud-header">
+          <span class="hud-icon">🏢</span>
+          <span class="hud-value">{{ company.state.progress.level }} ур.</span>
+        </div>
+        <div class="hud-progress">
+          <div class="hud-progress-bar" :style="{ width: companyProgressPct + '%' }"></div>
+        </div>
+        
+        <!-- Детали прогресса -->
+        <div v-if="showProgressDetails" class="hud-details progress-details">
+          <div class="details-header">
+            <h3>🏢 Компания</h3>
+            <button class="close-details" @click="showProgressDetails = false">×</button>
+          </div>
+          <div class="details-content">
+            <div class="summary-item">
+              <span class="summary-label">Уровень:</span>
+              <span class="summary-value">{{ company.state.progress.level }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Опыт:</span>
+              <span class="summary-value">{{ company.state.progress.experience }}/{{ requiredExp }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Арендовано:</span>
+              <span class="summary-value">{{ rentedCount }}/3</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Карта города -->
     <div class="map-container">
@@ -383,29 +446,58 @@
       v-if="showMarket"
       @close="closeMarket"
     />
+    
+    <!-- Модальное окно магазина -->
+    <ShopModal 
+      v-if="showShop"
+      @close="closeShop"
+    />
+    
+    <!-- Комната дома гуся -->
+    <HomeRoom v-if="showHome" @close="() => (showHome = false)" />
+
+    <!-- Кастомная модалка аренды -->
+    <div v-if="rentDialog?.visible" class="rent-modal-overlay" @click.self="cancelRentDialog">
+      <div class="rent-modal">
+        <div class="rent-header">
+          <h3>{{ rentDialog.title }}</h3>
+          <button class="close" @click="cancelRentDialog">✕</button>
+        </div>
+        <div class="rent-body">
+          <p>{{ rentDialog.description }}</p>
+          <div class="price">Цена аренды: ₽{{ rentDialog.price.toLocaleString() }}</div>
+        </div>
+        <div class="rent-actions">
+          <button class="btn" @click="cancelRentDialog">Отмена</button>
+          <button class="btn primary" @click="confirmRent">Арендовать</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
-// import { useAuthStore } from '@/stores/authStore' // Пока не используется
+import { useAuthStore } from '@/stores/authStore'
 import { useCompanyStore } from '@/stores/companyStore'
 import { useCharacterStore } from '@/stores/characterStore'
-import GameStats from './GameStats.vue'
+import { useTraderStore } from '@/stores/traderStore'
 import SettingsModal from './SettingsModal.vue'
 import HotkeysModal from './HotkeysModal.vue'
 import AccountModal from './AccountModal.vue'
 import WarehouseModal from './WarehouseModal.vue'
 import AtelierModal from './AtelierModal.vue'
 import MarketModal from './MarketModal.vue'
+import ShopModal from './ShopModal.vue'
 import PhoneInterface from './PhoneInterface.vue'
+import HomeRoom from './HomeRoom.vue'
 
 const emit = defineEmits<{
   exitToMainMenu: []
 }>()
 
 // Инициализация auth store
-// const authStore = useAuthStore() // Пока не используется
+const authStore = useAuthStore()
 
 // Состояние модальных окон
 const showSettings = ref(false)
@@ -414,6 +506,71 @@ const showAccount = ref(false)
 const showWarehouse = ref(false)
 const showAtelier = ref(false)
 const showMarket = ref(false)
+const showShop = ref(false)
+const showHome = ref(false)
+const company = useCompanyStore()
+const traderStore = useTraderStore()
+
+// Состояние деталей
+const showMoneyDetails = ref(false)
+const showProgressDetails = ref(false)
+
+// Прогресс в процентах
+const companyProgressPct = computed(() => {
+  const lvl = company.state.progress.level
+  const exp = company.state.progress.experience
+  const required = 100 + (lvl - 1) * 50
+  return Math.max(0, Math.min(100, Math.round((exp / required) * 100)))
+})
+
+// Требуемый опыт для следующего уровня
+const requiredExp = computed(() => {
+  const lvl = company.state.progress.level
+  return 100 + (lvl - 1) * 50
+})
+
+// Количество арендованных зданий
+const rentedCount = computed(() => {
+  const rent = company.state.rent.isRented
+  return Object.values(rent).filter(Boolean).length
+})
+
+// Общая стоимость аренды в месяц
+const totalRentCost = computed(() => {
+  const rent = company.state.rent.isRented
+  const costs = company.state.rent.rentCosts
+  let total = 0
+  if (rent.warehouse) total += costs.warehouse
+  if (rent.atelier) total += costs.atelier
+  if (rent.market) total += costs.market
+  return total
+})
+
+// Дневной доход (пока заглушка, позже из экономики)
+const dailyIncome = computed(() => {
+  // Пока возвращаем 0, позже подключим реальную экономику
+  return 0
+})
+
+// Кастомная модалка аренды
+const rentDialog = ref<{ place: 'warehouse'|'atelier'|'market'; title: string; description: string; price: number; visible: boolean }|null>(null)
+async function confirmRent() {
+  if (!rentDialog.value) return
+  const place = rentDialog.value.place
+  const ok = await company.rent(place)
+  // после успешной аренды открываем соответствующее окно
+  if (ok) {
+    if (place === 'warehouse' && company.canUseWarehouse()) showWarehouse.value = true
+    if (place === 'atelier' && company.canUseAtelier()) showAtelier.value = true
+    if (place === 'market' && company.canUseMarket()) showMarket.value = true
+    rentDialog.value = null
+  } else {
+    // Недостаточно средств — оставляем диалог открытым и показываем цену красным
+    rentDialog.value = { ...rentDialog.value, visible: true }
+    // TODO: заменить на тост/уведомление внутри UI
+  }
+}
+function cancelRentDialog() { rentDialog.value = null }
 
 // Отладочная сетка (временно)
 const showDebugGrid = ref(true)
@@ -479,33 +636,11 @@ let timeInterval: NodeJS.Timeout | null = null
 
 // Телефон
 const showPhone = ref(false)
-const unreadMessages = ref(3)
+const unreadMessages = ref(0)
 
 
 
-const messages = ref([
-  {
-    id: 1,
-    sender: 'Поставщик "Ткани+"',
-    text: 'Новая партия хлопка поступила! Скидка 15% до конца недели.',
-    time: '14:30',
-    read: false
-  },
-  {
-    id: 2,
-    sender: 'Администрация города',
-    text: 'Приглашаем на модный показ! Ваша репутация позволяет участвовать.',
-    time: '12:15',
-    read: false
-  },
-  {
-    id: 3,
-    sender: 'Банк "Сбербанк"',
-    text: 'Одобрен кредит на расширение производства. 500,000₽ под 12% годовых.',
-    time: '10:00',
-    read: true
-  }
-])
+const messages = ref([] as any[])
 
 // Функции времени
 const updateTime = () => {
@@ -549,50 +684,60 @@ onUnmounted(() => {
 })
 
 // Функции зданий
-const openBank = () => {
-  alert('🏦 Сбербанк\n\nКредиты: 500,000₽ под 12%\nДепозиты: 8% годовых\nПереводы: 1% комиссия')
-}
+const openBank = () => {}
 
-const openGovernment = () => {
-  // Временное значение репутации, в реальной игре это должно быть из GameStats
-  const currentReputation = 25
-  if (currentReputation >= 50) {
-    alert('🏛️ Администрация\n\n✅ Модные показы доступны!\n✅ Скидки на налоги 10%\n✅ Приоритетные лицензии')
-  } else {
-    alert('🏛️ Администрация\n\n❌ Модные показы недоступны\n❌ Стандартные налоги\n💡 Повысьте репутацию до 50')
-  }
-}
+const openGovernment = () => {}
 
-const openMall = () => {
-  alert('🏬 Торговый центр "Модный"\n\nАренда торгового места:\n• 50,000₽/мес\n• Высокий трафик\n• Престижное расположение')
-}
+const openMall = () => {}
 
-const openWorkshop = () => {
-  alert('🏭 Производственный цех\n\nПокупка: 500,000₽\nАренда: 30,000₽/мес\n\nПроизводство одежды\nСклад материалов\nОфис управления')
-}
+const openWorkshop = () => {}
 
 const openWarehouse = () => {
+  if (!company.canUseWarehouse()) {
+    rentDialog.value = {
+      place: 'warehouse',
+      title: 'Аренда склада',
+      description: 'Базовая емкость 20 мест. Можно апгрейдить позже.',
+      price: company.state.rent.rentCosts.warehouse,
+      visible: true,
+    }
+    return
+  }
   showWarehouse.value = true
 }
 
-const openOffice = () => {
-  alert('🏢 Офисный центр\n\nАренда: 30,000₽/мес\n\n• 200 м²\n• Конференц-зал\n• Парковка\n• Wi-Fi')
-}
-
-const openShop = () => {
-  alert('🏪 Магазин "Стиль"\n\nПокупка: 200,000₽\nАренда: 15,000₽/мес\n\n• Торговый зал 80 м²\n• Витрины\n• Склад 20 м²')
-}
+const openOffice = () => {}
 
 const openAtelier = () => {
+  if (!company.canUseAtelier()) {
+    rentDialog.value = {
+      place: 'atelier',
+      title: 'Аренда ателье',
+      description: 'Доступ к профессиональному пошиву и очередям заказов.',
+      price: company.state.rent.rentCosts.atelier,
+      visible: true,
+    }
+    return
+  }
   showAtelier.value = true
 }
 
 const openMarket = () => {
+  if (!company.canUseMarket()) {
+    rentDialog.value = {
+      place: 'market',
+      title: 'Аренда места на рынке',
+      description: 'Открывает продажи и аналитику спроса.',
+      price: company.state.rent.rentCosts.market,
+      visible: true,
+    }
+    return
+  }
   showMarket.value = true
 }
 
 const openHouse = () => {
-  alert('🏠 Жилой дом\n\nАренда: 20,000₽/мес\n\n• 2-комнатная квартира\n• Для персонала\n• Меблировка\n• Коммунальные услуги')
+  showHome.value = true
 }
 
 // Функции настроек
@@ -637,6 +782,14 @@ const closeMarket = () => {
   showMarket.value = false
 }
 
+const openShop = () => {
+  showShop.value = true
+}
+
+const closeShop = () => {
+  showShop.value = false
+}
+
 </script>
 
 <style scoped>
@@ -656,6 +809,178 @@ const closeMarket = () => {
   overflow: hidden;
   font-family: 'Orbitron', sans-serif;
 }
+
+/* Мини-HUD - красивые карточки как в GameStats */
+.mini-hud {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
+  z-index: 1002;
+  font-family: 'Orbitron', sans-serif;
+}
+
+.hud-card {
+  background: var(--color-bg-menu, #F4E6D1);
+  border-radius: clamp(8px, 1.2vw, 15px);
+  padding: clamp(10px, 1.5vw, 15px) clamp(15px, 2vw, 20px);
+  border: clamp(2px, 0.3vw, 3px) solid var(--color-text, #5D4037);
+  box-shadow: 0 clamp(4px, 0.8vw, 8px) clamp(8px, 1.6vw, 16px) var(--shadow-medium, rgba(0,0,0,0.2));
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  min-width: clamp(120px, 15vw, 180px);
+  backdrop-filter: blur(5px);
+}
+
+.hud-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 clamp(6px, 1.2vw, 12px) clamp(10px, 2vw, 20px) var(--shadow-dark, rgba(0,0,0,0.3));
+}
+
+.hud-header {
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 1.2vw, 12px);
+  font-weight: 700;
+  color: var(--color-text, #5D4037);
+}
+
+.hud-icon {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  filter: drop-shadow(0 clamp(2px, 0.4vw, 4px) clamp(4px, 0.8vw, 8px) var(--shadow-medium, rgba(0,0,0,0.2)));
+}
+
+.hud-value {
+  font-size: clamp(1rem, 2vw, 1.4rem);
+  font-weight: 900;
+  margin-left: auto;
+  text-shadow: 1px 1px 0px var(--shadow-light, rgba(255,255,255,0.5));
+  color: var(--color-text, #5D4037);
+}
+
+.hud-progress {
+  margin-top: clamp(6px, 1vw, 10px);
+  height: clamp(8px, 1.2vw, 12px);
+  background: var(--color-bg-menu-light, #e7d7bd);
+  border: clamp(1px, 0.2vw, 2px) solid var(--color-text, #5D4037);
+  border-radius: clamp(6px, 1vw, 10px);
+  overflow: hidden;
+}
+
+.hud-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #C85A54, #D4824A);
+  transition: width 0.3s ease;
+}
+
+/* Детальные панели */
+.hud-details {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--color-bg-menu, #F4E6D1);
+  border-radius: clamp(8px, 1.2vw, 15px);
+  border: clamp(2px, 0.3vw, 3px) solid var(--color-text, #5D4037);
+  box-shadow: 0 clamp(8px, 1.6vw, 16px) clamp(16px, 3.2vw, 32px) var(--shadow-dark, rgba(0,0,0,0.3));
+  z-index: 1003;
+  margin-top: 0;
+  min-width: clamp(250px, 30vw, 350px);
+  max-width: clamp(300px, 40vw, 400px);
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.details-header {
+  background: var(--gradient-accents, linear-gradient(135deg, #C85A54 0%, #D4824A 100%));
+  color: white;
+  padding: clamp(12px, 2vw, 20px);
+  border-radius: clamp(8px, 1.2vw, 12px) clamp(8px, 1.2vw, 12px) 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+}
+
+.details-header h3 {
+  margin: 0;
+  font-size: clamp(1rem, 1.8vw, 1.4rem);
+  text-shadow: 1px 1px 0px var(--shadow-dark, rgba(0,0,0,0.3));
+  font-family: 'Orbitron', sans-serif;
+}
+
+.close-details {
+  background: none;
+  border: none;
+  color: white;
+  font-size: clamp(1.2rem, 2vw, 1.8rem);
+  cursor: pointer;
+  padding: 0;
+  width: clamp(25px, 4vw, 35px);
+  height: clamp(25px, 4vw, 35px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  font-family: 'Orbitron', sans-serif;
+}
+
+.close-details:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+
+.details-content {
+  padding: clamp(15px, 2vw, 25px);
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: clamp(8px, 1.2vw, 12px);
+  font-size: clamp(0.8rem, 1.4vw, 1.1rem);
+  font-family: 'Orbitron', sans-serif;
+}
+
+.summary-item:last-child {
+  margin-bottom: 0;
+}
+
+.summary-label {
+  font-weight: 600;
+  color: var(--color-text, #5D4037);
+  text-shadow: 1px 1px 0px var(--shadow-light, rgba(255,255,255,0.5));
+}
+
+.summary-value {
+  font-weight: 700;
+  font-size: clamp(0.9rem, 1.6vw, 1.2rem);
+  text-shadow: 1px 1px 0px var(--shadow-light, rgba(255,255,255,0.5));
+}
+
+.summary-value.positive {
+  color: #2E7D32;
+}
+
+.summary-value.negative {
+  color: #C62828;
+}
+
+/* Кастомная модалка аренды */
+.rent-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+.rent-modal { width: 520px; background: var(--color-bg-menu-light); border: 2px solid var(--color-buttons); border-radius: 14px; box-shadow: 0 8px 16px var(--shadow-medium); overflow: hidden; }
+.rent-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--color-bg-menu); border-bottom: 2px solid var(--color-buttons); }
+.rent-body { padding: 16px; color: var(--color-text); }
+.price { margin-top: 8px; font-weight: 700; color: var(--color-highlights); }
+.rent-actions { display: flex; gap: 10px; justify-content: flex-end; padding: 12px 16px; border-top: 2px solid var(--color-buttons); background: var(--color-bg-menu); }
+.btn { background: var(--color-bg-menu-light); border: 2px solid var(--color-buttons); color: var(--color-text); padding: 8px 12px; border-radius: 10px; }
+.btn.primary { background: var(--color-accents); border-color: var(--color-highlights); color: #fff; }
+.rent-header .close { background: var(--color-buttons); color: #fff; border: none; border-radius: 8px; padding: 6px 10px; }
 
 
 /* Кнопка настроек */

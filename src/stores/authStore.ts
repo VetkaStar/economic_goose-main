@@ -155,7 +155,7 @@ export const useAuthStore = defineStore('auth', () => {
           email: authUser.user.email || '',
           username: authUser.user.user_metadata?.username || `user_${userId.slice(0, 8)}`,
           full_name: authUser.user.user_metadata?.full_name || 'Пользователь',
-          money: 10000, // Начальные деньги
+          money: 5000, // Начальные деньги для стартового персонажа
           level: 1,
           experience: 0
         }
@@ -189,6 +189,19 @@ export const useAuthStore = defineStore('auth', () => {
         user.value = newProfile
       } else {
         console.log('📥 Профиль найден:', data)
+        // Гарантируем стартовый капитал для новых аккаунтов, если поле пустое/0
+        if ((data as any).money == null || (data as any).money === 0) {
+          const start = 5000
+          const { error: fixError } = await supabase
+            .from('user_profiles')
+            .update({ money: start })
+            .eq('id', userId)
+          if (!fixError) {
+            ;(data as any).money = start
+          } else {
+            console.warn('Не удалось выставить стартовый капитал:', fixError)
+          }
+        }
         user.value = data
       }
     } catch (err) {

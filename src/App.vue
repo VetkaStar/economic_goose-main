@@ -63,8 +63,12 @@ const startGame = () => {
     console.log('🎵 Глобальная инициализация музыки после первого взаимодействия')
   }
   
-  // Переходим на главное меню
-  currentScreen.value = 'main-menu'
+  // Если не авторизован — показываем модалку логина, иначе идем в меню
+  if (!authStore.isAuthenticated) {
+    showAuth.value = true
+  } else {
+    currentScreen.value = 'main-menu'
+  }
 }
 
 const switchToHero = () => {
@@ -168,6 +172,7 @@ const closeAuth = () => {
 
 const onAuthSuccess = () => {
   showAuth.value = false
+  currentScreen.value = 'main-menu'
 }
 </script>
 

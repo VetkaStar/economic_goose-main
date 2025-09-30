@@ -1,248 +1,170 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { EconomyState, MarketTrend, EconomicEvent } from '@/types/game'
-import { GAME_CONFIG } from '@/config/gameConfig'
+import { useAuthStore } from './authStore'
+import { useCompanyStore } from './companyStore'
+import { useWarehouseStore } from './warehouseStore'
+import { useTraderStore } from './traderStore'
+
+export interface DailyReport {
+  day: number
+  income: {
+    sales: number
+    rent: number
+    investments: number
+    total: number
+  }
+  expenses: {
+    rent: number
+    materials: number
+    salaries: number
+    taxes: number
+    total: number
+  }
+  production: {
+    itemsProduced: number
+    materialsUsed: number
+    quality: number
+  }
+  netProfit: number
+  balance: number
+}
 
 export const useEconomyStore = defineStore('economy', () => {
-  // Состояние экономики
-  const economyState = ref<EconomyState>({
-    marketTrends: [],
-    inflation: 0,
-    season: 'spring',
-    events: []
+  // Сторы
+  const authStore = useAuthStore()
+  const companyStore = useCompanyStore()
+  const warehouseStore = useWarehouseStore()
+  const traderStore = useTraderStore()
+
+  // Состояние
+  const dailyReports = ref<DailyReport[]>([])
+  const isProcessing = ref(false)
+
+  // Настройки экономики
+  const economySettings = ref({
+    baseSalesPerDay: 1000,
+    dailyRentCost: 2500,
+    materialCostPerItem: 50,
+    taxRate: 0.15,
+    itemsPerDay: 5
   })
 
   // Вычисляемые свойства
-  const marketTrends = computed(() => economyState.value.marketTrends)
-  const inflation = computed(() => economyState.value.inflation)
-  const season = computed(() => economyState.value.season)
-  const events = computed(() => economyState.value.events)
+  const lastReport = computed(() => {
+    return dailyReports.value[dailyReports.value.length - 1] || null
+  })
 
-  // Сезонные модификаторы
-  const seasonModifiers = {
-    spring: { demand: 1.1, price: 1.0, reputation: 1.0 },
-    summer: { demand: 1.2, price: 1.1, reputation: 1.1 },
-    autumn: { demand: 0.9, price: 0.9, reputation: 0.9 },
-    winter: { demand: 0.8, price: 1.2, reputation: 0.8 }
-  }
+  const totalProfit = computed(() => {
+    return dailyReports.value.reduce((sum, report) => sum + report.netProfit, 0)
+  })
 
-  // Действия для управления рыночными трендами
-  const addMarketTrend = (trend: MarketTrend) => {
-    economyState.value.marketTrends.push(trend)
-  }
+  // Основная функция обработки дневных расчётов
+  const processDailyCalculations = async (): Promise<DailyReport> => {
+    if (isProcessing.value) {
+      throw new Error('Расчёты уже выполняются')
+    }
 
-  const updateMarketTrends = () => {
-    // Обновляем существующие тренды
-    economyState.value.marketTrends = economyState.value.marketTrends
-      .map(trend => ({
-        ...trend,
-        duration: trend.duration - 1
-      }))
-      .filter(trend => trend.duration > 0)
+    isProcessing.value = true
 
-    // Добавляем новые случайные тренды
-    if (Math.random() < 0.1) { // 10% вероятность нового тренда
-      const categories = ['dresses', 'shirts', 'pants', 'accessories']
-      const directions = ['up', 'down', 'stable'] as const
-      
-      const newTrend: MarketTrend = {
-        category: categories[Math.floor(Math.random() * categories.length)],
-        direction: directions[Math.floor(Math.random() * directions.length)],
-        strength: Math.random() * 0.5 + 0.1, // 0.1 - 0.6
-        duration: Math.floor(Math.random() * 7) + 3 // 3-10 дней
+    try {
+      const currentDay = traderStore.currentDay
+      const report: DailyReport = {
+        day: currentDay,
+        income: { sales: 0, rent: 0, investments: 0, total: 0 },
+        expenses: { rent: 0, materials: 0, salaries: 0, taxes: 0, total: 0 },
+        production: { itemsProduced: 0, materialsUsed: 0, quality: 0 },
+        netProfit: 0,
+        balance: authStore.user?.money || 0
       }
-      
-      addMarketTrend(newTrend)
-    }
-  }
 
-  // Действия для управления инфляцией
-  const updateInflation = () => {
-    economyState.value.inflation += GAME_CONFIG.ECONOMY.INFLATION_RATE / 30 // Ежедневное обновление
-  }
+      // 1. РАСХОДЫ
+      await processExpenses(report)
 
-  // Действия для смены сезона
-  const changeSeason = (newSeason: 'spring' | 'summer' | 'autumn' | 'winter') => {
-    economyState.value.season = newSeason
-  }
+      // 2. ПРОИЗВОДСТВО
+      await processProduction(report)
 
-  const getNextSeason = (): 'spring' | 'summer' | 'autumn' | 'winter' => {
-    const seasons = ['spring', 'summer', 'autumn', 'winter'] as const
-    const currentIndex = seasons.indexOf(economyState.value.season)
-    return seasons[(currentIndex + 1) % seasons.length]
-  }
+      // 3. ДОХОДЫ
+      await processIncome(report)
 
-  // Действия для управления событиями
-  const addEvent = (event: EconomicEvent) => {
-    economyState.value.events.push(event)
-  }
+      // 4. НАЛОГИ
+      await processTaxes(report)
 
-  const removeEvent = (eventId: string) => {
-    economyState.value.events = economyState.value.events.filter(e => e.id !== eventId)
-  }
+      // 5. ИТОГОВЫЕ РАСЧЁТЫ
+      report.netProfit = report.income.total - report.expenses.total
+      report.balance = (authStore.user?.money || 0) + report.netProfit
 
-  const updateEvents = () => {
-    // Обновляем длительность событий
-    economyState.value.events = economyState.value.events
-      .map(event => ({
-        ...event,
-        duration: event.duration - 1
-      }))
-      .filter(event => event.duration > 0)
-
-    // Добавляем новые случайные события
-    if (Math.random() < GAME_CONFIG.ECONOMY.EVENT_PROBABILITY) {
-      const randomEvent = generateRandomEvent()
-      addEvent(randomEvent)
-    }
-  }
-
-  // Генерация случайных событий
-  const generateRandomEvent = (): EconomicEvent => {
-    const events = [
-      {
-        name: 'Модная неделя',
-        description: 'Повышенный спрос на одежду',
-        type: 'positive' as const,
-        effects: [{ target: 'demand' as const, value: 0.3, category: 'all' }]
-      },
-      {
-        name: 'Экономический кризис',
-        description: 'Снижение покупательной способности',
-        type: 'negative' as const,
-        effects: [{ target: 'demand' as const, value: -0.2, category: 'all' }]
-      },
-      {
-        name: 'Новый тренд',
-        description: 'Популярность определенного стиля',
-        type: 'positive' as const,
-        effects: [{ target: 'demand' as const, value: 0.4, category: 'dresses' }]
-      },
-      {
-        name: 'Проблемы с поставками',
-        description: 'Рост цен на материалы',
-        type: 'negative' as const,
-        effects: [{ target: 'price' as const, value: 0.2, category: 'materials' }]
+      // 6. ОБНОВЛЕНИЕ БАЛАНСА
+      if (report.netProfit !== 0) {
+        await authStore.addMoney(report.netProfit)
       }
-    ]
 
-    const randomEvent = events[Math.floor(Math.random() * events.length)]
-    return {
-      id: `event_${Date.now()}`,
-      name: randomEvent.name,
-      description: randomEvent.description,
-      type: randomEvent.type,
-      effects: randomEvent.effects,
-      duration: Math.floor(Math.random() * 5) + 3 // 3-8 дней
+      // 7. СОХРАНЕНИЕ ОТЧЁТА
+      dailyReports.value.push(report)
+
+      // 8. ОБНОВЛЕНИЕ ТОРГОВЦЕВ
+      traderStore.nextDay()
+
+      return report
+    } finally {
+      isProcessing.value = false
     }
   }
 
-  // Расчет цены с учетом всех модификаторов
-  const calculatePrice = (basePrice: number, category: string): number => {
-    let price = basePrice
+  // Обработка расходов
+  const processExpenses = async (report: DailyReport) => {
+    const { rent } = companyStore.state
 
-    // Применяем инфляцию
-    price *= (1 + economyState.value.inflation)
-
-    // Применяем сезонные модификаторы
-    const seasonMod = seasonModifiers[economyState.value.season]
-    price *= seasonMod.price
-
-    // Применяем рыночные тренды
-    const relevantTrends = economyState.value.marketTrends.filter(
-      trend => trend.category === category || trend.category === 'all'
-    )
-
-    for (const trend of relevantTrends) {
-      if (trend.direction === 'up') {
-        price *= (1 + trend.strength)
-      } else if (trend.direction === 'down') {
-        price *= (1 - trend.strength)
-      }
+    // Аренда
+    if (rent.isRented.warehouse) {
+      report.expenses.rent += rent.rentCosts.warehouse / 30
+    }
+    if (rent.isRented.atelier) {
+      report.expenses.rent += rent.rentCosts.atelier / 30
+    }
+    if (rent.isRented.market) {
+      report.expenses.rent += rent.rentCosts.market / 30
     }
 
-    // Применяем события
-    for (const event of economyState.value.events) {
-      for (const effect of event.effects) {
-        if (effect.target === 'price' && (!effect.category || effect.category === category)) {
-          price *= (1 + effect.value)
-        }
-      }
-    }
+    // Материалы
+    report.expenses.materials = economySettings.value.materialCostPerItem * 
+                               economySettings.value.itemsPerDay
 
-    return Math.round(price)
+    report.expenses.total = report.expenses.rent + report.expenses.materials
   }
 
-  // Расчет спроса с учетом всех модификаторов
-  const calculateDemand = (baseDemand: number, category: string): number => {
-    let demand = baseDemand
-
-    // Применяем сезонные модификаторы
-    const seasonMod = seasonModifiers[economyState.value.season]
-    demand *= seasonMod.demand
-
-    // Применяем рыночные тренды
-    const relevantTrends = economyState.value.marketTrends.filter(
-      trend => trend.category === category || trend.category === 'all'
-    )
-
-    for (const trend of relevantTrends) {
-      if (trend.direction === 'up') {
-        demand *= (1 + trend.strength)
-      } else if (trend.direction === 'down') {
-        demand *= (1 - trend.strength)
-      }
+  // Обработка производства
+  const processProduction = async (report: DailyReport) => {
+    if (!companyStore.canUseAtelier()) {
+      return
     }
 
-    // Применяем события
-    for (const event of economyState.value.events) {
-      for (const effect of event.effects) {
-        if (effect.target === 'demand' && (!effect.category || effect.category === category)) {
-          demand *= (1 + effect.value)
-        }
-      }
-    }
-
-    return Math.max(0, Math.min(2, demand)) // Ограничиваем от 0 до 2
+    report.production.itemsProduced = economySettings.value.itemsPerDay
+    report.production.materialsUsed = report.production.itemsProduced * 2
+    report.production.quality = 3 // Базовая качество
   }
 
-  // Ежедневное обновление экономики
-  const dailyUpdate = () => {
-    updateMarketTrends()
-    updateInflation()
-    updateEvents()
+  // Обработка доходов
+  const processIncome = async (report: DailyReport) => {
+    let salesIncome = economySettings.value.baseSalesPerDay
+    const qualityMultiplier = 1 + (report.production.quality - 2) * 0.2
+    salesIncome *= qualityMultiplier
+    report.income.sales = Math.round(salesIncome)
+    report.income.total = report.income.sales
   }
 
-  // Сброс экономики
-  const resetEconomy = () => {
-    economyState.value = {
-      marketTrends: [],
-      inflation: 0,
-      season: 'spring',
-      events: []
-    }
+  // Обработка налогов
+  const processTaxes = async (report: DailyReport) => {
+    const taxableIncome = Math.max(0, report.income.total - report.expenses.materials)
+    report.expenses.taxes = Math.round(taxableIncome * economySettings.value.taxRate)
+    report.expenses.total += report.expenses.taxes
   }
 
   return {
-    // Состояние
-    economyState,
-    marketTrends,
-    inflation,
-    season,
-    events,
-    
-    // Действия
-    addMarketTrend,
-    updateMarketTrends,
-    updateInflation,
-    changeSeason,
-    getNextSeason,
-    addEvent,
-    removeEvent,
-    updateEvents,
-    calculatePrice,
-    calculateDemand,
-    dailyUpdate,
-    resetEconomy
+    dailyReports,
+    isProcessing,
+    economySettings,
+    lastReport,
+    totalProfit,
+    processDailyCalculations
   }
 })
