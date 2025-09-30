@@ -6,7 +6,6 @@ import { useAuthStore } from './authStore'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
 export const useAuctionStore = defineStore('auction', () => {
-  const authStore = useAuthStore()
   
   // Состояние
   const currentAuction = ref<Auction | null>(null)
@@ -23,16 +22,19 @@ export const useAuctionStore = defineStore('auction', () => {
 
   // Computed
   const isParticipating = computed(() => {
+    const authStore = useAuthStore()
     if (!currentAuction.value || !authStore.user) return false
     return currentAuction.value.participants.some(p => p.id === authStore.user?.id)
   })
 
   const isCurrentBidder = computed(() => {
+    const authStore = useAuthStore()
     if (!currentAuction.value || !authStore.user) return false
     return currentAuction.value.current_bidder_id === authStore.user.id
   })
 
   const canPlaceBid = computed(() => {
+    const authStore = useAuthStore()
     if (!currentAuction.value || !authStore.user) return false
     if (currentAuction.value.status !== 'active') return false
     return true
@@ -254,6 +256,8 @@ export const useAuctionStore = defineStore('auction', () => {
 
   // Присоединиться к аукциону
   async function joinAuction(auctionId: string) {
+    const authStore = useAuthStore()
+    
     if (!authStore.user) {
       error.value = 'Необходима авторизация'
       return false
@@ -469,6 +473,8 @@ export const useAuctionStore = defineStore('auction', () => {
 
   // Сделать ставку
   async function placeBid(amount: number) {
+    const authStore = useAuthStore()
+    
     if (!authStore.user || !currentAuction.value) {
       error.value = 'Необходима авторизация'
       return false
@@ -506,6 +512,9 @@ export const useAuctionStore = defineStore('auction', () => {
         
         console.log('✅ Ставка размещена:', amount)
       }
+
+      // Обновляем баланс в authStore после успешной ставки
+      await authStore.refreshBalance()
 
       return true
     } catch (err: any) {

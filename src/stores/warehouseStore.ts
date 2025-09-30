@@ -88,6 +88,12 @@ export const useWarehouseStore = defineStore('warehouse', () => {
       }
 
       // Загружаем персональный инвентарь игрока
+      console.log('🔍 Проверяем авторизацию:', { 
+        isAuthenticated: authStore.isAuthenticated, 
+        userId: authStore.user?.id,
+        user: authStore.user 
+      })
+      
       if (authStore.user?.id) {
         console.log('👤 Загружаем персональный инвентарь для пользователя:', authStore.user.id)
         
@@ -115,22 +121,45 @@ export const useWarehouseStore = defineStore('warehouse', () => {
         if (inventoryError) {
           console.error('❌ Ошибка загрузки персонального инвентаря:', inventoryError)
         } else if (inventoryData && inventoryData.length > 0) {
-          // Преобразуем данные: объединяем информацию о материале с количеством
-          const userMaterials = inventoryData.map((item: any) => ({
-            id: item.warehouse_materials.id,
-            name: item.warehouse_materials.name,
-            icon: item.warehouse_materials.icon,
-            quantity: item.quantity,
-            price: item.warehouse_materials.price,
-            quality: item.quality, // Качество из партии, а не из справочника
-            durability: item.durability, // Свойства из партии
-            comfort: item.comfort,
-            style: item.style,
-            description: item.warehouse_materials.description,
-            category: 'material'
-          }))
+          // Группируем материалы по ID и суммируем количество
+          const materialsMap = new Map()
           
-          console.log('✅ Персональный инвентарь загружен:', userMaterials)
+          inventoryData.forEach((item: any) => {
+            const materialId = item.warehouse_materials.id
+            const existingMaterial = materialsMap.get(materialId)
+            
+            if (existingMaterial) {
+              // Если материал уже есть, суммируем количество
+              existingMaterial.quantity += item.quantity
+              // Обновляем качество на лучшее из всех партий
+              if (item.quality > existingMaterial.quality) {
+                existingMaterial.quality = item.quality
+                existingMaterial.durability = item.durability
+                existingMaterial.comfort = item.comfort
+                existingMaterial.style = item.style
+              }
+            } else {
+              // Создаем новую запись материала
+              materialsMap.set(materialId, {
+                id: item.warehouse_materials.id,
+                name: item.warehouse_materials.name,
+                icon: item.warehouse_materials.icon,
+                quantity: item.quantity,
+                price: item.warehouse_materials.price,
+                quality: item.quality,
+                durability: item.durability,
+                comfort: item.comfort,
+                style: item.style,
+                description: item.warehouse_materials.description,
+                category: 'material'
+              })
+            }
+          })
+          
+          // Преобразуем Map в массив
+          const userMaterials = Array.from(materialsMap.values())
+          
+          console.log('✅ Персональный инвентарь загружен (сгруппирован):', userMaterials)
           materials.value = userMaterials
           
           // Сохраняем полный справочник для использования при закупках
@@ -424,15 +453,50 @@ export const useWarehouseStore = defineStore('warehouse', () => {
       const newQuantity = material.quantity - quantity
       console.log(`📦 Новое количество должно быть: ${newQuantity}`)
 
-      const { error: updateError } = await supabase
+      // Получаем все записи материала для пользователя
+      const { data: inventoryRecords, error: fetchError } = await supabase
         .from('user_warehouse_inventory')
-        .update({ quantity: newQuantity })
+        .select('id, quantity')
         .eq('user_id', authStore.user?.id || '')
         .eq('material_id', materialId)
+        .order('acquired_at', { ascending: true }) // Сначала старые партии
 
-      if (updateError) {
-        console.error('❌ Ошибка обновления в базе:', updateError)
-        throw updateError
+      if (fetchError) {
+        console.error('❌ Ошибка получения записей инвентаря:', fetchError)
+        throw fetchError
+      }
+
+      console.log('📋 Записи инвентаря для материала:', inventoryRecords)
+
+      // Распределяем продажу по записям (сначала старые партии)
+      let remainingToSell = quantity
+      const updates = []
+
+      for (const record of inventoryRecords || []) {
+        if (remainingToSell <= 0) break
+
+        const sellFromThisRecord = Math.min(remainingToSell, record.quantity)
+        const newRecordQuantity = record.quantity - sellFromThisRecord
+
+        updates.push({
+          id: record.id,
+          quantity: newRecordQuantity
+        })
+
+        remainingToSell -= sellFromThisRecord
+      }
+
+      // Обновляем записи в базе данных
+      for (const update of updates) {
+        const { error: updateError } = await supabase
+          .from('user_warehouse_inventory')
+          .update({ quantity: update.quantity })
+          .eq('id', update.id)
+
+        if (updateError) {
+          console.error('❌ Ошибка обновления записи:', updateError)
+          throw updateError
+        }
       }
 
       console.log('✅ База данных обновлена успешно')
@@ -450,6 +514,9 @@ export const useWarehouseStore = defineStore('warehouse', () => {
         materials.value = updatedMaterials
         console.log(`✅ Локальное состояние обновлено: ${materials.value[materialIndex].quantity}`)
       }
+      
+      // Обновляем баланс в authStore после продажи
+      await authStore.refreshBalance()
       
       // Записываем транзакцию
       await recordTransaction({

@@ -5,6 +5,9 @@
       <div class="warehouse-header">
         <div class="header-left">
           <h2>📦 Мой склад</h2>
+          <button class="reload-btn" @click="reloadWarehouseData" title="Перезагрузить данные">
+            🔄
+          </button>
         </div>
         <button class="close-btn" @click="closeModal">×</button>
       </div>
@@ -240,10 +243,10 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, computed, nextTick } from 'vue'
+import { onMounted, ref, computed, nextTick, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useWarehouseStore } from '@/stores/warehouseStore'
-// import { useAuthStore } from '@/stores/authStore' // Пока не используется
+import { useAuthStore } from '@/stores/authStore'
 
 // const props = defineProps<{
 //   show?: boolean
@@ -255,7 +258,7 @@ const emit = defineEmits<{
 
 // Используем store для управления складом и авторизацией
 const warehouseStore = useWarehouseStore()
-// const authStore = useAuthStore() // Пока не используется
+const authStore = useAuthStore()
 
 // Состояние для уведомлений
 const notification = ref<{ type: 'success' | 'error', message: string } | null>(null)
@@ -266,12 +269,23 @@ const initialLoading = ref(true)
 // Загружаем данные склада только при монтировании компонента
 onMounted(async () => {
   console.log('🏭 WarehouseModal: Начинаем загрузку данных склада...')
+  console.log('🔍 WarehouseModal: Проверяем авторизацию:', { 
+    isAuthenticated: authStore.isAuthenticated, 
+    userId: authStore.user?.id 
+  })
   
   // Загружаем данные БЕЗ использования loading из store
   try {
     await warehouseStore.loadWarehouseData()
     console.log('🏭 WarehouseModal: Данные склада загружены, материалы:', materials.value?.length || 0)
     console.log('🏭 WarehouseModal: Одежда:', clothing.value?.length || 0)
+    
+    // Дополнительная отладка
+    if (materials.value?.length === 0) {
+      console.log('⚠️ WarehouseModal: Материалы не загружены! Проверяем состояние store...')
+      console.log('📦 materials.value:', materials.value)
+      console.log('👤 authStore.user:', authStore.user)
+    }
   } catch (error) {
     console.error('Ошибка загрузки:', error)
   } finally {
@@ -279,6 +293,17 @@ onMounted(async () => {
     initialLoading.value = false
   }
 })
+
+// Функция для принудительной перезагрузки данных
+const reloadWarehouseData = async () => {
+  console.log('🔄 WarehouseModal: Принудительная перезагрузка данных склада...')
+  try {
+    await warehouseStore.loadWarehouseData()
+    console.log('✅ WarehouseModal: Данные перезагружены')
+  } catch (error) {
+    console.error('❌ WarehouseModal: Ошибка перезагрузки:', error)
+  }
+}
 
 // Функция для показа уведомлений
 const showNotification = (type: 'success' | 'error', message: string) => {
@@ -306,6 +331,14 @@ const {
 
 // Получаем методы из store
 const { sellMaterial, sellClothing } = warehouseStore
+
+// Отслеживаем изменения в материалах для отладки
+watch(materials, (newMaterials) => {
+  console.log('🔍 WarehouseModal: Изменение в materials:', {
+    length: newMaterials?.length || 0,
+    materials: newMaterials
+  })
+}, { deep: true })
 
 // Фильтруем товары с наличием на складе
 const materialsWithStock = computed(() => {
@@ -433,8 +466,25 @@ const closeModal = () => {
 
 .header-left {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+.reload-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: white;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.3s ease;
+}
+
+.reload-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(180deg);
 }
 
 .player-balance {

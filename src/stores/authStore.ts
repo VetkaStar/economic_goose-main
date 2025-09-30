@@ -19,6 +19,9 @@ export const useAuthStore = defineStore('auth', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
   const isAuthenticated = computed(() => !!user.value)
+  
+  // Интервал для обновления баланса
+  let balanceUpdateInterval: number | null = null
 
   // Регистрация нового пользователя
   const signUp = async (email: string, password: string, username: string, fullName: string) => {
@@ -106,6 +109,7 @@ export const useAuthStore = defineStore('auth', () => {
       }
 
       user.value = null
+      stopBalanceAutoUpdate() // Останавливаем обновление баланса при выходе
       return true
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Ошибка выхода'
@@ -225,6 +229,9 @@ export const useAuthStore = defineStore('auth', () => {
         // Разрешаем работу без подтверждения email
         console.log('✅ Загружаем профиль (подтверждение email не требуется)...')
         await loadUserProfile(session.user.id)
+        
+        // Запускаем автоматическое обновление баланса
+        startBalanceAutoUpdate()
       } else {
         console.log('❌ Пользователь не найден в сессии')
       }
@@ -264,6 +271,59 @@ export const useAuthStore = defineStore('auth', () => {
     if (!user.value || user.value.money < amount) return false
 
     return await updateMoney(-amount)
+  }
+
+  // Обновить баланс из базы данных
+  const refreshBalance = async () => {
+    if (!user.value) return false
+
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('money')
+        .eq('id', user.value.id)
+        .single()
+
+      if (error) {
+        console.error('❌ Ошибка обновления баланса:', error)
+        return false
+      }
+
+      if (data) {
+        user.value.money = data.money
+        console.log('💰 Баланс обновлен из БД:', data.money)
+        return true
+      }
+
+      return false
+    } catch (err) {
+      console.error('❌ Ошибка при обновлении баланса:', err)
+      return false
+    }
+  }
+
+  // Запустить автоматическое обновление баланса
+  const startBalanceAutoUpdate = () => {
+    if (balanceUpdateInterval) {
+      clearInterval(balanceUpdateInterval)
+    }
+    
+    balanceUpdateInterval = window.setInterval(async () => {
+      if (user.value) {
+        await refreshBalance()
+      }
+    }, 30000) // Обновляем каждые 30 секунд
+    
+    console.log('🔄 Автоматическое обновление баланса запущено')
+  }
+
+  // Остановить автоматическое обновление баланса
+  const stopBalanceAutoUpdate = () => {
+    if (balanceUpdateInterval) {
+      clearInterval(balanceUpdateInterval)
+      balanceUpdateInterval = null
+      console.log('⏹️ Автоматическое обновление баланса остановлено')
+    }
   }
 
   // Добавление денег
@@ -450,6 +510,9 @@ export const useAuthStore = defineStore('auth', () => {
     updateMoney,
     spendMoney,
     addMoney,
+    refreshBalance,
+    startBalanceAutoUpdate,
+    stopBalanceAutoUpdate,
     resetCompanyProgress
   }
 })

@@ -250,7 +250,7 @@
               >
                 <span class="bid-player">{{ bid.player_name }}</span>
                 <span class="bid-value">₽{{ bid.amount.toLocaleString() }}</span>
-                <span class="bid-time">{{ formatTimestamp(bid.timestamp) }}</span>
+                <span class="bid-time">{{ formatTimestamp(bid.created_at) }}</span>
               </div>
             </div>
           </div>
@@ -307,8 +307,38 @@ function formatTime(seconds: number): string {
 
 // Форматирование timestamp
 function formatTimestamp(timestamp: string): string {
+  if (!timestamp) return 'Неизвестно'
+  
   const date = new Date(timestamp)
-  return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+  
+  // Проверяем, что дата валидна
+  if (isNaN(date.getTime())) {
+    console.error('❌ Неверная дата:', timestamp)
+    return 'Неверная дата'
+  }
+  
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffSeconds = Math.floor(diffMs / 1000)
+  const diffMinutes = Math.floor(diffSeconds / 60)
+  const diffHours = Math.floor(diffMinutes / 60)
+  
+  // Если ставка была сделана недавно, показываем относительное время
+  if (diffSeconds < 60) {
+    return 'только что'
+  } else if (diffMinutes < 60) {
+    return `${diffMinutes} мин назад`
+  } else if (diffHours < 24) {
+    return `${diffHours} ч назад`
+  } else {
+    // Для старых ставок показываем дату и время
+    return date.toLocaleString('ru-RU', { 
+      day: '2-digit', 
+      month: '2-digit', 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    })
+  }
 }
 
 // Статус аукциона
