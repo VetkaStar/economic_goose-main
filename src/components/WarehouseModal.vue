@@ -33,7 +33,6 @@
         <template v-else>
           <!-- Левая панель - Инвентарь -->
           <div class="inventory-panel">
-            <h3>📦 Содержимое склада ({{ materials?.value?.length || 0 }} материалов, {{ clothing?.value?.length || 0 }} одежды)</h3>
             <div class="table-skeleton" v-if="!materials || !clothing">
               <div class="row" v-for="i in 5" :key="i"></div>
             </div>

@@ -15,10 +15,10 @@
               <div class="name">{{ m.name }}</div>
               <div class="qty">x{{ m.quantity }}</div>
               <div class="stats">
-                <div v-if="m.quality" class="stat">Качество: {{ m.quality }}%</div>
-                <div v-if="m.durability" class="stat">🛡️ Прочность: {{ m.durability }}/10</div>
-                <div v-if="m.comfort" class="stat">😌 Комфорт: {{ m.comfort }}/10</div>
-                <div v-if="m.style" class="stat">✨ Стиль: {{ m.style }}/10</div>
+                <div v-if="m.quality !== null && m.quality !== undefined" class="stat">Качество: {{ m.quality }}%</div>
+                <div v-if="m.durability !== null && m.durability !== undefined" class="stat">🛡️ Прочность: {{ m.durability }}/10</div>
+                <div v-if="m.comfort !== null && m.comfort !== undefined" class="stat">😌 Комфорт: {{ m.comfort }}/10</div>
+                <div v-if="m.style !== null && m.style !== undefined" class="stat">✨ Стиль: {{ m.style }}/10</div>
               </div>
               <button 
                 v-if="company.isWarehouseAvailable" 
@@ -72,7 +72,7 @@ const transferring = ref(false)
 
 const transferMaterial = async (materialId: string, quantity: number) => {
   if (transferring.value) return
-  
+
   transferring.value = true
   try {
     const success = await pantry.transferMaterialToWarehouse(materialId, quantity)
@@ -87,6 +87,7 @@ const transferMaterial = async (materialId: string, quantity: number) => {
     transferring.value = false
   }
 }
+
 </script>
 
 <style scoped>
