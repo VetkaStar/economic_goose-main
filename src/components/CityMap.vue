@@ -650,9 +650,9 @@ const gooseStyle = computed(() => {
   const point = allGridIntersections.value.find(p => p.number === companyStore.state.location.currentPointId)
   if (!point) return { display: 'none' }
   return {
-    left: point.x + '%',
-    top: point.y + '%',
-    transform: 'translate(-50%, -80%)',
+    left: (point.x + 5) + '%', // Сдвигаем вправо на 5% от центра здания
+    top: (point.y + 8) + '%', // Сдвигаем вниз на 8% от центра здания
+    transform: 'translate(-50%, -100%)', // Выравниваем по низу персонажа
   }
 })
 
@@ -1118,17 +1118,17 @@ const closeShop = () => {
 
 .goose-marker {
   position: absolute;
-  width: 72px;
+  width: 140px; /* Значительно увеличиваем размер с 90px до 140px */
   height: auto;
-  z-index: 40;
+  z-index: 45; /* Увеличиваем z-index для перекрытия здания */
   pointer-events: none;
   filter: drop-shadow(0 4px 8px rgba(0,0,0,.25));
   animation: gentleFloat 4s ease-in-out infinite;
 }
 
 @keyframes gentleFloat {
-  0%, 100% { transform: translate(-50%, -80%) }
-  50% { transform: translate(-50%, -85%) }
+  0%, 100% { transform: translate(-50%, -100%) }
+  50% { transform: translate(-50%, -105%) }
 }
 
 /* Отладочные направляющие */
@@ -3013,15 +3013,17 @@ const closeShop = () => {
     right: 20px;
   }
   
-  .time-controls-strip {
-    top: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    max-width: calc(100vw - 20px);
-  }
   
   .building {
     transform: scale(0.8);
+  }
+  
+  .time-controls-strip {
+    top: auto;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: calc(100vw - 20px);
   }
 }
 </style>

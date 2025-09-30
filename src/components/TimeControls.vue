@@ -37,10 +37,10 @@
 
       <button 
         class="time-btn fast-forward-btn"
-        @click="toggleAcceleration"
+        @click="toggleAccelerationX2"
         :title="timeStore.isFastForward ? 'Скорость x1' : 'Скорость x2'"
       >
-        <span class="btn-icon">{{ timeStore.isFastForward ? '⏹️' : '⏩' }}</span>
+        <span class="btn-icon">{{ timeStore.isFastForward ? 'x1' : 'x2' }}</span>
       </button>
 
       <button 
@@ -102,6 +102,10 @@ const togglePause = () => {
   timeStore.pauseTime()
 }
 
+const toggleAccelerationX2 = () => {
+  timeStore.toggleAccelerationX2()
+}
+
 const nextDay = async () => {
   timeStore.nextDay()
   
@@ -112,9 +116,6 @@ const nextDay = async () => {
   showDailyReport()
 }
 
-const toggleAcceleration = () => {
-  timeStore.toggleAccelerationX2()
-}
 
 
 const showDailyReport = () => {
@@ -303,13 +304,12 @@ onUnmounted(() => {
 }
 
 .report-modal-center {
-  max-width: 90vw;
-  max-height: 90vh;
-  width: 100%;
-  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 20px;
 }
 
 /* Адаптивность */
