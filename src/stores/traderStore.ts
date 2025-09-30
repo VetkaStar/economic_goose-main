@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Trader, TraderMaterial, MarketState, MarketTrend } from '@/types/traders'
+import type { Trader, TraderMaterial, MarketState } from '@/types/traders'
 
 export const useTraderStore = defineStore('trader', () => {
   // Состояние рынка
@@ -253,10 +253,10 @@ export const useTraderStore = defineStore('trader', () => {
     // Уменьшаем количество материала
     material.quantity -= quantity
     
-    // Добавляем материал в склад
+    // Добавляем материал в правильное хранилище (кладовая или склад)
     const { useWarehouseStore } = await import('@/stores/warehouseStore')
     const warehouseStore = useWarehouseStore()
-    await warehouseStore.addMaterialToWarehouse(materialId, quantity)
+    await warehouseStore.addMaterialToCorrectStorage(materialId, quantity)
     
     // Записываем в историю
     const existingVisit = marketState.value.traderHistory.find(v => 

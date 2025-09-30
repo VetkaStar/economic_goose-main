@@ -15,6 +15,14 @@
               <div class="name">{{ m.name }}</div>
               <div class="qty">x{{ m.quantity }}</div>
               <div class="meta" v-if="m.quality">{{ m.quality }}%</div>
+              <button 
+                v-if="company.isWarehouseAvailable" 
+                class="transfer-btn" 
+                @click="transferMaterial(m.id, m.quantity)"
+                :disabled="transferring"
+              >
+                📦
+              </button>
             </div>
           </div>
         </div>
@@ -31,13 +39,19 @@
         </div>
       </div>
       <div class="footer">
-        <div class="hint">До аренды склада все покупки и изделия будут попадать сюда автоматически.</div>
+        <div class="hint" v-if="!company.isWarehouseAvailable">
+          До аренды склада все покупки и изделия будут попадать сюда автоматически.
+        </div>
+        <div class="hint" v-else>
+          Склад арендован! Используйте кнопку 📦 для переноса материалов на склад.
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { usePantryStore } from '@/stores/pantryStore'
 import { useCompanyStore } from '@/stores/companyStore'
@@ -48,6 +62,26 @@ const pantry = usePantryStore()
 const company = useCompanyStore()
 
 const { materials, products, materialsSlots, productsSlots, materialsUsedSlots, productsUsedSlots } = storeToRefs(pantry)
+
+const transferring = ref(false)
+
+const transferMaterial = async (materialId: string, quantity: number) => {
+  if (transferring.value) return
+  
+  transferring.value = true
+  try {
+    const success = await pantry.transferMaterialToWarehouse(materialId, quantity)
+    if (success) {
+      console.log(`✅ Материал перенесен на склад`)
+    } else {
+      console.log(`❌ Ошибка при переносе материала`)
+    }
+  } catch (error) {
+    console.error('Ошибка при переносе материала:', error)
+  } finally {
+    transferring.value = false
+  }
+}
 </script>
 
 <style scoped>
@@ -67,6 +101,9 @@ const { materials, products, materialsSlots, productsSlots, materialsUsedSlots, 
 .name { color: var(--color-text); font-weight:600; flex:1; }
 .qty { color:#555; font-weight:600; }
 .meta { color:#777; font-size: 12px; }
+.transfer-btn { background: var(--color-accents); border: 2px solid var(--color-buttons); border-radius: 8px; color: var(--color-text); padding: 4px 8px; font-size: 16px; cursor: pointer; transition: all 0.2s; }
+.transfer-btn:hover:not(:disabled) { background: var(--color-buttons); transform: scale(1.05); }
+.transfer-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .footer { padding: 10px 12px; border-top: 2px solid var(--color-buttons); color: var(--color-text); border-radius: 0 0 14px 14px; background: var(--color-bg-menu); }
 .hint { opacity:.9; }
 </style>

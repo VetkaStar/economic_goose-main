@@ -95,7 +95,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { useWarehouseStore } from '@/stores/warehouseStore'
 
@@ -264,7 +264,7 @@ const getCurrentCategoryName = () => {
 const canBuy = (material: any) => {
   const quantity = selectedQuantities.value[material.id] || 1
   const totalPrice = material.price * quantity
-  return authStore.user?.money >= totalPrice && material.available >= quantity
+  return (authStore.user?.money || 0) >= totalPrice && material.available >= quantity
 }
 
 const getTotalPrice = (material: any) => {
@@ -293,14 +293,19 @@ const buyMaterial = async (material: any) => {
   
   try {
     // Списываем деньги
+    if (!authStore.user) {
+      console.log('❌ Пользователь не авторизован')
+      return
+    }
+    
     const success = await authStore.spendMoney(totalPrice)
     if (!success) {
       console.log('❌ Недостаточно средств')
       return
     }
     
-    // Добавляем материал в склад
-    await warehouseStore.addMaterialToWarehouse(material.id, quantity)
+    // Добавляем материал в правильное хранилище (кладовая или склад)
+    await warehouseStore.addMaterialToCorrectStorage(material.id, quantity, material)
     
     // Уменьшаем доступное количество
     material.available -= quantity

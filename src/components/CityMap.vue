@@ -28,6 +28,19 @@
               <span class="summary-label">Доходы (день):</span>
               <span class="summary-value positive">+₽{{ dailyIncome.toLocaleString() }}</span>
             </div>
+            
+            <!-- Статистика заказов -->
+            <div class="stats-section">
+              <h4>📋 Заказы</h4>
+              <div class="summary-item">
+                <span class="summary-label">Выполнено:</span>
+                <span class="summary-value">{{ company.state.stats?.ordersCompleted || 0 }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">Заработано с заказов:</span>
+                <span class="summary-value positive">+₽{{ (company.state.stats?.ordersEarnings || 0).toLocaleString() }}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -60,6 +73,23 @@
             <div class="summary-item">
               <span class="summary-label">Арендовано:</span>
               <span class="summary-value">{{ rentedCount }}/3</span>
+            </div>
+            
+            <!-- Статистика заказов -->
+            <div class="stats-section">
+              <h4>📋 Заказы</h4>
+              <div class="summary-item">
+                <span class="summary-label">Выполнено:</span>
+                <span class="summary-value">{{ company.state.stats?.ordersCompleted || 0 }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">Заработано:</span>
+                <span class="summary-value positive">+₽{{ (company.state.stats?.ordersEarnings || 0).toLocaleString() }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">Опыт с заказов:</span>
+                <span class="summary-value">+{{ company.state.stats?.ordersExperience || 0 }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -949,6 +979,19 @@ const closeShop = () => {
 
 .summary-item:last-child {
   margin-bottom: 0;
+}
+
+.stats-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 2px solid #e0e0e0;
+}
+
+.stats-section h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: #666;
+  font-weight: 600;
 }
 
 .summary-label {

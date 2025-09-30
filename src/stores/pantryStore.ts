@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
-import { useCompanyStore } from '@/stores/companyStore'
 
 // Простейшие типы для локальной кладовой (дом гуся)
 export interface PantryMaterial {
@@ -27,15 +26,14 @@ export interface PantryProduct {
 
 export const usePantryStore = defineStore('pantry', () => {
   const auth = useAuthStore()
-  const company = useCompanyStore()
 
   const STORAGE_KEY = computed(() => `home_pantry_${auth.user?.id || 'guest'}`)
 
   const materials = ref<PantryMaterial[]>([])
   const products = ref<PantryProduct[]>([])
 
-  const materialsSlots = computed(() => company.state.capacities.homePantry.materialsSlots)
-  const productsSlots = computed(() => company.state.capacities.homePantry.productsSlots)
+  const materialsSlots = computed(() => 10) // Фиксированное количество слотов для кладовой
+  const productsSlots = computed(() => 10) // Фиксированное количество слотов для кладовой
 
   const materialsUsedSlots = computed(() => materials.value.length)
   const productsUsedSlots = computed(() => products.value.length)
@@ -118,6 +116,45 @@ export const usePantryStore = defineStore('pantry', () => {
       .reduce((s, m) => s + m.quantity, 0)
   }
 
+  // Перенос материала из кладовой на склад
+  async function transferMaterialToWarehouse(materialId: string, quantity: number): Promise<boolean> {
+    try {
+      const material = materials.value.find(m => m.id === materialId)
+      if (!material || material.quantity < quantity) {
+        return false
+      }
+
+      // Импортируем warehouseStore для добавления на склад
+      const { useWarehouseStore } = await import('@/stores/warehouseStore')
+      const warehouseStore = useWarehouseStore()
+
+      // Добавляем материал на склад
+      const success = await warehouseStore.addMaterialToWarehouse(materialId, quantity)
+      
+      if (success) {
+        // Уменьшаем количество в кладовой
+        material.quantity -= quantity
+        
+        // Если материала не осталось, удаляем его из кладовой
+        if (material.quantity <= 0) {
+          const index = materials.value.findIndex(m => m.id === materialId)
+          if (index !== -1) {
+            materials.value.splice(index, 1)
+          }
+        }
+        
+        save()
+        console.log(`📦 Перенесено ${quantity} единиц материала "${material.name}" на склад`)
+        return true
+      }
+      
+      return false
+    } catch (error) {
+      console.error('Ошибка при переносе материала на склад:', error)
+      return false
+    }
+  }
+
   function addProduct(payload: Omit<PantryProduct, 'id'> & { id?: string }) {
     const id = payload.id || generateId()
     const same = products.value.find(p => p.name === payload.name)
@@ -155,6 +192,7 @@ export const usePantryStore = defineStore('pantry', () => {
     addProduct,
     removeMaterialByNameContains,
     getQuantityByNameContains,
+    transferMaterialToWarehouse,
     load,
   }
 })
