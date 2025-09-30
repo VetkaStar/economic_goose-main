@@ -276,7 +276,7 @@ export const useAtelierStore = defineStore('atelier', () => {
     return true
   }
 
-  const checkMaterials = async (materials: string[]) => {
+  const checkMaterials = async (_materials: string[]) => {
     // Проверяем наличие материалов на складе
     // Пока возвращаем true, позже интегрируем с warehouseStore
     return true

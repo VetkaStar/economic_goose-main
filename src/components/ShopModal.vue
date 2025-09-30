@@ -128,9 +128,9 @@ interface ShopMaterial {
 }
 
 // Эмиты
-const emit = defineEmits<{
-  close: []
-}>()
+// const emit = defineEmits<{
+//   close: []
+// }>() // Пока не используется
 
 // Сторы
 const authStore = useAuthStore()

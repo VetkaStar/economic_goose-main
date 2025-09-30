@@ -201,7 +201,7 @@
     <div v-if="showSewingGame" class="sewing-game-overlay" @click="closeSewingGame">
       <div class="sewing-game-modal" @click.stop>
         <SewingMinigame 
-          :order-id="currentOrderId"
+          :order-id="currentOrderId || undefined"
           :game-mode="currentGameMode"
           @complete="onSewingComplete"
           @close="closeSewingGame"
@@ -285,7 +285,7 @@ const selectOrder = async (orderId: string, gameMode: 'clicker' | 'precision' | 
   }
 }
 
-const onSewingComplete = async (progress: number, quality: number) => {
+const onSewingComplete = async (progress: number, _quality: number) => {
   if (currentOrderId.value) {
     await atelierStore.workOnOrder(currentOrderId.value, progress)
   }

@@ -84,12 +84,12 @@
                         min="1"
                         :value="1"
                         class="quantity-input"
-                        :disabled="loading.value"
+                        :disabled="initialLoading"
                       />
                       <button 
                         @click="handleSellMaterial(material.id, getQuantityInput(`material-quantity-${material.id}`))" 
                         class="action-btn sell-btn"
-                        :disabled="material.quantity < 1 || loading.value"
+                        :disabled="material.quantity < 1 || initialLoading"
                         title="Продать указанное количество"
                       >
                         Продать
@@ -97,7 +97,7 @@
                       <button 
                         @click="handleSellMaterial(material.id, material.quantity)" 
                         class="action-btn sell-all-btn"
-                        :disabled="material.quantity < 1 || loading.value"
+                        :disabled="material.quantity < 1 || initialLoading"
                         title="Продать всё"
                       >
                         Всё
@@ -137,12 +137,12 @@
                         min="1"
                         :value="1"
                         class="quantity-input"
-                        :disabled="loading.value"
+                        :disabled="initialLoading"
                       />
                       <button 
                         @click="handleSellClothing(clothingItem.id, getQuantityInput(`clothing-quantity-${clothingItem.id}`))" 
                         class="action-btn sell-btn"
-                        :disabled="clothingItem.quantity < 1 || loading.value"
+                        :disabled="clothingItem.quantity < 1 || initialLoading"
                         title="Продать указанное количество"
                       >
                         Продать
@@ -150,7 +150,7 @@
                       <button 
                         @click="handleSellClothing(clothingItem.id, clothingItem.quantity)" 
                         class="action-btn sell-all-btn"
-                        :disabled="clothingItem.quantity < 1 || loading.value"
+                        :disabled="clothingItem.quantity < 1 || initialLoading"
                         title="Продать всё"
                       >
                         Всё
@@ -243,11 +243,11 @@
 import { onMounted, ref, computed, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useWarehouseStore } from '@/stores/warehouseStore'
-import { useAuthStore } from '@/stores/authStore'
+// import { useAuthStore } from '@/stores/authStore' // Пока не используется
 
-const props = defineProps<{
-  show?: boolean
-}>()
+// const props = defineProps<{
+//   show?: boolean
+// }>() // Пока не используется
 
 const emit = defineEmits<{
   close: []
@@ -255,7 +255,7 @@ const emit = defineEmits<{
 
 // Используем store для управления складом и авторизацией
 const warehouseStore = useWarehouseStore()
-const authStore = useAuthStore()
+// const authStore = useAuthStore() // Пока не используется
 
 // Состояние для уведомлений
 const notification = ref<{ type: 'success' | 'error', message: string } | null>(null)
@@ -293,7 +293,7 @@ const {
   materials,
   clothing,
   stats,
-  loading,
+  // loading, // Пока не используется
   error,
   materialsTotal,
   materialsValue,

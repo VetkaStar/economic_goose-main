@@ -127,7 +127,8 @@ const userInfo = ref({
   level: authStore.user?.level || 1,
   experience: authStore.user?.experience || 0,
   nextLevelExp: 1000,
-  email: authStore.user?.email || ''
+  email: authStore.user?.email || '',
+  money: authStore.user?.money || 5000
 })
 
 // Состояние модального окна подтверждения сброса

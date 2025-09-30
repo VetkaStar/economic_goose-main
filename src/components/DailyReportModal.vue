@@ -107,7 +107,7 @@
             <div class="profit-chart">
               <div class="chart-bars">
                 <div 
-                  v-for="(dayReport, index) in lastWeekReports" 
+                  v-for="(dayReport, _index) in lastWeekReports" 
                   :key="dayReport.day"
                   class="chart-bar"
                   :class="{ active: dayReport.day === report.day }"
@@ -128,7 +128,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useEconomyStore } from '@/stores/economyStore'
-import type { DailyReport } from '@/stores/economyStore'
 
 // Пропсы
 interface Props {
@@ -138,9 +137,9 @@ interface Props {
 const props = defineProps<Props>()
 
 // Эмиты
-const emit = defineEmits<{
-  close: []
-}>()
+// const emit = defineEmits<{
+//   close: []
+// }>() // Пока не используется
 
 // Сторы
 const economyStore = useEconomyStore()

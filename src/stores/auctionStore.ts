@@ -540,37 +540,37 @@ export const useAuctionStore = defineStore('auction', () => {
   }
 
   // Завершить аукцион
-  async function finishAuction() {
-    if (!currentAuction.value) return
+  // async function finishAuction() {
+  //   if (!currentAuction.value) return
 
-    stopTimer()
+  //   stopTimer()
 
-    try {
-      const { data, error: finishError } = await supabase.rpc('finish_auction', {
-        p_auction_id: currentAuction.value.id
-      })
+  //   try {
+  //     const { data, error: finishError } = await supabase.rpc('finish_auction', {
+  //       p_auction_id: currentAuction.value.id
+  //     })
 
-      if (finishError) throw finishError
+  //     if (finishError) throw finishError
 
-      console.log('Аукцион завершён:', data)
+  //     console.log('Аукцион завершён:', data)
 
-      if (data.winner_id && authStore.user && data.winner_id === authStore.user.id) {
-        const { data: profile, error: profileError } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('id', authStore.user.id)
-          .single()
+  //     if (data.winner_id && authStore.user && data.winner_id === authStore.user.id) {
+  //       const { data: profile, error: profileError } = await supabase
+  //         .from('user_profiles')
+  //         .select('*')
+  //         .eq('id', authStore.user.id)
+  //         .single()
 
-        if (!profileError && profile) {
-          authStore.user = profile
-          console.log('✅ Баланс обновлён:', profile.money)
-        }
-      }
-    } catch (err: any) {
-      error.value = err.message
-      console.error('Ошибка при завершении аукциона:', err)
-    }
-  }
+  //       if (!profileError && profile) {
+  //         authStore.user = profile
+  //         console.log('✅ Баланс обновлён:', profile.money)
+  //       }
+  //     }
+  //   } catch (err: any) {
+  //     error.value = err.message
+  //     console.error('Ошибка при завершении аукциона:', err)
+  //   }
+  // } // Пока не используется
 
   // Покинуть аукцион
   async function leaveAuction() {

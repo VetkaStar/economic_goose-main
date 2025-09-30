@@ -358,34 +358,34 @@ const canSubmitResponse = computed(() => {
          respondPrice.value > 0
 })
 
-function formatDate(dateString: string) {
-  const date = new Date(dateString)
-  return date.toLocaleDateString('ru-RU', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
+// function formatDate(dateString: string) {
+//   const date = new Date(dateString)
+//   return date.toLocaleDateString('ru-RU', {
+//     day: '2-digit',
+//     month: '2-digit',
+//     year: 'numeric',
+//     hour: '2-digit',
+//     minute: '2-digit'
+//   })
+// } // Пока не используется
 
-function getStatusText(status: string) {
-  const statusMap: Record<string, string> = {
-    'active': 'Активно',
-    'completed': 'Завершено',
-    'cancelled': 'Отменено'
-  }
-  return statusMap[status] || status
-}
+// function getStatusText(status: string) {
+//   const statusMap: Record<string, string> = {
+//     'active': 'Активно',
+//     'completed': 'Завершено',
+//     'cancelled': 'Отменено'
+//   }
+//   return statusMap[status] || status
+// } // Пока не используется
 
-function getResponseStatusText(status: string) {
-  const statusMap: Record<string, string> = {
-    'pending': 'Ожидает',
-    'accepted': 'Принято',
-    'rejected': 'Отклонено'
-  }
-  return statusMap[status] || status
-}
+// function getResponseStatusText(status: string) {
+//   const statusMap: Record<string, string> = {
+//     'pending': 'Ожидает',
+//     'accepted': 'Принято',
+//     'rejected': 'Отклонено'
+//   }
+//   return statusMap[status] || status
+// } // Пока не используется
 
 function createPost() {
   if (!canCreatePost.value) return
@@ -418,13 +418,13 @@ function createPost() {
   }
 }
 
-function showRespondModal(post: SocialPost) {
-  selectedPost.value = post
-  respondMessage.value = ''
-  respondQuantity.value = 1
-  respondPrice.value = post.pricePerUnit
-  showRespond.value = true
-}
+// function showRespondModal(post: SocialPost) {
+//   selectedPost.value = post
+//   respondMessage.value = ''
+//   respondQuantity.value = 1
+//   respondPrice.value = post.pricePerUnit
+//   showRespond.value = true
+// } // Пока не используется
 
 function closeRespondModal() {
   showRespond.value = false
@@ -449,11 +449,11 @@ function submitResponse() {
   }
 }
 
-function deletePost(postId: string) {
-  if (confirm('Удалить этот пост?')) {
-    social.deletePost(postId)
-  }
-}
+// function deletePost(postId: string) {
+//   if (confirm('Удалить этот пост?')) {
+//     social.deletePost(postId)
+//   }
+// } // Пока не используется
 
 function take(id: string) {
   social.takeOrder(id)
@@ -513,17 +513,17 @@ function canSubmitAll(orderId: string) {
   return true
 }
 
-function getTypeName(type?: string) {
-  const types: Record<string, string> = {
-    'tshirt': 'Футболка',
-    'shirt': 'Рубашка', 
-    'dress': 'Платье',
-    'hoodie': 'Худи',
-    'pants': 'Брюки',
-    'skirt': 'Юбка'
-  }
-  return types[type || ''] || type || 'любой'
-}
+// function getTypeName(type?: string) {
+//   const types: Record<string, string> = {
+//     'tshirt': 'Футболка',
+//     'shirt': 'Рубашка', 
+//     'dress': 'Платье',
+//     'hoodie': 'Худи',
+//     'pants': 'Брюки',
+//     'skirt': 'Юбка'
+//   }
+//   return types[type || ''] || type || 'любой'
+// } // Пока не используется
 
 function getPatternName(pattern?: string) {
   const patterns: Record<string, string> = {

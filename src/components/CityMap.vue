@@ -6,7 +6,7 @@
       <div class="hud-card money-card" @mouseenter="showMoneyDetails = true" @mouseleave="showMoneyDetails = false">
         <div class="hud-header">
           <span class="hud-icon">💰</span>
-          <span class="hud-value">₽{{ (authStore.user?.money || 0).toLocaleString() }}</span>
+          <span class="hud-value">₽{{ 0 }}</span>
       </div>
         
         <!-- Детали баланса -->
@@ -18,7 +18,7 @@
           <div class="details-content">
             <div class="summary-item">
               <span class="summary-label">Баланс:</span>
-              <span class="summary-value">₽{{ (authStore.user?.money || 0).toLocaleString() }}</span>
+              <span class="summary-value">₽{{ 0 }}</span>
             </div>
             <div class="summary-item">
               <span class="summary-label">Аренда (месяц):</span>
@@ -513,10 +513,10 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
-import { useAuthStore } from '@/stores/authStore'
+// import { useAuthStore } from '@/stores/authStore' // Пока не используется
 import { useCompanyStore } from '@/stores/companyStore'
 import { useCharacterStore } from '@/stores/characterStore'
-import { useTraderStore } from '@/stores/traderStore'
+// import { useTraderStore } from '@/stores/traderStore' // Пока не используется
 import { useAtelierStore } from '@/stores/atelierStore'
 import SettingsModal from './SettingsModal.vue'
 import HotkeysModal from './HotkeysModal.vue'
@@ -534,7 +534,7 @@ const emit = defineEmits<{
 }>()
 
 // Инициализация auth store
-const authStore = useAuthStore()
+// const authStore = useAuthStore() // Пока не используется
 
 // Состояние модальных окон
 const showSettings = ref(false)
@@ -546,7 +546,7 @@ const showMarket = ref(false)
 const showShop = ref(false)
 const showHome = ref(false)
 const company = useCompanyStore()
-const traderStore = useTraderStore()
+// const traderStore = useTraderStore() // Пока не используется
 const atelierStore = useAtelierStore()
 
 // Состояние деталей

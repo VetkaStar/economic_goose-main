@@ -191,6 +191,11 @@ export const useCompanyStore = defineStore('company', () => {
           level: 1,
           experience: 0,
         },
+        stats: {
+          ordersCompleted: 0,
+          ordersEarnings: 0,
+          ordersExperience: 0,
+        },
         capacities: {
           homePantry: { materialsSlots: 10, productsSlots: 10 },
           warehouse: { level: 0, slots: 0 },

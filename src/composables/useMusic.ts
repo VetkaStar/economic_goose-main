@@ -8,7 +8,7 @@ export interface MusicTrack {
 }
 
 // Глобальная музыкальная система (синглтон)
-let globalAudio: Audio | null = null
+let globalAudio: HTMLAudioElement | null = null
 let globalIsPlaying = false
 let globalCurrentTrack: MusicTrack | null = null
 
@@ -78,7 +78,7 @@ export function useMusic() {
   })
 
   // Обработчик ошибок
-  audio.addEventListener('error', (e) => {
+  audio.addEventListener('error', (e: Event) => {
     console.error('❌ Ошибка аудио:', e)
     console.error('❌ Код ошибки:', audio.error?.code)
     console.error('❌ Сообщение ошибки:', audio.error?.message)
@@ -120,36 +120,36 @@ export function useMusic() {
   }
 
   // Функция появления звука
-  const fadeIn = (duration: number = 3000): Promise<void> => {
-    return new Promise((resolve) => {
-      const targetVolume = volume.value * musicVolume.value
-      const steps = 30 // Увеличиваем количество шагов для более плавного перехода
-      const stepDuration = duration / steps
-      
-      console.log(`🎵 FadeIn: Целевая громкость ${Math.round(targetVolume * 100)}%`)
-      
-      // Начинаем с текущей громкости или очень тихой
-      const startVolume = Math.min(0.01, targetVolume)
-      audio.volume = startVolume
-      let currentStep = 0
-      
-      fadeInterval = setInterval(() => {
-        currentStep++
-        // Используем экспоненциальную кривую для более естественного fade-in
-        const progress = currentStep / steps
-        const easedProgress = 1 - Math.pow(1 - progress, 3) // easeOutCubic
-        audio.volume = startVolume + (targetVolume - startVolume) * easedProgress
-        
-        if (currentStep >= steps || audio.volume >= targetVolume) {
-          audio.volume = targetVolume
-          clearInterval(fadeInterval!)
-          fadeInterval = null
-          console.log(`🎵 FadeIn завершён: ${Math.round(audio.volume * 100)}%`)
-          resolve()
-        }
-      }, stepDuration)
-    })
-  }
+  // const fadeIn = (duration: number = 3000): Promise<void> => {
+  //   return new Promise((resolve) => {
+  //     const targetVolume = volume.value * musicVolume.value
+  //     const steps = 30 // Увеличиваем количество шагов для более плавного перехода
+  //     const stepDuration = duration / steps
+  //     
+  //     console.log(`🎵 FadeIn: Целевая громкость ${Math.round(targetVolume * 100)}%`)
+  //     
+  //     // Начинаем с текущей громкости или очень тихой
+  //     const startVolume = Math.min(0.01, targetVolume)
+  //     audio.volume = startVolume
+  //     let currentStep = 0
+  //     
+  //     fadeInterval = setInterval(() => {
+  //       currentStep++
+  //       // Используем экспоненциальную кривую для более естественного fade-in
+  //       const progress = currentStep / steps
+  //       const easedProgress = 1 - Math.pow(1 - progress, 3) // easeOutCubic
+  //       audio.volume = startVolume + (targetVolume - startVolume) * easedProgress
+  //       
+  //       if (currentStep >= steps || audio.volume >= targetVolume) {
+  //         audio.volume = targetVolume
+  //         clearInterval(fadeInterval!)
+  //         fadeInterval = null
+  //         console.log(`🎵 FadeIn завершён: ${Math.round(audio.volume * 100)}%`)
+  //         resolve()
+  //       }
+  //     }, stepDuration)
+  //   })
+  // } // Пока не используется
 
   // Загрузка и воспроизведение трека
   const loadTrack = async (trackIndex: number): Promise<void> => {
@@ -334,7 +334,7 @@ export function useMusic() {
       setTimeout(() => {
         if (audio.paused) {
           console.log('⚠️ Аудио на паузе после запуска, пытаемся снова...')
-          audio.play().catch(err => console.error('❌ Повторная попытка запуска:', err))
+          audio.play().catch((err: Error) => console.error('❌ Повторная попытка запуска:', err))
         }
         console.log(`🎵 Проверка после запуска: paused=${audio.paused}, volume=${Math.round(audio.volume * 100)}%`)
       }, 200)
@@ -637,9 +637,7 @@ export function useMusic() {
     musicVolume,
     environmentVolume,
     tracks,
-    isWaitingForInteraction,
     hasUserInteracted,
-    isInitialized,
     
     // Методы
     play,

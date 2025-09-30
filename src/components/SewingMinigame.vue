@@ -1,7 +1,7 @@
 <template>
   <div class="sewing-minigame">
     <div class="game-header">
-      <h3>{{ order?.itemName || 'Пошив одежды' }}</h3>
+      <h3>{{ orderId || 'Пошив одежды' }}</h3>
       <div class="progress-info">
         <span>Прогресс: {{ currentProgress }}%</span>
         <div class="progress-bar">
@@ -100,7 +100,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onUnmounted } from 'vue'
 
 interface Target {
   id: string

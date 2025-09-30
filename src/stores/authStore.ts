@@ -365,7 +365,7 @@ export const useAuthStore = defineStore('auth', () => {
       
       // Очищаем все ключи, связанные с пользователем
       Object.keys(localStorage).forEach(key => {
-        if (key.includes(user.value.id)) {
+        if (user.value && key.includes(user.value.id)) {
           localStorage.removeItem(key)
         }
       })

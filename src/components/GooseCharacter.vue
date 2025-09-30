@@ -194,7 +194,7 @@ watch(() => props.animation, (newAnimation) => {
 // Методы для управления персонажем
 const changeHero = (heroId: string) => {
   // Эмитим событие смены героя
-  emit('heroChange', heroId)
+  emit('hero-change', heroId)
 }
 
 const addExperience = (amount: number) => {
@@ -209,7 +209,7 @@ const levelUp = () => {
 
 // Эмиты
 const emit = defineEmits<{
-  heroChange: [heroId: string]
+  'hero-change': [heroId: string]
   levelUp: []
   experienceGain: [amount: number]
 }>()

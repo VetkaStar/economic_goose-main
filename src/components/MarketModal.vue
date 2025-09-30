@@ -79,19 +79,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { onMounted } from 'vue'
 import { useTraderStore } from '@/stores/traderStore'
 import { useAuthStore } from '@/stores/authStore'
 
-const emit = defineEmits<{
-  close: []
-}>()
+// const emit = defineEmits<{
+//   close: []
+// }>() // Пока не используется
 
 const traderStore = useTraderStore()
 const authStore = useAuthStore()
 
 const canBuy = (material: any) => {
-  return authStore.user?.money >= material.basePrice && material.quantity > 0
+  return (authStore.user?.money ?? 0) >= material.basePrice && material.quantity > 0
 }
 
 const buyMaterial = async (traderId: string, materialId: string) => {

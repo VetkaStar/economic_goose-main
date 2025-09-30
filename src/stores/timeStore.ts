@@ -136,7 +136,7 @@ export const useTimeStore = defineStore('time', () => {
 
   const getWeather = () => {
     const season = getSeason()
-    const timeOfDay = getTimeOfDay()
+    // const timeOfDay = getTimeOfDay() // Пока не используется
     
     // Простая система погоды на основе сезона и времени
     const weatherChances = {
@@ -151,8 +151,8 @@ export const useTimeStore = defineStore('time', () => {
     
     if (random < chances.sunny) return 'sunny'
     if (random < chances.sunny + chances.cloudy) return 'cloudy'
-    if (chances.rainy && random < chances.sunny + chances.cloudy + chances.rainy) return 'rainy'
-    if (chances.snowy && random < chances.sunny + chances.cloudy + (chances.rainy || 0) + chances.snowy) return 'snowy'
+    if ('rainy' in chances && chances.rainy && random < chances.sunny + chances.cloudy + chances.rainy) return 'rainy'
+    if ('snowy' in chances && chances.snowy && random < chances.sunny + chances.cloudy + ('rainy' in chances ? (chances as any).rainy : 0) + chances.snowy) return 'snowy'
     
     return 'sunny'
   }

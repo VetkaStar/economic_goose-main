@@ -224,10 +224,10 @@ const currentTime = computed(() => {
   console.log('🕐 Phone time update:', timeStore.currentTime.time)
   return timeStore.currentTime.time
 })
-const currentDate = computed(() => {
-  console.log('📅 Phone date update:', timeStore.gameDate)
-  return timeStore.gameDate
-})
+// const currentDate = computed(() => {
+//   console.log('📅 Phone date update:', timeStore.gameDate)
+//   return timeStore.gameDate
+// }) // Пока не используется
 
 // Состояние
 const activeTab = ref('home')

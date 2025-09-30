@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useAuthStore } from './authStore'
 import { useCompanyStore } from './companyStore'
-import { useWarehouseStore } from './warehouseStore'
+// import { useWarehouseStore } from './warehouseStore' // Пока не используется
 import { useTraderStore } from './traderStore'
 
 export interface DailyReport {
@@ -33,7 +33,7 @@ export const useEconomyStore = defineStore('economy', () => {
   // Сторы
   const authStore = useAuthStore()
   const companyStore = useCompanyStore()
-  const warehouseStore = useWarehouseStore()
+  // const warehouseStore = useWarehouseStore() // Пока не используется
   const traderStore = useTraderStore()
 
   // Состояние

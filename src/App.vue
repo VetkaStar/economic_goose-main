@@ -20,11 +20,14 @@ const authStore = useAuthStore()
 
 // Инициализация музыкальной системы
 const { 
-  play: startMusic, 
   cleanup: cleanupMusic, 
   initializeAfterInteraction,
   hasUserInteracted
 } = useMusic()
+
+// Временно закомментируем неиспользуемые переменные
+// const isWaitingForInteraction = ref(true)
+// const isInitialized = ref(false)
 
 // Состояние приложения
 const currentScreen = ref<'start-screen' | 'main-menu' | 'hero-page' | 'company-page'>('start-screen')

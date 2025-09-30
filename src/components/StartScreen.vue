@@ -26,10 +26,10 @@
 
 <script setup lang="ts">
 import { onMounted } from 'vue'
-import { useMusic } from '@/composables/useMusic'
+// import { useMusic } from '@/composables/useMusic' // Пока не используется
 
 // Музыкальная система
-const musicSystem = useMusic()
+// const musicSystem = useMusic() // Пока не используется
 
 // Эмиты
 const emit = defineEmits<{
