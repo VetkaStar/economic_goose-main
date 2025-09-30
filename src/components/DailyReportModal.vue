@@ -3,15 +3,21 @@
     <div class="modal daily-report-modal">
       <div class="modal-header">
         <h2 class="menu-title">📊 Дневной отчёт</h2>
-        <button class="close-btn" @click="$emit('close')">✕</button>
+        <div class="header-controls">
+          <label class="checkbox-label">
+            <input type="checkbox" v-model="dontShowDailyReport" @change="toggleDailyReportSetting">
+            <span class="checkbox-text">Не показывать ежедневный отчёт</span>
+          </label>
+          <button class="close-btn" @click="$emit('close')">✕</button>
+        </div>
       </div>
       
       <div class="modal-content">
         <div v-if="!report" class="no-report">
           <div class="no-report-icon">📊</div>
           <h3>Отчёт за день {{ day }}</h3>
-          <p>Дневные отчёты пока не реализованы</p>
-          <p class="no-report-note">Экономическая система будет добавлена в следующих обновлениях</p>
+          <p>Отчёт за этот день ещё не создан</p>
+          <p class="no-report-note">Отчёт будет создан автоматически в конце дня</p>
         </div>
         
         <div v-else class="report-content">
@@ -36,6 +42,10 @@
           <div class="report-section">
             <h4 class="section-title">📈 Доходы</h4>
             <div class="section-content">
+              <div class="income-item">
+                <span class="item-label">Заказы ({{ report.orders.completed }} выполнено):</span>
+                <span class="item-value positive">+₽{{ report.income.orders.toLocaleString() }}</span>
+              </div>
               <div class="income-item">
                 <span class="item-label">Продажи:</span>
                 <span class="item-value positive">+₽{{ report.income.sales.toLocaleString() }}</span>
@@ -66,6 +76,10 @@
               <div class="expense-item">
                 <span class="item-label">Материалы:</span>
                 <span class="item-value negative">-₽{{ report.expenses.materials.toLocaleString() }}</span>
+              </div>
+              <div class="expense-item">
+                <span class="item-label">Покупки:</span>
+                <span class="item-value negative">-₽{{ report.expenses.purchases.toLocaleString() }}</span>
               </div>
               <div class="expense-item">
                 <span class="item-label">Зарплаты:</span>
@@ -101,6 +115,25 @@
             </div>
           </div>
 
+          <!-- Заказы -->
+          <div class="report-section">
+            <h4 class="section-title">📋 Заказы</h4>
+            <div class="section-content">
+              <div class="order-item">
+                <span class="item-label">Выполнено заказов:</span>
+                <span class="item-value positive">{{ report.orders.completed }}</span>
+              </div>
+              <div class="order-item">
+                <span class="item-label">Неудачных заказов:</span>
+                <span class="item-value negative">{{ report.orders.failed }}</span>
+              </div>
+              <div class="order-item">
+                <span class="item-label">Заработано с заказов:</span>
+                <span class="item-value positive">+₽{{ report.orders.totalEarnings.toLocaleString() }}</span>
+              </div>
+            </div>
+          </div>
+
           <!-- График прибыли -->
           <div class="report-section">
             <h4 class="section-title">📊 График прибыли</h4>
@@ -126,7 +159,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useEconomyStore } from '@/stores/economyStore'
 
 // Пропсы
@@ -144,9 +177,27 @@ const props = defineProps<Props>()
 // Сторы
 const economyStore = useEconomyStore()
 
+// Состояние для галочки
+const dontShowDailyReport = ref(false)
+
 // Вычисляемые свойства
 const report = computed(() => {
-  return economyStore.dailyReports.find(r => r.day === props.day) || null
+  const foundReport = economyStore.dailyReports.find(r => r.day === props.day)
+  console.log('🔍 Поиск отчета для дня', props.day, 'Найден:', foundReport)
+  console.log('📊 Все отчеты:', economyStore.dailyReports)
+  return foundReport || null
+})
+
+// Функция для переключения настройки показа ежедневного отчета
+const toggleDailyReportSetting = () => {
+  localStorage.setItem('dontShowDailyReport', dontShowDailyReport.value.toString())
+  console.log('🔧 Настройка ежедневного отчета:', dontShowDailyReport.value ? 'отключен' : 'включен')
+}
+
+// Загружаем настройку при инициализации
+onMounted(() => {
+  const saved = localStorage.getItem('dontShowDailyReport')
+  dontShowDailyReport.value = saved === 'true'
 })
 
 const lastWeekReports = computed(() => {
@@ -173,6 +224,20 @@ const getBarHeight = (profit: number) => {
 @import '@/styles/colors.css';
 @import '@/styles/menu-common.css';
 
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  backdrop-filter: blur(5px);
+}
+
 .daily-report-modal {
   background: var(--color-bg-menu, #F4E6D1);
   border-radius: clamp(15px, 2vw, 30px);
@@ -184,6 +249,42 @@ const getBarHeight = (profit: number) => {
   border: clamp(3px, 0.5vw, 5px) solid var(--color-text, #5D4037);
   position: relative;
   z-index: 10001;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: clamp(20px, 3vw, 40px);
+  background: var(--color-bg-menu, #F4E6D1);
+  border-bottom: clamp(2px, 0.3vw, 3px) solid var(--color-buttons, #C85A54);
+  border-radius: clamp(15px, 2vw, 30px) clamp(15px, 2vw, 30px) 0 0;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.9rem;
+  color: var(--color-text, #5D4037);
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-buttons, #C85A54);
+}
+
+.checkbox-text {
+  user-select: none;
 }
 
 .modal-content {

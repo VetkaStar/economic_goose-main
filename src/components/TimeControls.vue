@@ -45,7 +45,7 @@
 
       <button 
         class="time-btn report-btn"
-        @click="showDailyReport"
+        @click="showDailyReport(true)"
         title="Просмотр отчёта"
       >
         <span class="btn-icon">📊</span>
@@ -59,27 +59,24 @@
     </div>
 
 
-    <!-- Модальное окно дневного отчёта -->
-    <div v-if="showReportModal" class="report-modal-overlay" @click.self="showReportModal = false">
-      <div class="report-modal-center">
-        <DailyReportModal 
-          :day="timeStore.gameTime.day || 1"
-          @close="showReportModal = false"
-        />
-      </div>
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useTimeStore } from '@/stores/timeStore'
-import DailyReportModal from './DailyReportModal.vue'
+import { useEconomyStore } from '@/stores/economyStore'
+// Эмиты
+const emit = defineEmits<{
+  'show-report': [day: number]
+  'hide-report': []
+}>()
 
 // Сторы
 const timeStore = useTimeStore()
+const economyStore = useEconomyStore()
 
-const showReportModal = ref(false)
+const reportDay = ref(1)
 
 // Интервал для автоматического тика времени
 let timeInterval: NodeJS.Timeout | null = null
@@ -107,26 +104,58 @@ const toggleAccelerationX2 = () => {
 }
 
 const nextDay = async () => {
-  timeStore.nextDay()
-  
-  // Обрабатываем дневные расчёты
+  // Сначала создаем отчет за ТЕКУЩИЙ день
   await processDailyCalculations()
   
-  // Показываем отчёт
-  showDailyReport()
+  // Потом переходим на следующий день
+  timeStore.nextDay()
 }
 
 
 
-const showDailyReport = () => {
-  showReportModal.value = true
+const showDailyReport = (isManual = false) => {
+  // Проверяем настройку пользователя только для автоматического показа
+  if (!isManual) {
+    const dontShow = localStorage.getItem('dontShowDailyReport') === 'true'
+    if (dontShow) {
+      console.log('📊 Автоматический показ ежедневного отчета отключен пользователем')
+      return
+    }
+  }
+  
+  // Для ручного показа ищем последний доступный отчет
+  let targetDay = reportDay.value
+  if (isManual) {
+    const reports = economyStore.dailyReports
+    if (reports.length > 0) {
+      // Берем последний созданный отчет
+      const lastReport = reports[reports.length - 1]
+      targetDay = lastReport.day
+      console.log('📊 Показываем последний отчет за день', targetDay)
+    } else {
+      console.log('📊 Отчеты отсутствуют')
+      return
+    }
+  }
+  
+  console.log('📊 Показываем отчет', isManual ? 'вручную' : 'автоматически', 'за день', targetDay)
+  emit('show-report', targetDay)
 }
 
 const processDailyCalculations = async () => {
   try {
     console.log('🔄 Обработка дневных расчётов...')
     
-    // Пока просто переходим к следующему дню без расчётов
+    // Создаем отчет за ТЕКУЩИЙ день (до перехода на следующий)
+    const currentDay = timeStore.gameTime.day
+    const report = await economyStore.processDailyCalculations(currentDay)
+    console.log('✅ Дневной отчёт создан для дня', currentDay, ':', report)
+    
+    // Сохраняем день отчета для показа
+    reportDay.value = currentDay
+    
+    // Автоматически показываем отчет после создания (с проверкой галочки)
+    showDailyReport(false) // false = автоматический показ
     
   } catch (error) {
     console.error('❌ Ошибка при обработке дневных расчётов:', error)
@@ -288,29 +317,6 @@ onUnmounted(() => {
 }
 
 
-/* Модальное окно отчёта по центру */
-.report-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
-  backdrop-filter: blur(5px);
-}
-
-.report-modal-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  padding: 20px;
-}
 
 /* Адаптивность */
 @media (max-width: 768px) {

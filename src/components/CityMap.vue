@@ -427,8 +427,15 @@
 
     <!-- Компактная панель управления временем -->
     <div class="time-controls-strip">
-      <TimeControls />
+      <TimeControls @show-report="(day) => { currentReportDay = day; showReportModal = true }" @hide-report="showReportModal = false" />
     </div>
+    
+    <!-- Модальное окно дневного отчёта -->
+    <DailyReportModal 
+      v-if="showReportModal"
+      :day="currentReportDay"
+      @close="showReportModal = false"
+    />
 
     <!-- Кнопка настроек -->
     <button class="settings-btn" @click="openSettings" title="Настройки">
@@ -491,6 +498,9 @@
     <!-- Комната дома гуся -->
     <HomeRoom v-if="showHome" @close="() => (showHome = false)" />
 
+    <!-- Модальное окно банка -->
+    <BankModal v-if="showBank" @close="() => (showBank = false)" />
+
     <!-- Кастомная модалка аренды -->
     <div v-if="rentDialog?.visible" class="rent-modal-overlay" @click.self="cancelRentDialog">
       <div class="rent-modal">
@@ -522,12 +532,14 @@ import SettingsModal from './SettingsModal.vue'
 import HotkeysModal from './HotkeysModal.vue'
 import AccountModal from './AccountModal.vue'
 import WarehouseModal from './WarehouseModal.vue'
+import DailyReportModal from './DailyReportModal.vue'
 import AtelierModal from './AtelierModal.vue'
 import MarketModal from './MarketModal.vue'
 import ShopModal from './ShopModal.vue'
 import PhoneInterface from './PhoneInterface.vue'
 import TimeControls from './TimeControls.vue'
 import HomeRoom from './HomeRoom.vue'
+import BankModal from './BankModal.vue'
 
 const emit = defineEmits<{
   exitToMainMenu: []
@@ -545,6 +557,9 @@ const showAtelier = ref(false)
 const showMarket = ref(false)
 const showShop = ref(false)
 const showHome = ref(false)
+const showBank = ref(false)
+const showReportModal = ref(false)
+const currentReportDay = ref(1)
 const company = useCompanyStore()
 // const traderStore = useTraderStore() // Пока не используется
 const atelierStore = useAtelierStore()
@@ -595,16 +610,23 @@ const rentDialog = ref<{ place: 'warehouse'|'atelier'|'market'; title: string; d
 async function confirmRent() {
   if (!rentDialog.value) return
   const place = rentDialog.value.place
+  console.log('🏢 Начинаем аренду:', place)
   const ok = await company.rent(place)
+  console.log('🏢 Результат аренды через company:', ok)
+  console.log('🏢 canUseAtelier после аренды:', company.canUseAtelier())
   // после успешной аренды открываем соответствующее окно
   if (ok) {
     if (place === 'warehouse' && company.canUseWarehouse()) {
       showWarehouse.value = true
     } else if (place === 'atelier' && company.canUseAtelier()) {
       // Арендуем ателье через atelierStore
-      await atelierStore.rentAtelier()
-      await atelierStore.loadAtelierState()
-      showAtelier.value = true
+      console.log('🏭 Арендуем ателье...')
+      const rentSuccess = await atelierStore.rentAtelier()
+      console.log('🏭 Результат аренды:', rentSuccess)
+      if (rentSuccess) {
+        await atelierStore.loadAtelierState()
+        showAtelier.value = true
+      }
     } else if (place === 'market' && company.canUseMarket()) {
       showMarket.value = true
     }
@@ -729,7 +751,9 @@ onUnmounted(() => {
 })
 
 // Функции зданий
-const openBank = () => {}
+const openBank = () => {
+  showBank.value = true
+}
 
 const openGovernment = () => {}
 
@@ -766,8 +790,11 @@ const openAtelier = async () => {
     return
   }
   
+  console.log('🔧 Открываем ателье...')
   // Загружаем данные ателье
   await atelierStore.loadAtelierState()
+  console.log('🔧 Состояние ателье после загрузки:', atelierStore.atelierState)
+  console.log('🔧 Можно брать заказы:', atelierStore.canTakeOrder)
   showAtelier.value = true
 }
 

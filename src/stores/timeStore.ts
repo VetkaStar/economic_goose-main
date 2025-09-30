@@ -107,6 +107,22 @@ export const useTimeStore = defineStore('time', () => {
     const timeStep = timeAcceleration.value
     console.log('⏰ TimeStore tick:', { timeStep, currentTime: gameTime.value })
     addTime(timeStep)
+    
+    // Проверяем ежемесячные события
+    checkMonthlyEvents()
+  }
+
+  // Проверка на начало нового месяца (каждые 30 дней)
+  const checkMonthlyEvents = () => {
+    const { day } = gameTime.value
+    if (day % 30 === 0) {
+      // Импортируем банк store только когда нужно
+      import('./bankStore').then(({ useBankStore }) => {
+        const bankStore = useBankStore()
+        bankStore.processMonthlyPayments()
+        console.log('🏦 Обработаны ежемесячные банковские платежи')
+      })
+    }
   }
 
   // Форматирование времени для отображения

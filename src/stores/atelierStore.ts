@@ -84,45 +84,84 @@ export const useAtelierStore = defineStore('atelier', () => {
     }
   ]
 
-  // Доступные заказы
-  const availableOrders = ref<Order[]>([
-    {
-      id: 'order_1',
-      clientName: 'Анна Петрова',
-      itemName: 'Вечернее платье',
-      price: 15000,
-      progress: 0,
-      status: 'pending',
-      dueDate: 3,
-      createdAt: 0,
-      complexity: 3,
-      materials: ['fabric_silk', 'thread_gold', 'zipper']
-    },
-    {
-      id: 'order_2',
-      clientName: 'Михаил Соколов',
-      itemName: 'Костюм на заказ',
-      price: 25000,
-      progress: 0,
-      status: 'pending',
-      dueDate: 5,
-      createdAt: 0,
-      complexity: 4,
-      materials: ['fabric_wool', 'thread_black', 'buttons']
-    },
-    {
-      id: 'order_3',
-      clientName: 'Елена Козлова',
-      itemName: 'Платье для выпускного',
-      price: 12000,
-      progress: 0,
-      status: 'pending',
-      dueDate: 2,
-      createdAt: 0,
-      complexity: 2,
-      materials: ['fabric_satin', 'thread_white', 'lace']
+  // Доступные заказы (генерируются динамически)
+  const availableOrders = ref<Order[]>([])
+
+  // Генерация новых заказов
+  const generateNewOrders = () => {
+    const orderTemplates = [
+      {
+        clientName: 'Анна Петрова',
+        itemName: 'Вечернее платье',
+        price: 15000,
+        dueDate: 3,
+        complexity: 3,
+        materials: ['fabric_silk', 'thread_gold', 'zipper']
+      },
+      {
+        clientName: 'Михаил Соколов',
+        itemName: 'Деловой костюм',
+        price: 25000,
+        dueDate: 7,
+        complexity: 4,
+        materials: ['fabric_wool', 'thread_black', 'buttons_pearl']
+      },
+      {
+        clientName: 'Елена Козлова',
+        itemName: 'Летнее платье',
+        price: 8000,
+        dueDate: 2,
+        complexity: 2,
+        materials: ['fabric_cotton', 'thread_white']
+      },
+      {
+        clientName: 'Дмитрий Волков',
+        itemName: 'Рубашка',
+        price: 6000,
+        dueDate: 1,
+        complexity: 1,
+        materials: ['fabric_cotton', 'thread_blue']
+      },
+      {
+        clientName: 'Светлана Морозова',
+        itemName: 'Пальто',
+        price: 35000,
+        dueDate: 10,
+        complexity: 5,
+        materials: ['fabric_wool', 'thread_black', 'buttons_wood', 'lining']
+      },
+      {
+        clientName: 'Александр Новиков',
+        itemName: 'Брюки',
+        price: 12000,
+        dueDate: 4,
+        complexity: 3,
+        materials: ['fabric_denim', 'thread_blue', 'zipper']
+      }
+    ]
+
+    // Генерируем 2-4 случайных заказа
+    const numOrders = Math.floor(Math.random() * 3) + 2 // 2-4 заказа
+    const newOrders: Order[] = []
+    
+    for (let i = 0; i < numOrders; i++) {
+      const template = orderTemplates[Math.floor(Math.random() * orderTemplates.length)]
+      const order: Order = {
+        id: `order_${Date.now()}_${i}`,
+        ...template,
+        progress: 0,
+        status: 'pending',
+        createdAt: Date.now()
+      }
+      newOrders.push(order)
     }
-  ])
+    
+    availableOrders.value = newOrders
+    console.log('📋 Сгенерированы новые заказы:', newOrders.length)
+  }
+
+  // Инициализация заказов
+  generateNewOrders()
 
   // Доступные сотрудники для найма
   const availableStaff = ref<Staff[]>([
@@ -237,22 +276,28 @@ export const useAtelierStore = defineStore('atelier', () => {
   })
 
   const canTakeOrder = computed(() => {
-    return atelierState.value.equipment.some(e => e.isWorking) && 
-           atelierState.value.staff.some(s => s.isWorking)
+    // Можно брать заказы если есть хотя бы одно работающее оборудование
+    // Сотрудники не обязательны для начала
+    return atelierState.value.isRented && atelierState.value.equipment.some(e => e.isWorking)
   })
 
   // Методы
   const rentAtelier = async () => {
-    if (!authStore.user) return false
+    if (!authStore.user) {
+      console.log('❌ Нет пользователя для аренды ателье')
+      return false
+    }
     
-    const success = await authStore.spendMoney(atelierState.value.monthlyRent)
-    if (!success) return false
+    // Не списываем деньги - это уже сделал company.rent()
+    console.log('🏭 Инициализация ателье (деньги уже списаны через company.rent)')
     
     atelierState.value.isRented = true
     atelierState.value.equipment = [...initialEquipment]
+    console.log('✅ Ателье арендовано, добавлено оборудование:', atelierState.value.equipment.length)
     
     // Сохраняем в Supabase
     await saveAtelierState()
+    console.log('💾 Состояние ателье сохранено')
     return true
   }
 
@@ -271,6 +316,11 @@ export const useAtelierStore = defineStore('atelier', () => {
     
     // Удаляем из доступных
     availableOrders.value = availableOrders.value.filter(o => o.id !== orderId)
+    
+    // Генерируем новый заказ взамен взятого
+    if (availableOrders.value.length < 2) {
+      generateNewOrders()
+    }
     
     await saveAtelierState()
     return true
@@ -316,10 +366,16 @@ export const useAtelierStore = defineStore('atelier', () => {
     if (!success) return false
     
     // Нанимаем
-    staff.isWorking = true
-    staff.hiredAt = Date.now()
-    atelierState.value.staff.push({ ...staff })
+    const hiredStaff = { ...staff, isWorking: true, hiredAt: Date.now() }
+    atelierState.value.staff.push(hiredStaff)
     
+    // Убираем из доступных для найма
+    const staffIndex = availableStaff.value.findIndex(s => s.id === staffId)
+    if (staffIndex !== -1) {
+      availableStaff.value.splice(staffIndex, 1)
+    }
+    
+    console.log('✅ Нанят сотрудник:', staff.name)
     await saveAtelierState()
     return true
   }
@@ -333,8 +389,16 @@ export const useAtelierStore = defineStore('atelier', () => {
     const success = await authStore.spendMoney(equipment.price)
     if (!success) return false
     
+    // Добавляем оборудование в ателье
     atelierState.value.equipment.push({ ...equipment })
     
+    // Убираем из магазина
+    const shopIndex = shopEquipment.value.findIndex(e => e.id === equipmentId)
+    if (shopIndex !== -1) {
+      shopEquipment.value.splice(shopIndex, 1)
+    }
+    
+    console.log('✅ Куплено оборудование:', equipment.name)
     await saveAtelierState()
     return true
   }
@@ -352,6 +416,28 @@ export const useAtelierStore = defineStore('atelier', () => {
     equipment.condition = 100
     equipment.isWorking = true
     
+    console.log('🔧 Отремонтировано оборудование:', equipment.name)
+    await saveAtelierState()
+    return true
+  }
+
+  const fireStaff = async (staffId: string) => {
+    const staffIndex = atelierState.value.staff.findIndex(s => s.id === staffId)
+    if (staffIndex === -1) return false
+    
+    const staff = atelierState.value.staff[staffIndex]
+    
+    // Возвращаем в доступные для найма
+    availableStaff.value.push({
+      ...staff,
+      isWorking: false,
+      hiredAt: 0
+    })
+    
+    // Убираем из нанятых
+    atelierState.value.staff.splice(staffIndex, 1)
+    
+    console.log('👋 Уволен сотрудник:', staff.name)
     await saveAtelierState()
     return true
   }
@@ -385,8 +471,39 @@ export const useAtelierStore = defineStore('atelier', () => {
       
       if (error && error.code !== 'PGRST116') throw error
       
-      if (data) {
-        atelierState.value = { ...atelierState.value, ...data.atelier_data }
+      if (data && data.atelier_data) {
+        // Полностью заменяем состояние данными из базы
+        atelierState.value = data.atelier_data
+        
+        // Если ателье арендовано, но нет оборудования - добавляем базовое
+        if (atelierState.value.isRented && (!atelierState.value.equipment || atelierState.value.equipment.length === 0)) {
+          atelierState.value.equipment = [...initialEquipment]
+          console.log('🔧 Добавлено базовое оборудование при загрузке')
+        }
+        
+        // Обновляем массивы сотрудников и оборудования
+        if (data.atelier_data.equipment) {
+          // Помечаем купленное оборудование как недоступное для покупки
+          data.atelier_data.equipment.forEach((ownedEquipment: Equipment) => {
+            const shopIndex = shopEquipment.value.findIndex(e => e.id === ownedEquipment.id)
+            if (shopIndex !== -1) {
+              shopEquipment.value.splice(shopIndex, 1)
+            }
+          })
+        }
+        
+        if (data.atelier_data.staff) {
+          // Помечаем нанятых сотрудников как недоступных для найма
+          data.atelier_data.staff.forEach((hiredStaff: Staff) => {
+            const staffIndex = availableStaff.value.findIndex(s => s.id === hiredStaff.id)
+            if (staffIndex !== -1) {
+              availableStaff.value.splice(staffIndex, 1)
+            }
+          })
+        }
+        
+        console.log('✅ Загружено состояние ателье:', atelierState.value)
+        console.log('🔧 Работающее оборудование:', atelierState.value.equipment.filter(e => e.isWorking).length)
       }
     } catch (error) {
       console.error('Ошибка загрузки состояния ателье:', error)
@@ -406,10 +523,12 @@ export const useAtelierStore = defineStore('atelier', () => {
     canTakeOrder,
     
     // Methods
+    generateNewOrders,
     rentAtelier,
     takeOrder,
     workOnOrder,
     hireStaff,
+    fireStaff,
     buyEquipment,
     repairEquipment,
     saveAtelierState,

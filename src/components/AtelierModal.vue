@@ -58,6 +58,7 @@
                   @click="takeOrder(order.id)" 
                   class="take-order-btn"
                   :disabled="!atelierStore.canTakeOrder"
+                  :title="`Можно брать заказы: ${atelierStore.canTakeOrder}. Арендовано: ${atelierStore.atelierState.isRented}. Оборудование: ${atelierStore.atelierState.equipment.filter(e => e.isWorking).length}`"
                 >
                   Взять
                 </button>
@@ -69,6 +70,7 @@
             @click="showNewOrderModal = true" 
             class="new-order-btn"
             :disabled="!atelierStore.canTakeOrder"
+            :title="`Можно брать заказы: ${atelierStore.canTakeOrder}. Арендовано: ${atelierStore.atelierState.isRented}. Оборудование: ${atelierStore.atelierState.equipment.filter(e => e.isWorking).length}`"
           >
             + Взять новый заказ
           </button>
@@ -200,6 +202,10 @@
     <!-- Модальное окно мини-игры -->
     <div v-if="showSewingGame" class="sewing-game-overlay" @click="closeSewingGame">
       <div class="sewing-game-modal" @click.stop>
+        <div class="sewing-game-header">
+          <h3>Мини-игра пошива</h3>
+          <button class="close-sewing-btn" @click="closeSewingGame">×</button>
+        </div>
         <SewingMinigame 
           :order-id="currentOrderId || undefined"
           :game-mode="currentGameMode"
@@ -238,6 +244,11 @@
         <button @click="closeNewOrderModal" class="close-selection-btn">Отмена</button>
       </div>
     </div>
+
+    <!-- Уведомления -->
+    <div v-if="notification" class="notification" :class="notification.type">
+      {{ notification.message }}
+    </div>
   </div>
 </template>
 
@@ -258,6 +269,9 @@ const showNewOrderModal = ref(false)
 const currentOrderId = ref<string | null>(null)
 const currentGameMode = ref<'clicker' | 'precision' | 'manual'>('clicker')
 
+// Уведомления
+const notification = ref<{ message: string; type: 'success' | 'error' } | null>(null)
+
 // Методы
 const closeModal = () => {
   emit('close')
@@ -268,10 +282,19 @@ const workOnOrder = (orderId: string) => {
   showSewingGame.value = true
 }
 
+const showNotification = (message: string, type: 'success' | 'error') => {
+  notification.value = { message, type }
+  setTimeout(() => {
+    notification.value = null
+  }, 3000)
+}
+
 const takeOrder = async (orderId: string) => {
   const success = await atelierStore.takeOrder(orderId)
   if (success) {
-    // Можно показать уведомление
+    showNotification('Заказ взят в работу!', 'success')
+  } else {
+    showNotification('Не удалось взять заказ', 'error')
   }
 }
 
@@ -304,26 +327,36 @@ const closeNewOrderModal = () => {
 const hireStaff = async (staffId: string) => {
   const success = await atelierStore.hireStaff(staffId)
   if (success) {
-    // Можно показать уведомление
+    showNotification('Сотрудник нанят!', 'success')
+  } else {
+    showNotification('Не удалось нанять сотрудника', 'error')
   }
 }
 
 const fireStaff = async (staffId: string) => {
-  // Реализовать увольнение
-  console.log('Увольняем сотрудника:', staffId)
+  const success = await atelierStore.fireStaff(staffId)
+  if (success) {
+    showNotification('Сотрудник уволен', 'success')
+  } else {
+    showNotification('Не удалось уволить сотрудника', 'error')
+  }
 }
 
 const buyEquipment = async (equipmentId: string) => {
   const success = await atelierStore.buyEquipment(equipmentId)
   if (success) {
-    // Можно показать уведомление
+    showNotification('Оборудование куплено!', 'success')
+  } else {
+    showNotification('Не удалось купить оборудование', 'error')
   }
 }
 
 const repairEquipment = async (equipmentId: string) => {
   const success = await atelierStore.repairEquipment(equipmentId)
   if (success) {
-    // Можно показать уведомление
+    showNotification('Оборудование отремонтировано!', 'success')
+  } else {
+    showNotification('Не удалось отремонтировать оборудование', 'error')
   }
 }
 
@@ -340,6 +373,10 @@ const getPositionName = (position: string) => {
 // Загружаем данные при монтировании
 onMounted(async () => {
   await atelierStore.loadAtelierState()
+  console.log('🏭 AtelierModal mounted. Can take orders:', atelierStore.canTakeOrder)
+  console.log('🏭 Atelier rented:', atelierStore.atelierState.isRented)
+  console.log('🏭 Working equipment:', atelierStore.atelierState.equipment.filter(e => e.isWorking).length)
+  console.log('🏭 Available orders:', atelierStore.availableOrders.length)
 })
 </script>
 
@@ -354,7 +391,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 10000;
   backdrop-filter: blur(5px);
 }
 
@@ -418,6 +455,9 @@ onMounted(async () => {
   border-radius: 15px;
   padding: 20px;
   border: 2px solid var(--color-text, #5D4037);
+  display: flex;
+  flex-direction: column;
+  height: fit-content;
 }
 
 .orders-panel h3 {
@@ -427,7 +467,8 @@ onMounted(async () => {
 }
 
 .orders-list {
-  margin-bottom: 20px;
+  margin-bottom: 15px;
+  min-height: auto;
 }
 
 .order-item {
@@ -526,7 +567,7 @@ onMounted(async () => {
 
 /* Доступные заказы */
 .available-orders {
-  margin-bottom: 20px;
+  margin-bottom: 15px;
 }
 
 .available-orders h4 {
@@ -535,8 +576,8 @@ onMounted(async () => {
 }
 
 .available-orders-list {
-  max-height: 200px;
-  overflow-y: auto;
+  max-height: none;
+  overflow-y: visible;
 }
 
 .available-order {
@@ -598,12 +639,13 @@ onMounted(async () => {
   background: var(--color-accents, #C85A54);
   color: white;
   border: none;
-  padding: 15px;
+  padding: 12px;
   border-radius: 10px;
   cursor: pointer;
   font-weight: bold;
-  font-size: 1.1rem;
+  font-size: 1rem;
   transition: all 0.3s ease;
+  margin-top: auto;
 }
 
 .new-order-btn:hover:not(:disabled) {
@@ -895,7 +937,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
+  z-index: 20000;
   backdrop-filter: blur(5px);
 }
 
@@ -904,6 +946,46 @@ onMounted(async () => {
   max-width: 800px;
   max-height: 90vh;
   overflow-y: auto;
+  background: var(--color-bg-menu, #F4E6D1);
+  border-radius: 15px;
+  border: 3px solid var(--color-text, #5D4037);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.sewing-game-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background: var(--color-bg-menu-light, #E6D3B7);
+  border-bottom: 2px solid var(--color-text, #5D4037);
+  border-radius: 12px 12px 0 0;
+}
+
+.sewing-game-header h3 {
+  color: var(--color-text, #5D4037);
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.close-sewing-btn {
+  background: var(--color-accents, #C85A54);
+  color: white;
+  border: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.close-sewing-btn:hover {
+  background: #B71C1C;
+  transform: scale(1.1);
 }
 
 .new-order-modal {
@@ -981,6 +1063,41 @@ onMounted(async () => {
 
 .close-selection-btn:hover {
   background: #424242;
+}
+
+/* Уведомления */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 15px 20px;
+  border-radius: 10px;
+  color: white;
+  font-weight: bold;
+  z-index: 30000;
+  animation: slideIn 0.3s ease;
+  max-width: 300px;
+}
+
+.notification.success {
+  background: #4CAF50;
+  border: 2px solid #45A049;
+}
+
+.notification.error {
+  background: #F44336;
+  border: 2px solid #D32F2F;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 /* Адаптивность */

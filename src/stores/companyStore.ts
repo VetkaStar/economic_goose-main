@@ -146,7 +146,7 @@ export const useCompanyStore = defineStore('company', () => {
 
   // Доступ к действиям по месту
   function canUseWarehouse() { return isWarehouseAvailable.value }
-  function canUseAtelier() { return isAtelierAvailable.value }
+  function canUseAtelier() { return state.value.rent.isRented.atelier }
   function canUseMarket() { return isMarketAvailable.value }
 
   return {
