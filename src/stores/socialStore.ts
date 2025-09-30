@@ -94,15 +94,23 @@ export const useSocialStore = defineStore('social', () => {
     const names = ['Лилия','Мия','София','Максим','Арсений','Алиса','Ева','Никита','Матвей','Даша','Кира','Илья','Оля','Варя','Гриша']
     const items = [
       { name: 'Футболки школьные', icon: '👕', type: 'tshirt' },
+      { name: 'Футболки спортивные', icon: '👕', type: 'tshirt' },
+      { name: 'Футболки с принтом', icon: '👕', type: 'tshirt' },
       { name: 'Рубашки белые', icon: '👔', type: 'shirt' },
+      { name: 'Рубашки в клетку', icon: '👔', type: 'shirt' },
+      { name: 'Рубашки офисные', icon: '👔', type: 'shirt' },
       { name: 'Платья летние', icon: '👗', type: 'dress' },
-      { name: 'Шапочки в горошек', icon: '🧢', type: 'tshirt' },
-      { name: 'Худи тёплые', icon: '🧥', type: 'tshirt' },
-      { name: 'Фартуки повара', icon: '🧑‍🍳', type: 'shirt' },
-      { name: 'Спортивные шорты', icon: '🩳', type: 'tshirt' },
-      { name: 'Носочки радужные', icon: '🧦', type: 'tshirt' },
-      { name: 'Шарфики уютные', icon: '🧣', type: 'tshirt' },
-      { name: 'Пижамы мягкие', icon: '🛌', type: 'tshirt' }
+      { name: 'Платья вечерние', icon: '👗', type: 'dress' },
+      { name: 'Платья повседневные', icon: '👗', type: 'dress' },
+      { name: 'Худи тёплые', icon: '🧥', type: 'hoodie' },
+      { name: 'Худи с капюшоном', icon: '🧥', type: 'hoodie' },
+      { name: 'Худи спортивные', icon: '🧥', type: 'hoodie' },
+      { name: 'Брюки джинсовые', icon: '👖', type: 'pants' },
+      { name: 'Брюки классические', icon: '👖', type: 'pants' },
+      { name: 'Брюки спортивные', icon: '👖', type: 'pants' },
+      { name: 'Юбки мини', icon: '👗', type: 'skirt' },
+      { name: 'Юбки макси', icon: '👗', type: 'skirt' },
+      { name: 'Юбки в складку', icon: '👗', type: 'skirt' }
     ]
     const colors = ['красный', 'синий', 'зелёный', 'жёлтый', 'розовый', 'фиолетовый', 'оранжевый', 'чёрный', 'белый']
     const patterns = ['plain', 'dots', 'stripes', 'flowers']
@@ -200,6 +208,17 @@ export const useSocialStore = defineStore('social', () => {
     order.submittedItems = submittedItems
     order.status = isValid ? 'completed' : 'failed'
     
+    // Если заказ не прошел валидацию, сбрасываем статус на in_progress для повторной попытки
+    if (!isValid) {
+      // Небольшая задержка перед сбросом статуса, чтобы пользователь увидел ошибку
+      setTimeout(() => {
+        const orderToReset = takenOrders.value.find(o => o.id === orderId)
+        if (orderToReset && orderToReset.status === 'failed') {
+          orderToReset.status = 'in_progress'
+        }
+      }, 2000)
+    }
+    
     return isValid
   }
 
@@ -218,6 +237,8 @@ export const useSocialStore = defineStore('social', () => {
     
     // Проверяем каждый предмет
     for (const item of items) {
+      // Проверяем название изделия
+      if (item.name !== order.itemName) return false
       if (req.color && item.color !== req.color) return false
       if (req.type && item.type !== req.type) return false
       if (req.pattern && item.pattern !== req.pattern) return false

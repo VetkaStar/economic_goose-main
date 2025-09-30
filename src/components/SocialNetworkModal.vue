@@ -46,7 +46,7 @@
                   <div class="order-details">{{ order.quantity }} шт · {{ order.pricePerUnit }}₽/шт</div>
                   <div class="order-requirements">
                     <div class="req-item">🎨 {{ order.requirements.color }}</div>
-                    <div class="req-item">👕 {{ getTypeName(order.requirements.type) }}</div>
+                    <div class="req-item">👕 {{ order.itemName }}</div>
                     <div class="req-item">🎭 {{ getPatternName(order.requirements.pattern) }}</div>
                     <div class="req-item">🧵 {{ order.requirements.material }}</div>
                     <div class="req-item">⭐ Качество: {{ order.requirements.quality }}% <span class="dev-note">(в разработке)</span></div>
@@ -64,13 +64,18 @@
 
           <!-- Взятые заказы -->
           <div v-if="activeTab === 'taken'" class="taken-page">
-            <h3 class="section-title">🎯 Мои заказы</h3>
+            <h3 class="section-title">
+              🎯 Мои заказы 
+              <span v-if="activeOrdersCount > 0" class="active-orders-badge">
+                ({{ activeOrdersCount }} активных)
+              </span>
+            </h3>
             <div v-if="takenOrders.length === 0" class="empty">
               <div class="empty-icon">📋</div>
               <p>У вас пока нет взятых заказов</p>
             </div>
             <div v-else class="taken-list">
-              <div v-for="order in takenOrders" :key="order.id" class="taken-card">
+              <div v-for="order in sortedTakenOrders" :key="order.id" class="taken-card">
                 <div class="taken-header">
                   <div class="order-icon">{{ order.itemIcon }}</div>
                   <div class="order-info">
@@ -86,18 +91,18 @@
                   <h4>Требования:</h4>
                   <div class="req-grid">
                     <div class="req-item">🎨 Цвет: {{ order.requirements.color }}</div>
-                    <div class="req-item">👕 Тип: {{ getTypeName(order.requirements.type) }}</div>
+                    <div class="req-item">👕 Изделие: {{ order.itemName }}</div>
                     <div class="req-item">🎭 Узор: {{ getPatternName(order.requirements.pattern) }}</div>
                     <div class="req-item">🧵 Материал: {{ order.requirements.material }}</div>
                     <div class="req-item">⭐ Качество: {{ order.requirements.quality }}% <span class="dev-note">(в разработке)</span></div>
                   </div>
                 </div>
 
-                <div v-if="order.status === 'in_progress'" class="submit-section">
+                <div v-if="order.status === 'in_progress' || order.status === 'failed'" class="submit-section">
                   <h4>Сдать заказ:</h4>
                   <div class="submit-form">
                     <div class="form-group">
-                      <label>Количество предметов:</label>
+                      <label>Количество предметов (нужно: {{ order.quantity }}):</label>
                       <input 
                         type="number" 
                         v-model.number="submitQuantities[order.id]" 
@@ -106,13 +111,22 @@
                         class="quantity-input"
                       />
                     </div>
-                    <button 
-                      class="btn submit-btn" 
-                      @click="submitOrder(order.id)"
-                      :disabled="!submitQuantities[order.id] || submitQuantities[order.id] < 1"
-                    >
-                      Сдать заказ
-                    </button>
+                    <div class="submit-buttons">
+                      <button 
+                        class="btn submit-btn" 
+                        @click="submitOrder(order.id)"
+                        :disabled="!submitQuantities[order.id] || submitQuantities[order.id] < 1"
+                      >
+                        Сдать заказ
+                      </button>
+                      <button 
+                        class="btn submit-all-btn" 
+                        @click="submitAllOrder(order.id)"
+                        :disabled="!canSubmitAll(order.id)"
+                      >
+                        Передать всё
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -273,14 +287,16 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useSocialStore } from '@/stores/socialStore'
 import { useAuthStore } from '@/stores/authStore'
+import { useCompanyStore } from '@/stores/companyStore'
 import type { SocialPost } from '@/stores/socialStore'
 
 defineEmits<{ close: [] }>()
 
 const social = useSocialStore()
 const auth = useAuthStore()
+const company = useCompanyStore()
 
-const activeTab = ref<'orders' | 'taken' | 'create'>('orders')
+const activeTab = ref<'orders' | 'taken' | 'create' | 'my-posts' | 'my-responses'>('orders')
 const createType = ref<'offer' | 'request'>('offer')
 
 // Данные для создания поста
@@ -297,6 +313,34 @@ const respondQuantity = ref(1)
 const respondPrice = ref(0)
 
 const { availableItems, visibleOrders, takenOrders } = social
+
+// Активные заказы (в работе или неудачные)
+const activeOrdersCount = computed(() => {
+  return takenOrders.filter((order: any) => 
+    order.status === 'in_progress' || order.status === 'failed'
+  ).length
+})
+
+// Отсортированные заказы (активные сверху)
+const sortedTakenOrders = computed(() => {
+  return [...takenOrders].sort((a: any, b: any) => {
+    // Активные заказы (in_progress, failed) идут первыми
+    const aActive = a.status === 'in_progress' || a.status === 'failed'
+    const bActive = b.status === 'in_progress' || b.status === 'failed'
+    
+    if (aActive && !bActive) return -1
+    if (!aActive && bActive) return 1
+    
+    // Среди активных: in_progress идет перед failed
+    if (aActive && bActive) {
+      if (a.status === 'in_progress' && b.status === 'failed') return -1
+      if (a.status === 'failed' && b.status === 'in_progress') return 1
+    }
+    
+    // Остальные сортируем по дате взятия (новые сверху)
+    return new Date(b.takenAt).getTime() - new Date(a.takenAt).getTime()
+  })
+})
 
 // Количества для сдачи заказов
 const submitQuantities = ref<Record<string, number>>({})
@@ -425,7 +469,7 @@ function submitOrder(orderId: string) {
   
   // Для демо создаём фиктивные предметы с правильными характеристиками
   const submittedItems = Array(quantity).fill(null).map(() => ({
-    name: order.itemName,
+    name: order.itemName, // Используем точное название из заказа
     color: order.requirements.color || 'любой',
     type: order.requirements.type || 'tshirt',
     pattern: order.requirements.pattern || 'plain',
@@ -437,17 +481,46 @@ function submitOrder(orderId: string) {
   
   if (success) {
     // Добавляем деньги игроку
-    auth.addMoney(order.quantity * order.pricePerUnit)
+    auth.addMoney(quantity * order.pricePerUnit)
+    
+    // Добавляем опыт компании за выполненный заказ
+    const earnings = quantity * order.pricePerUnit
+    const expGained = Math.max(1, Math.floor(earnings / 100)) // 1 опыт за каждые 100₽
+    company.addOrderStats(earnings, expGained)
+    
     // Убираем из количества для сдачи
     delete submitQuantities.value[orderId]
+    
+    console.log(`✅ Заказ выполнен! Получено: ${quantity * order.pricePerUnit}₽ и ${expGained} опыта компании`)
   }
+}
+
+function submitAllOrder(orderId: string) {
+  const order = social.getOrderById(orderId)
+  if (!order) return
+
+  // Устанавливаем количество на максимум
+  submitQuantities.value[orderId] = order.quantity
+  submitOrder(orderId)
+}
+
+function canSubmitAll(orderId: string) {
+  const order = social.getOrderById(orderId)
+  if (!order) return false
+  
+  // Проверяем, есть ли у нас достаточно предметов в инвентаре
+  // Пока что всегда возвращаем true для демо
+  return true
 }
 
 function getTypeName(type?: string) {
   const types: Record<string, string> = {
     'tshirt': 'Футболка',
     'shirt': 'Рубашка', 
-    'dress': 'Платье'
+    'dress': 'Платье',
+    'hoodie': 'Худи',
+    'pants': 'Брюки',
+    'skirt': 'Юбка'
   }
   return types[type || ''] || type || 'любой'
 }
@@ -574,6 +647,24 @@ onUnmounted(() => {
   font-weight: 800;
   margin: 4px 0 12px;
   font-size: 18px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.active-orders-badge {
+  background: #ff6b35;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
 }
 
 .orders-list, .taken-list {
@@ -690,14 +781,40 @@ onUnmounted(() => {
   gap: 12px;
 }
 
+.submit-buttons {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
 .submit-btn {
   background: #4caf50;
   border-color: #2e7d32;
   color: white;
   padding: 8px 16px;
+  flex: 1;
 }
 
 .submit-btn:disabled {
+  background: #ccc;
+  border-color: #999;
+  color: #666;
+}
+
+.submit-all-btn {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+  padding: 8px 16px;
+  flex: 1;
+}
+
+.submit-all-btn:hover:not(:disabled) {
+  background: #0056b3;
+  border-color: #0056b3;
+}
+
+.submit-all-btn:disabled {
   background: #ccc;
   border-color: #999;
   color: #666;

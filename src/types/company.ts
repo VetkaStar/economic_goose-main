@@ -17,10 +17,23 @@ export interface CompanyProgress {
   experience: number;
 }
 
+export interface CompanyStats {
+  ordersCompleted: number;
+  ordersEarnings: number;
+  ordersExperience: number;
+}
+
+export interface CompanyCapacities {
+  homePantry: { materialsSlots: number; productsSlots: number };
+  warehouse: { level: number; slots: number };
+}
+
 export interface CompanyState {
   location: CompanyLocationState;
   rent: CompanyRentState;
   progress: CompanyProgress;
+  stats: CompanyStats;
+  capacities: CompanyCapacities;
 }
 
 

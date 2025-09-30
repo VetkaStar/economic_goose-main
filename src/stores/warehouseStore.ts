@@ -2,6 +2,8 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from './authStore'
+import { useCompanyStore } from './companyStore'
+import { usePantryStore } from './pantryStore'
 import type { 
   WarehouseMaterial, 
   WarehouseClothing, 
@@ -46,19 +48,15 @@ export const useWarehouseStore = defineStore('warehouse', () => {
 
   const warehouseCapacity = computed(() => {
     // Если нет таблицы статистики — считаем по слотам из companyStore
-    const company = require('@/stores/companyStore') as any
-    const useCompanyStore = company.useCompanyStore
-    const c = useCompanyStore?.()
-    const slots = c?.state.capacities?.warehouse?.slots || c?.state.capacities?.homePantry?.materialsSlots || 0
+    const companyStore = useCompanyStore()
+    const slots = companyStore.state.capacities?.warehouse?.slots || companyStore.state.capacities?.homePantry?.materialsSlots || 0
     const used = materialsTotal.value + clothingTotal.value
     return slots > 0 ? Math.min(100, Math.round((used / slots) * 100)) : 0
   })
 
   const freeSpace = computed(() => {
-    const company = require('@/stores/companyStore') as any
-    const useCompanyStore = company.useCompanyStore
-    const c = useCompanyStore?.()
-    const slots = c?.state.capacities?.warehouse?.slots || c?.state.capacities?.homePantry?.materialsSlots || 0
+    const companyStore = useCompanyStore()
+    const slots = companyStore.state.capacities?.warehouse?.slots || companyStore.state.capacities?.homePantry?.materialsSlots || 0
     const used = materialsTotal.value + clothingTotal.value
     return Math.max(0, slots - used)
   })
@@ -556,6 +554,63 @@ export const useWarehouseStore = defineStore('warehouse', () => {
     }
   }
 
+  // Новая функция для правильной маршрутизации материалов
+  const addMaterialToCorrectStorage = async (materialId: string, quantity: number, materialData?: any) => {
+    try {
+      const companyStore = useCompanyStore()
+      const pantryStore = usePantryStore()
+      
+      // Проверяем, арендован ли склад
+      if (companyStore.isWarehouseAvailable) {
+        // Если склад арендован - отправляем в основной склад
+        console.log('📦 Склад арендован, отправляем материал в основной склад')
+        return await addMaterialToWarehouse(materialId, quantity)
+      } else {
+        // Если склад не арендован - отправляем в кладовую дома
+        console.log('🏠 Склад не арендован, отправляем материал в кладовую дома')
+        
+        // Получаем данные о материале из базы
+        const { data: materialInfo } = await supabase
+          .from('warehouse_materials')
+          .select('*')
+          .eq('id', materialId)
+          .single()
+        
+        if (materialInfo) {
+          return pantryStore.addMaterial({
+            id: materialId,
+            name: materialInfo.name,
+            icon: materialInfo.icon,
+            price: materialInfo.price,
+            quantity: quantity,
+            quality: materialInfo.quality,
+            durability: materialInfo.durability,
+            comfort: materialInfo.comfort,
+            style: materialInfo.style
+          })
+        } else if (materialData) {
+          // Если материал новый, используем переданные данные
+          return pantryStore.addMaterial({
+            id: materialId,
+            name: materialData.name,
+            icon: materialData.icon,
+            price: materialData.price,
+            quantity: quantity,
+            quality: materialData.quality,
+            durability: materialData.durability,
+            comfort: materialData.comfort,
+            style: materialData.style
+          })
+        } else {
+          throw new Error('Данные о материале не найдены')
+        }
+      }
+    } catch (err) {
+      console.error('Error adding material to correct storage:', err)
+      return false
+    }
+  }
+
   // Добавление одежды на склад игрока (при покупке в магазине)
   const addClothingToWarehouse = async (clothingId: string, quantity: number) => {
     try {
@@ -667,6 +722,7 @@ export const useWarehouseStore = defineStore('warehouse', () => {
     sellClothing,
     addMaterialToWarehouse,
     addClothingToWarehouse,
+    addMaterialToCorrectStorage,
     loadWarehouseData,
     resetWarehouse
   }

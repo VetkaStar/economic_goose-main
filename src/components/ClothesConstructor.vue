@@ -30,7 +30,12 @@
               <div v-for="req in materialRequirements" :key="req.name" class="material-item" :class="{ available: req.available, missing: !req.available }">
                 <span class="material-icon">{{ req.icon }}</span>
                 <span class="material-name">{{ req.name }}</span>
-                <span class="material-count">{{ req.have }}/{{ req.need }}</span>
+                <span class="material-count">
+                  {{ req.have }}/{{ req.need * design.quantity }}
+                  <span v-if="design.quantity > 1" class="quantity-multiplier">
+                    ({{ req.need }} × {{ design.quantity }})
+                  </span>
+                </span>
               </div>
             </div>
           </div>
@@ -102,6 +107,9 @@
                 <span v-if="material.rare" class="rare-badge">✨</span>
               </button>
             </div>
+            <div class="material-hint">
+              <p class="small-text">Если выбранной ткани нет, система использует любую доступную</p>
+            </div>
           </div>
 
           <!-- Качество -->
@@ -128,12 +136,43 @@
               <div class="row"><span>Прогноз спроса:</span><strong>{{ demandLabel }}</strong></div>
             </div>
             
+            <!-- Количество -->
+            <div class="quantity-section">
+              <div class="section-title">📦 Количество</div>
+              <div class="quantity-control">
+                <button 
+                  class="quantity-btn" 
+                  @click="decreaseQuantity"
+                  :disabled="design.quantity <= 1"
+                >
+                  -
+                </button>
+                <input 
+                  v-model.number="design.quantity" 
+                  type="number" 
+                  min="1" 
+                  max="99"
+                  class="quantity-input"
+                />
+                <button 
+                  class="quantity-btn" 
+                  @click="increaseQuantity"
+                  :disabled="design.quantity >= 99"
+                >
+                  +
+                </button>
+              </div>
+              <div class="quantity-hint">
+                <p class="small-text">Максимум 99 изделий за раз</p>
+              </div>
+            </div>
+            
             <button 
               class="btn primary create-btn" 
               @click="createItem" 
               :disabled="!canCreate"
             >
-              ✂️ Создать одежду
+              ✂️ Создать {{ design.quantity }} {{ design.quantity === 1 ? 'одежду' : 'одежды' }}
             </button>
             
             <div v-if="!canCreate" class="notice">
@@ -208,7 +247,8 @@ const design = reactive({
   color: 'blue',
   pattern: 'plain',
   material: 'cotton',
-  quality: 80
+  quality: 80,
+  quantity: 1
 })
 
 // Доступные материалы (включая редкие с аукциона)
@@ -241,34 +281,221 @@ const availableMaterials = computed(() => {
   })
 })
 
-// Требования материалов
-const materialRequirements = computed(() => {
-  const selectedMaterial = availableMaterials.value.find(m => m.id === design.material)
+// Требования материалов для каждого типа одежды
+const getMaterialRequirements = (clothingType: string) => {
   const usePantry = !company.canUseWarehouse()
   const materials = usePantry ? pantry.materials : warehouse.materials
   
-  const requirements = [
-    {
-      name: selectedMaterial?.name || 'Материал',
-      icon: selectedMaterial?.icon || '🧵',
-      need: 2,
-      have: selectedMaterial?.quantity || 0,
-      available: (selectedMaterial?.quantity || 0) >= 2
-    },
-    {
-      name: 'Краситель',
-      icon: '🎨',
-      need: 1,
-      have: materials.find(m => m.name.toLowerCase().includes('красител'))?.quantity || 0,
-      available: (materials.find(m => m.name.toLowerCase().includes('красител'))?.quantity || 0) >= 1
+  // Функция для поиска материала по названию
+  const findMaterial = (searchTerm: string) => {
+    return materials.find(m => 
+      m.name.toLowerCase().includes(searchTerm.toLowerCase())
+    ) || { quantity: 0 }
+  }
+  
+  // Функция для проверки наличия любого материала из категории
+  const findAnyMaterial = (searchTerms: string[]) => {
+    for (const term of searchTerms) {
+      const material = findMaterial(term)
+      if (material.quantity > 0) return { ...material, name: term }
     }
-  ]
+    return { quantity: 0, name: searchTerms[0] }
+  }
 
-  return requirements
+  // Функция для проверки выбранной ткани или любой доступной
+  const findSelectedOrAnyFabric = (searchTerms: string[], need: number) => {
+    // Сначала пытаемся найти выбранную ткань
+    const selectedMaterial = availableMaterials.value.find(m => m.id === design.material)
+    if (selectedMaterial && selectedMaterial.available && selectedMaterial.quantity >= need) {
+      return {
+        name: selectedMaterial.name,
+        quantity: selectedMaterial.quantity,
+        available: true
+      }
+    }
+    
+    // Если выбранной ткани нет или недостаточно, ищем любую доступную
+    const anyFabric = findAnyMaterial(searchTerms)
+    return {
+      name: anyFabric.quantity > 0 ? anyFabric.name : 'Ткань (любая)',
+      quantity: anyFabric.quantity,
+      available: anyFabric.quantity >= need
+    }
+  }
+
+  switch (clothingType) {
+    case 'tshirt': // Футболка: выбранная ткань или любая доступная + нитки
+      return [
+        {
+          name: findSelectedOrAnyFabric(['хлопок', 'лен', 'шерсть', 'шелк', 'джинс', 'кожа', 'кашемир', 'бамбук', 'ткань'], 2).name,
+          icon: '🧵',
+          need: 2,
+          have: findSelectedOrAnyFabric(['хлопок', 'лен', 'шерсть', 'шелк', 'джинс', 'кожа', 'кашемир', 'бамбук', 'ткань'], 2).quantity,
+          available: findSelectedOrAnyFabric(['хлопок', 'лен', 'шерсть', 'шелк', 'джинс', 'кожа', 'кашемир', 'бамбук', 'ткань'], 2).available
+        },
+        {
+          name: 'Нитки',
+          icon: '🧶',
+          need: 1,
+          have: findAnyMaterial(['нитк', 'нить', 'нити', 'обычная нить', 'швейная нить']).quantity,
+          available: findAnyMaterial(['нитк', 'нить', 'нити', 'обычная нить', 'швейная нить']).quantity >= 1
+        }
+      ]
+      
+    case 'shirt': // Рубашка: выбранная ткань или любая доступная + нитки + пуговицы
+      return [
+        {
+          name: findSelectedOrAnyFabric(['хлопок', 'лен', 'шерсть', 'шелк', 'джинс', 'кожа', 'кашемир', 'бамбук', 'ткань'], 3).name,
+          icon: '🧵',
+          need: 3,
+          have: findSelectedOrAnyFabric(['хлопок', 'лен', 'шерсть', 'шелк', 'джинс', 'кожа', 'кашемир', 'бамбук', 'ткань'], 3).quantity,
+          available: findSelectedOrAnyFabric(['хлопок', 'лен', 'шерсть', 'шелк', 'джинс', 'кожа', 'кашемир', 'бамбук', 'ткань'], 3).available
+        },
+        {
+          name: 'Нитки',
+          icon: '🧶',
+          need: 2,
+          have: findAnyMaterial(['нитк', 'нить', 'нити', 'обычная нить', 'швейная нить']).quantity,
+          available: findAnyMaterial(['нитк', 'нить', 'нити', 'обычная нить', 'швейная нить']).quantity >= 2
+        },
+        {
+          name: 'Пуговицы',
+          icon: '🔘',
+          need: 6,
+          have: findAnyMaterial(['пуговиц', 'пуговица', 'пуговицы', 'кнопка', 'кнопки']).quantity,
+          available: findAnyMaterial(['пуговиц', 'пуговица', 'пуговицы', 'кнопка', 'кнопки']).quantity >= 6
+        }
+      ]
+      
+    case 'dress': // Платье: выбранная ткань или любая доступная + нитки + молния
+      return [
+        {
+          name: findSelectedOrAnyFabric(['хлопок', 'лен', 'шерсть', 'шелк', 'джинс', 'кожа', 'кашемир', 'бамбук', 'ткань'], 4).name,
+          icon: '🧵',
+          need: 4,
+          have: findSelectedOrAnyFabric(['хлопок', 'лен', 'шерсть', 'шелк', 'джинс', 'кожа', 'кашемир', 'бамбук', 'ткань'], 4).quantity,
+          available: findSelectedOrAnyFabric(['хлопок', 'лен', 'шерсть', 'шелк', 'джинс', 'кожа', 'кашемир', 'бамбук', 'ткань'], 4).available
+        },
+        {
+          name: 'Нитки',
+          icon: '🧶',
+          need: 3,
+          have: findAnyMaterial(['нитк', 'нить', 'нити', 'обычная нить', 'швейная нить']).quantity,
+          available: findAnyMaterial(['нитк', 'нить', 'нити', 'обычная нить', 'швейная нить']).quantity >= 3
+        },
+        {
+          name: 'Молния',
+          icon: '⚡',
+          need: 1,
+          have: findAnyMaterial(['молния', 'молнии', 'застежка', 'застежки', 'зиппер']).quantity,
+          available: findAnyMaterial(['молния', 'молнии', 'застежка', 'застежки', 'зиппер']).quantity >= 1
+        }
+      ]
+      
+    case 'hoodie': // Худи: выбранная ткань или любая доступная + нитки + молния + шнурок
+      return [
+        {
+          name: findSelectedOrAnyFabric(['хлопок', 'лен', 'шерсть', 'шелк', 'джинс', 'кожа', 'кашемир', 'бамбук', 'ткань'], 3).name,
+          icon: '🧵',
+          need: 3,
+          have: findSelectedOrAnyFabric(['хлопок', 'лен', 'шерсть', 'шелк', 'джинс', 'кожа', 'кашемир', 'бамбук', 'ткань'], 3).quantity,
+          available: findSelectedOrAnyFabric(['хлопок', 'лен', 'шерсть', 'шелк', 'джинс', 'кожа', 'кашемир', 'бамбук', 'ткань'], 3).available
+        },
+        {
+          name: 'Нитки',
+          icon: '🧶',
+          need: 2,
+          have: findAnyMaterial(['нитк', 'нить', 'нити', 'обычная нить', 'швейная нить']).quantity,
+          available: findAnyMaterial(['нитк', 'нить', 'нити', 'обычная нить', 'швейная нить']).quantity >= 2
+        },
+        {
+          name: 'Молния',
+          icon: '⚡',
+          need: 1,
+          have: findAnyMaterial(['молния', 'молнии', 'застежка', 'застежки', 'зиппер']).quantity,
+          available: findAnyMaterial(['молния', 'молнии', 'застежка', 'застежки', 'зиппер']).quantity >= 1
+        },
+        {
+          name: 'Шнурок',
+          icon: '🎀',
+          need: 1,
+          have: findAnyMaterial(['шнурок', 'шнурки', 'шнур', 'веревка', 'веревки']).quantity,
+          available: findAnyMaterial(['шнурок', 'шнурки', 'шнур', 'веревка', 'веревки']).quantity >= 1
+        }
+      ]
+      
+    case 'pants': // Брюки: выбранная ткань или любая доступная + нитки + молния + ремень
+      return [
+        {
+          name: findSelectedOrAnyFabric(['хлопок', 'лен', 'шерсть', 'шелк', 'джинс', 'кожа', 'кашемир', 'бамбук', 'ткань'], 3).name,
+          icon: '🧵',
+          need: 3,
+          have: findSelectedOrAnyFabric(['хлопок', 'лен', 'шерсть', 'шелк', 'джинс', 'кожа', 'кашемир', 'бамбук', 'ткань'], 3).quantity,
+          available: findSelectedOrAnyFabric(['хлопок', 'лен', 'шерсть', 'шелк', 'джинс', 'кожа', 'кашемир', 'бамбук', 'ткань'], 3).available
+        },
+        {
+          name: 'Нитки',
+          icon: '🧶',
+          need: 2,
+          have: findAnyMaterial(['нитк', 'нить', 'нити', 'обычная нить', 'швейная нить']).quantity,
+          available: findAnyMaterial(['нитк', 'нить', 'нити', 'обычная нить', 'швейная нить']).quantity >= 2
+        },
+        {
+          name: 'Молния',
+          icon: '⚡',
+          need: 1,
+          have: findAnyMaterial(['молния', 'молнии', 'застежка', 'застежки', 'зиппер']).quantity,
+          available: findAnyMaterial(['молния', 'молнии', 'застежка', 'застежки', 'зиппер']).quantity >= 1
+        },
+        {
+          name: 'Ремень',
+          icon: '🔗',
+          need: 1,
+          have: findAnyMaterial(['ремень', 'ремни', 'пояс', 'пояса']).quantity,
+          available: findAnyMaterial(['ремень', 'ремни', 'пояс', 'пояса']).quantity >= 1
+        }
+      ]
+      
+    case 'skirt': // Юбка: выбранная ткань или любая доступная + нитки + молния
+      return [
+        {
+          name: findSelectedOrAnyFabric(['хлопок', 'лен', 'шерсть', 'шелк', 'джинс', 'кожа', 'кашемир', 'бамбук', 'ткань'], 2).name,
+          icon: '🧵',
+          need: 2,
+          have: findSelectedOrAnyFabric(['хлопок', 'лен', 'шерсть', 'шелк', 'джинс', 'кожа', 'кашемир', 'бамбук', 'ткань'], 2).quantity,
+          available: findSelectedOrAnyFabric(['хлопок', 'лен', 'шерсть', 'шелк', 'джинс', 'кожа', 'кашемир', 'бамбук', 'ткань'], 2).available
+        },
+        {
+          name: 'Нитки',
+          icon: '🧶',
+          need: 1,
+          have: findAnyMaterial(['нитк', 'нить', 'нити', 'обычная нить', 'швейная нить']).quantity,
+          available: findAnyMaterial(['нитк', 'нить', 'нити', 'обычная нить', 'швейная нить']).quantity >= 1
+        },
+        {
+          name: 'Молния',
+          icon: '⚡',
+          need: 1,
+          have: findAnyMaterial(['молния', 'молнии', 'застежка', 'застежки', 'зиппер']).quantity,
+          available: findAnyMaterial(['молния', 'молнии', 'застежка', 'застежки', 'зиппер']).quantity >= 1
+        }
+      ]
+      
+    default:
+      return []
+  }
+}
+
+// Требования материалов
+const materialRequirements = computed(() => {
+  return getMaterialRequirements(design.type)
 })
 
 const canCreate = computed(() => {
-  return materialRequirements.value.every(req => req.available)
+  return materialRequirements.value.every(req => {
+    const totalNeed = req.need * design.quantity
+    return req.have >= totalNeed
+  })
 })
 
 // Лейблы для отображения
@@ -280,9 +507,10 @@ const patternLabel = computed(() =>
   patterns.find(p => p.id === design.pattern)?.name || design.pattern
 )
 
-const materialLabel = computed(() => 
-  availableMaterials.value.find(m => m.id === design.material)?.name || design.material
-)
+const materialLabel = computed(() => {
+  const selectedMaterial = availableMaterials.value.find(m => m.id === design.material)
+  return selectedMaterial?.name || 'Любая ткань'
+})
 
 // Название и иконка одежды
 const getClothingName = () => {
@@ -296,18 +524,34 @@ const getClothingIcon = () => {
 
 // Стоимость и цена
 const cost = computed(() => {
-  const selectedMaterial = availableMaterials.value.find(m => m.id === design.material)
-  const materialCost = selectedMaterial ? selectedMaterial.basePrice * 2 : 100
-  const dyeCost = 30
+  // Базовая стоимость зависит от типа одежды и количества материалов
+  const requirements = getMaterialRequirements(design.type)
+  let baseCost = 0
+  
+  for (const req of requirements) {
+    if (req.name.includes('Ткань (любая)')) {
+      baseCost += 50 * req.need // Базовая стоимость ткани
+    } else if (req.name.includes('Нитки')) {
+      baseCost += 10 * req.need
+    } else if (req.name.includes('Пуговицы')) {
+      baseCost += 5 * req.need
+    } else if (req.name.includes('Молния')) {
+      baseCost += 20 * req.need
+    } else if (req.name.includes('Шнурок')) {
+      baseCost += 15 * req.need
+    } else if (req.name.includes('Ремень')) {
+      baseCost += 30 * req.need
+    }
+  }
+  
   const qualityMultiplier = 1 + (design.quality - 50) / 100
-  return Math.round((materialCost + dyeCost) * qualityMultiplier)
+  return Math.round(baseCost * qualityMultiplier)
 })
 
 const price = computed(() => {
   const basePrice = cost.value * 2.5
   const qualityBonus = (design.quality - 50) * 2
-  const rareBonus = availableMaterials.value.find(m => m.id === design.material)?.rare ? 200 : 0
-  return Math.round(basePrice + qualityBonus + rareBonus)
+  return Math.round(basePrice + qualityBonus)
 })
 
 const demandLabel = computed(() => {
@@ -315,54 +559,118 @@ const demandLabel = computed(() => {
   return lvl <= 1 ? 'Средний' : lvl <= 3 ? 'Высокий' : 'Очень высокий'
 })
 
+// Управление количеством
+function increaseQuantity() {
+  if (design.quantity < 99) {
+    design.quantity++
+  }
+}
+
+function decreaseQuantity() {
+  if (design.quantity > 1) {
+    design.quantity--
+  }
+}
+
 // Создание одежды
 function createItem() {
   if (!canCreate.value) return
   
   const usePantryDest = !company.canUseWarehouse()
-  const selectedMaterial = availableMaterials.value.find(m => m.id === design.material)
+  const materials = usePantryDest ? pantry.materials : warehouse.materials
   
-  // Списание материалов
+  // Функция для поиска и списания любого материала из категории
+  const consumeAnyMaterial = (searchTerms: string[], amount: number) => {
+    for (const term of searchTerms) {
+      const material = materials.find(m =>
+        m.name.toLowerCase().includes(term.toLowerCase()) && m.quantity >= amount
+      )
+      if (material) {
+        if (usePantryDest) {
+          return pantry.removeMaterialByNameContains(term, amount)
+        } else {
+          warehouse.updateMaterialQuantity(material.id, -amount, `Пошив в конструкторе (${design.quantity} шт)`)
+          return true
+        }
+      }
+    }
+    return false
+  }
+  
+  // Получаем требования для текущего типа одежды
+  const requirements = getMaterialRequirements(design.type)
+
+  // Списываем все необходимые материалы (умножаем на количество)
+  let allConsumed = true
+  
+  for (const req of requirements) {
+    let consumed = false
+    const totalNeed = req.need * design.quantity
+    
+    if (req.name.includes('Ткань') || req.name.includes('Хлопок') || req.name.includes('Лён') || req.name.includes('Шерсть') || req.name.includes('Шёлк') || req.name.includes('Джинс') || req.name.includes('Кожа') || req.name.includes('Кашемир') || req.name.includes('Бамбук')) {
+      // Сначала пытаемся использовать выбранную ткань
+      const selectedMaterial = availableMaterials.value.find(m => m.id === design.material)
+      if (selectedMaterial && selectedMaterial.available && selectedMaterial.quantity >= totalNeed) {
+        // Ищем конкретную ткань в инвентаре
+        const fabricInInventory = materials.find(m => 
+          m.name.toLowerCase().includes(selectedMaterial.name.toLowerCase()) && m.quantity >= totalNeed
+        )
+        if (fabricInInventory) {
+          if (usePantryDest) {
+            consumed = pantry.removeMaterialByNameContains(selectedMaterial.name.toLowerCase(), totalNeed)
+          } else {
+            warehouse.updateMaterialQuantity(fabricInInventory.id, -totalNeed, 'Пошив в конструкторе')
+            consumed = true
+          }
+        }
+      }
+      
+      // Если выбранной ткани нет или недостаточно, используем любую доступную
+      if (!consumed) {
+        consumed = consumeAnyMaterial(['хлопок', 'лен', 'шерсть', 'шелк', 'джинс', 'кожа', 'кашемир', 'бамбук', 'ткань'], totalNeed)
+      }
+    } else if (req.name.includes('Нитки')) {
+      consumed = consumeAnyMaterial(['нитк', 'нить', 'нити', 'обычная нить', 'швейная нить'], totalNeed)
+    } else if (req.name.includes('Пуговицы')) {
+      consumed = consumeAnyMaterial(['пуговиц', 'пуговица', 'пуговицы', 'кнопка', 'кнопки'], totalNeed)
+    } else if (req.name.includes('Молния')) {
+      consumed = consumeAnyMaterial(['молния', 'молнии', 'застежка', 'застежки', 'зиппер'], totalNeed)
+    } else if (req.name.includes('Шнурок')) {
+      consumed = consumeAnyMaterial(['шнурок', 'шнурки', 'шнур', 'веревка', 'веревки'], totalNeed)
+    } else if (req.name.includes('Ремень')) {
+      consumed = consumeAnyMaterial(['ремень', 'ремни', 'пояс', 'пояса'], totalNeed)
+    }
+
+    if (!consumed) {
+      allConsumed = false
+      break
+    }
+  }
+  
+  if (!allConsumed) {
+    console.log('❌ Не удалось списать все материалы')
+    return
+  }
+  
+  // Добавляем готовое изделие
   if (usePantryDest) {
-    // Списываем из кладовой
-    const materialOk = pantry.removeMaterialByNameContains(
-      selectedMaterial?.name.toLowerCase() || 'материал', 
-      2
-    )
-    const dyeOk = pantry.removeMaterialByNameContains('красител', 1)
-    
-    if (!materialOk || !dyeOk) return
-    
-    // Добавляем готовое изделие в кладовую
     pantry.addProduct({
       name: getClothingName(),
       icon: getClothingIcon(),
       price: price.value,
-      quantity: 1,
+      quantity: design.quantity,
       meta: {
         type: design.type,
         color: design.color,
         pattern: design.pattern,
         material: design.material,
         quality: design.quality,
-        rare: selectedMaterial?.rare || false
+        rare: availableMaterials.value.find(m => m.id === design.material)?.rare || false
       }
     })
   } else {
-    // Списываем со склада
-    const material = warehouse.materials.find(m => 
-      m.name.toLowerCase().includes(selectedMaterial?.name.toLowerCase() || '')
-    )
-    const dye = warehouse.materials.find(m => 
-      m.name.toLowerCase().includes('красител')
-    )
-    
-    if (!material || !dye) return
-    
-    warehouse.updateMaterialQuantity(material.id, -2, 'Пошив в конструкторе')
-    warehouse.updateMaterialQuantity(dye.id, -1, 'Пошив в конструкторе')
-    
     // TODO: Добавить готовое изделие в warehouse_clothing
+    console.log(`✅ Создано ${design.quantity} единиц одежды и добавлено на склад`)
   }
   
   company.addCompanyExp(5)
@@ -557,6 +865,9 @@ function createItem() {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 6px;
 }
 
 .material-item {
@@ -732,6 +1043,92 @@ function createItem() {
   background: #f5f5f5;
 }
 
+.material-hint {
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
+.small-text {
+  font-size: 0.875rem;
+  color: #6c757d;
+  font-style: italic;
+}
+
+.quantity-section {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 2px solid #e9ecef;
+}
+
+.quantity-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin: 0.5rem 0;
+}
+
+.quantity-btn {
+  width: 40px;
+  height: 40px;
+  border: 2px solid #dee2e6;
+  background: white;
+  border-radius: 8px;
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #495057;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quantity-btn:hover:not(:disabled) {
+  border-color: var(--primary);
+  background: #f0f8ff;
+  color: var(--primary);
+}
+
+.quantity-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  color: #6c757d;
+  background: #f8f9fa;
+}
+
+.quantity-input {
+  width: 80px;
+  height: 40px;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #495057;
+  background: white;
+}
+
+.quantity-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.quantity-hint {
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+.quantity-multiplier {
+  font-size: 0.8rem;
+  color: #6c757d;
+  font-style: italic;
+  margin-left: 0.25rem;
+}
+
 .material-icon {
   font-size: 1.5rem;
 }
@@ -892,7 +1289,7 @@ function createItem() {
 }
 
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(5px); }
-.constructor-modal { width: 1000px; height: 700px; background: var(--color-bg-menu-light); border: 2px solid var(--color-buttons); border-radius: 15px; box-shadow: 0 8px 16px var(--shadow-medium); display: flex; flex-direction: column; }
+.constructor-modal { width: 1000px; height: 820px; background: var(--color-bg-menu-light); border: 2px solid var(--color-buttons); border-radius: 15px; box-shadow: 0 8px 16px var(--shadow-medium); display: flex; flex-direction: column; }
 .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 25px; background: var(--color-bg-menu); border-bottom: 2px solid var(--color-buttons); border-radius: 15px 15px 0 0; }
 .modal-title { color: var(--color-text); font-weight: 700; text-shadow: 2px 2px 0 var(--shadow-light); }
 .close-btn { background: var(--color-buttons); border: 2px solid var(--color-accents); border-radius: 12px; color: var(--color-text); padding: 8px 12px; }

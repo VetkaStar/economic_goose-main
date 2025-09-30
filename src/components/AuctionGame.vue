@@ -414,6 +414,55 @@ async function handleAuctionFinish() {
         bidAmount
       )
       console.log(`🏆 Победитель аукциона! Получено ${points} очков`)
+
+      // Добавляем материал победителю в правильное хранилище
+      if (auction.value.material) {
+        const { useWarehouseStore } = await import('@/stores/warehouseStore')
+        const warehouseStore = useWarehouseStore()
+        
+        // Создаем материал в базе данных если его нет
+        const { data: existingMaterial } = await supabase
+          .from('warehouse_materials')
+          .select('id')
+          .eq('name', auction.value.material.name)
+          .single()
+
+        let materialId = existingMaterial?.id
+
+        if (!materialId) {
+          const { data: newMaterial, error: createError } = await supabase
+            .from('warehouse_materials')
+            .insert({
+              name: auction.value.material.name,
+              icon: auction.value.material.icon || '🧵',
+              price: auction.value.material.base_price || 0,
+              quality: auction.value.material.quality || 1,
+              durability: auction.value.material.durability || null,
+              comfort: auction.value.material.comfort || null,
+              style: auction.value.material.style || null,
+              description: auction.value.material.description || null
+            })
+            .select('id')
+            .single()
+
+          if (createError) {
+            console.error('Ошибка создания материала:', createError)
+            return
+          }
+          materialId = newMaterial.id
+        }
+
+        // Добавляем материал в правильное хранилище
+        const success = await warehouseStore.addMaterialToCorrectStorage(
+          materialId, 
+          auction.value.material.quantity || 1,
+          auction.value.material
+        )
+
+        if (success) {
+          console.log(`📦 Материал "${auction.value.material.name}" добавлен в хранилище`)
+        }
+      }
     } else {
       // Участники получают очки за участие (находим последнюю ставку игрока)
       const playerBids = auction.value.bids_history?.filter(

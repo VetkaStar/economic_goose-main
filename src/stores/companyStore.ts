@@ -34,6 +34,11 @@ export const useCompanyStore = defineStore('company', () => {
       level: 1,
       experience: 0,
     },
+    stats: {
+      ordersCompleted: 0,
+      ordersEarnings: 0,
+      ordersExperience: 0,
+    },
     // Емкости: мини-склад дома и арендованный склад
     capacities: {
       homePantry: { materialsSlots: 10, productsSlots: 10 },
@@ -51,6 +56,14 @@ export const useCompanyStore = defineStore('company', () => {
       const raw = localStorage.getItem(STORAGE_KEY.value)
       if (raw) {
         const parsed = JSON.parse(raw)
+        // Миграция: добавляем недостающие поля
+        if (!parsed.stats) {
+          parsed.stats = {
+            ordersCompleted: 0,
+            ordersEarnings: 0,
+            ordersExperience: 0
+          }
+        }
         state.value = { ...state.value, ...parsed }
       }
     } catch {}
@@ -114,6 +127,13 @@ export const useCompanyStore = defineStore('company', () => {
     saveState()
   }
 
+  function addOrderStats(earnings: number, experience: number) {
+    state.value.stats.ordersCompleted += 1
+    state.value.stats.ordersEarnings += earnings
+    state.value.stats.ordersExperience += experience
+    saveState()
+  }
+
   function checkCompanyLevelUp() {
     const required = 100 + (state.value.progress.level - 1) * 50
     if (state.value.progress.experience >= required) {
@@ -139,6 +159,7 @@ export const useCompanyStore = defineStore('company', () => {
     chargeDailyFees,
     moveToPoint,
     addCompanyExp,
+    addOrderStats,
     canUseWarehouse,
     canUseAtelier,
     canUseMarket,
