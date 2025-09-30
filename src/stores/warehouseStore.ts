@@ -497,12 +497,24 @@ export const useWarehouseStore = defineStore('warehouse', () => {
 
       console.log(`📦 Добавляем материал ${materialId} количество: ${quantity}`)
 
-      // Проверяем, есть ли уже этот материал в персональном складе
+      // Получаем информацию о материале из базы
+      const { data: materialInfo } = await supabase
+        .from('warehouse_materials')
+        .select('*')
+        .eq('id', materialId)
+        .single()
+
+      if (!materialInfo) {
+        throw new Error('Материал не найден в базе данных')
+      }
+
+      // Проверяем, есть ли уже этот материал с таким же качеством в персональном складе
       const { data: existingInventory } = await supabase
         .from('user_warehouse_inventory')
         .select('quantity')
         .eq('user_id', authStore.user.id)
         .eq('material_id', materialId)
+        .eq('quality', materialInfo.quality)
         .single()
 
       const currentQuantity = existingInventory?.quantity || 0
@@ -514,9 +526,13 @@ export const useWarehouseStore = defineStore('warehouse', () => {
         .upsert({
           user_id: authStore.user.id,
           material_id: materialId,
-          quantity: newQuantity
+          quantity: newQuantity,
+          quality: materialInfo.quality,
+          durability: materialInfo.durability,
+          comfort: materialInfo.comfort,
+          style: materialInfo.style
         }, {
-          onConflict: 'user_id,material_id'
+          onConflict: 'user_id,material_id,quality'
         })
 
       if (upsertError) {
@@ -578,7 +594,7 @@ export const useWarehouseStore = defineStore('warehouse', () => {
         
         if (materialInfo) {
           return pantryStore.addMaterial({
-            id: materialId,
+            id: materialId, // Сохраняем UUID для корректного переноса
             name: materialInfo.name,
             icon: materialInfo.icon,
             price: materialInfo.price,
@@ -591,7 +607,7 @@ export const useWarehouseStore = defineStore('warehouse', () => {
         } else if (materialData) {
           // Если материал новый, используем переданные данные
           return pantryStore.addMaterial({
-            id: materialId,
+            id: materialId, // Сохраняем UUID для корректного переноса
             name: materialData.name,
             icon: materialData.icon,
             price: materialData.price,

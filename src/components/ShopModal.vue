@@ -55,7 +55,19 @@
               <div class="material-stats">
                 <div class="stat-item">
                   <span class="stat-label">Качество:</span>
-                  <span class="stat-value">Q{{ material.quality }}</span>
+                  <span class="stat-value">{{ material.quality }}%</span>
+                </div>
+                <div v-if="material.durability" class="stat-item">
+                  <span class="stat-label">🛡️ Прочность:</span>
+                  <span class="stat-value">{{ material.durability }}/10</span>
+                </div>
+                <div v-if="material.comfort" class="stat-item">
+                  <span class="stat-label">😌 Комфорт:</span>
+                  <span class="stat-value">{{ material.comfort }}/10</span>
+                </div>
+                <div v-if="material.style" class="stat-item">
+                  <span class="stat-label">✨ Стиль:</span>
+                  <span class="stat-value">{{ material.style }}/10</span>
                 </div>
                 <div class="stat-item">
                   <span class="stat-label">Доступно:</span>
@@ -98,6 +110,22 @@
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { useWarehouseStore } from '@/stores/warehouseStore'
+import { supabase } from '@/lib/supabase'
+
+// Интерфейс для материала в магазине
+interface ShopMaterial {
+  id: string
+  name: string
+  description: string
+  icon: string
+  category: string
+  price: number
+  quality: number
+  durability?: number
+  comfort?: number
+  style?: number
+  available: number
+}
 
 // Эмиты
 const emit = defineEmits<{
@@ -120,140 +148,47 @@ const categories = [
   { id: 'special', name: 'Особые', icon: '✨' }
 ]
 
-// Базовые материалы магазина
-const shopMaterials = [
-  // Ткани
-  {
-    id: 'cotton_fabric',
-    name: 'Хлопковая ткань',
-    description: 'Базовый материал для повседневной одежды',
-    icon: '🧵',
-    category: 'fabric',
-    price: 100,
-    quality: 2,
-    available: 50
-  },
-  {
-    id: 'linen_fabric',
-    name: 'Льняная ткань',
-    description: 'Лёгкая и дышащая ткань для летней одежды',
-    icon: '🌾',
-    category: 'fabric',
-    price: 150,
-    quality: 3,
-    available: 30
-  },
-  {
-    id: 'denim_fabric',
-    name: 'Джинсовая ткань',
-    description: 'Прочная ткань для джинсов и курток',
-    icon: '👖',
-    category: 'fabric',
-    price: 200,
-    quality: 3,
-    available: 25
-  },
-  {
-    id: 'wool_fabric',
-    name: 'Шерстяная ткань',
-    description: 'Тёплая ткань для зимней одежды',
-    icon: '🐑',
-    category: 'fabric',
-    price: 300,
-    quality: 4,
-    available: 20
-  },
-  
-  // Аксессуары
-  {
-    id: 'basic_buttons',
-    name: 'Обычные пуговицы',
-    description: 'Стандартные пуговицы для повседневной одежды',
-    icon: '🔘',
-    category: 'accessories',
-    price: 10,
-    quality: 1,
-    available: 100
-  },
-  {
-    id: 'zipper_basic',
-    name: 'Обычная молния',
-    description: 'Стандартная молния для курток и брюк',
-    icon: '🔗',
-    category: 'accessories',
-    price: 50,
-    quality: 2,
-    available: 40
-  },
-  {
-    id: 'thread_basic',
-    name: 'Обычная нить',
-    description: 'Базовая нить для шитья',
-    icon: '🧶',
-    category: 'accessories',
-    price: 5,
-    quality: 1,
-    available: 200
-  },
-  
-  // Инструменты
-  {
-    id: 'basic_scissors',
-    name: 'Обычные ножницы',
-    description: 'Стандартные ножницы для резки ткани',
-    icon: '✂️',
-    category: 'tools',
-    price: 200,
-    quality: 2,
-    available: 10
-  },
-  {
-    id: 'measuring_tape',
-    name: 'Сантиметровая лента',
-    description: 'Для точных измерений при пошиве',
-    icon: '📏',
-    category: 'tools',
-    price: 100,
-    quality: 2,
-    available: 15
-  },
-  {
-    id: 'sewing_needles',
-    name: 'Швейные иглы',
-    description: 'Набор игл для ручного шитья',
-    icon: '🪡',
-    category: 'tools',
-    price: 50,
-    quality: 2,
-    available: 25
-  },
-  
-  // Особые материалы
-  {
-    id: 'elastic_band',
-    name: 'Резинка',
-    description: 'Эластичная лента для поясов и манжет',
-    icon: '🔄',
-    category: 'special',
-    price: 80,
-    quality: 2,
-    available: 30
-  },
-  {
-    id: 'interfacing',
-    name: 'Клеевая прокладка',
-    description: 'Для укрепления деталей одежды',
-    icon: '📋',
-    category: 'special',
-    price: 120,
-    quality: 3,
-    available: 20
+// Материалы магазина (загружаются из базы данных)
+const shopMaterials = ref<ShopMaterial[]>([])
+
+// Функция загрузки материалов из базы данных
+const loadMaterials = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('warehouse_materials')
+      .select('*')
+      .order('category', { ascending: true })
+      .order('name', { ascending: true })
+
+    if (error) {
+      console.error('Ошибка загрузки материалов:', error)
+      return
+    }
+
+    // Добавляем поле available для каждого материала
+    shopMaterials.value = data.map((material: any): ShopMaterial => ({
+      id: material.id,
+      name: material.name,
+      description: material.description || '',
+      icon: material.icon || '🧵',
+      category: material.category || 'material',
+      price: Number(material.price) || 0,
+      quality: material.quality || 1,
+      durability: material.durability,
+      comfort: material.comfort,
+      style: material.style,
+      available: Math.floor(Math.random() * 50) + 10 // Случайное количество от 10 до 60
+    }))
+
+    console.log('✅ Материалы магазина загружены:', shopMaterials.value.length)
+  } catch (error) {
+    console.error('Ошибка при загрузке материалов:', error)
   }
-]
+}
 
 // Вычисляемые свойства
 const getCurrentMaterials = () => {
-  return shopMaterials.filter(material => material.category === selectedCategory.value)
+  return shopMaterials.value.filter(material => material.category === selectedCategory.value)
 }
 
 const getCurrentCategoryName = () => {
@@ -320,9 +255,17 @@ const buyMaterial = async (material: any) => {
 }
 
 // Инициализация
-onMounted(() => {
+onMounted(async () => {
   // Загружаем данные склада
   warehouseStore.loadWarehouseData()
+  
+  // Загружаем материалы из базы данных
+  await loadMaterials()
+  
+  // Инициализация количества для каждого материала
+  shopMaterials.value.forEach(material => {
+    selectedQuantities.value[material.id] = 1
+  })
 })
 </script>
 
