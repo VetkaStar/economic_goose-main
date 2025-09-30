@@ -17,7 +17,7 @@
       <!-- Список аукционов (если не выбран конкретный) -->
       <div v-else-if="!auction && auctionStore.availableAuctions.length > 0" class="auctions-list">
         <div class="auctions-header">
-          <h2>🔨 Доступные аукционы</h2>
+          <h2>▲ Доступные аукционы</h2>
           <button class="close-btn" @click="close">✕</button>
         </div>
 
@@ -85,15 +85,16 @@
         </div>
       </div>
 
-      <!-- Просмотр конкретного аукциона -->
-      <div v-else-if="auction" class="auction-content">
+        <!-- Просмотр конкретного аукциона -->
+        <div v-else-if="auction" class="auction-content">
+          <div class="content-section">
         <!-- Хедер -->
         <div class="auction-header">
           <button class="back-btn" @click="auctionStore.leaveAuction()">
             ← Назад к списку
           </button>
           <div class="auction-title">
-            <h2>🔨 Аукцион материалов</h2>
+            <h2>▲ Аукцион материалов</h2>
             <div class="auction-status" :class="auction.status">
               {{ getStatusText(auction.status) }}
             </div>
@@ -264,8 +265,9 @@
             </div>
           </div>
         </div>
+          </div>
+        </div>
       </div>
-    </div>
   </div>
 </template>
 
@@ -302,10 +304,10 @@ function formatTimestamp(timestamp: string): string {
 // Статус аукциона
 function getStatusText(status: string): string {
   switch (status) {
-    case 'waiting': return '⏳ Ожидание'
-    case 'active': return '🔥 Активен'
-    case 'finished': return '✅ Завершён'
-    case 'cancelled': return '❌ Отменён'
+    case 'waiting': return '◉ Ожидание'
+    case 'active': return '● Активен'
+    case 'finished': return '■ Завершён'
+    case 'cancelled': return '▲ Отменён'
     default: return status
   }
 }
@@ -394,7 +396,7 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -403,15 +405,16 @@ onUnmounted(() => {
 }
 
 .auction-modal {
-  background: linear-gradient(135deg, #fff7e6 0%, #fef3c7 100%);
-  border: 4px solid #d8b86a;
-  border-radius: 20px;
-  padding: 30px;
-  width: 95%;
-  max-width: 800px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+  background: var(--color-bg-menu-light);
+  border: 2px solid var(--color-buttons);
+  border-radius: 15px;
+  width: 1000px;
+  height: 700px;
+  overflow: hidden;
+  box-shadow: 0 8px 16px var(--shadow-medium);
+  display: flex;
+  flex-direction: column;
+  position: relative;
 }
 
 /* Загрузка и ошибки */
@@ -445,9 +448,10 @@ onUnmounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 2px solid #d8b86a;
+  padding: 20px 25px;
+  background: var(--color-bg-menu);
+  border-bottom: 2px solid var(--color-buttons);
+  border-radius: 15px 15px 0 0;
 }
 
 .auction-title {
@@ -457,27 +461,30 @@ onUnmounted(() => {
 }
 
 .auction-title h2 {
-  font-size: 24px;
-  font-weight: 800;
-  color: #3a2b16;
+  font-size: clamp(1.4rem, 2.2vw, 1.8rem);
+  font-weight: 700;
+  color: var(--color-text);
   margin: 0;
+  text-shadow: 2px 2px 0px var(--shadow-light);
 }
 
 .auction-status {
   padding: 5px 12px;
   border-radius: 8px;
-  font-size: 13px;
+  font-size: clamp(0.7rem, 1.1vw, 0.9rem);
   font-weight: 600;
 }
 
 .auction-status.waiting {
-  background: #fef3c7;
-  color: #d97706;
+  background: var(--color-bg-menu-light);
+  color: var(--color-text);
+  border: 2px solid var(--color-buttons);
 }
 
 .auction-status.active {
-  background: #dcfce7;
-  color: #16a34a;
+  background: var(--color-accents);
+  color: var(--color-text);
+  border: 2px solid var(--color-highlights);
   animation: pulse-status 2s infinite;
 }
 
@@ -487,43 +494,45 @@ onUnmounted(() => {
 }
 
 .auction-status.finished {
-  background: #e5e7eb;
-  color: #6b7280;
+  background: var(--color-bg-menu-light);
+  color: var(--color-text);
+  border: 2px solid var(--color-buttons);
+  opacity: 0.8;
 }
 
 .close-btn {
-  background: none;
-  border: none;
-  font-size: 24px;
+  background: var(--color-buttons);
+  border: 2px solid var(--color-accents);
+  border-radius: 12px;
+  color: var(--color-text);
+  font-size: clamp(1rem, 1.5vw, 1.2rem);
+  font-weight: 600;
+  padding: 8px 12px;
   cursor: pointer;
-  color: #7a4b16;
-  padding: 5px;
-  border-radius: 50%;
-  width: 35px;
-  height: 35px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px var(--shadow-light);
 }
 
 .close-btn:hover {
-  background: rgba(0, 0, 0, 0.1);
+  background: var(--color-accents);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px var(--shadow-medium);
 }
 
 /* Таймер */
 .auction-timer {
-  background: #fef4d1;
-  border: 2px solid #d8b86a;
-  border-radius: 15px;
+  background: var(--color-bg-menu);
+  border: 2px solid var(--color-buttons);
+  border-radius: 12px;
   padding: 20px;
   text-align: center;
-  margin-bottom: 20px;
+  margin: 20px;
+  box-shadow: 0 2px 4px var(--shadow-light);
 }
 
 .auction-timer.urgent {
-  border-color: #dc2626;
-  background: #fee2e2;
+  border-color: var(--color-highlights);
+  background: var(--color-accents);
   animation: shake 0.5s infinite;
 }
 
@@ -534,30 +543,34 @@ onUnmounted(() => {
 }
 
 .timer-icon {
-  font-size: 32px;
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
   margin-bottom: 10px;
+  color: var(--color-accents);
 }
 
 .timer-value {
-  font-size: 48px;
-  font-weight: 800;
-  color: #3a2b16;
+  font-size: clamp(2rem, 3.5vw, 3rem);
+  font-weight: 700;
+  color: var(--color-text);
   font-family: 'Courier New', monospace;
+  text-shadow: 2px 2px 0px var(--shadow-light);
 }
 
 .timer-label {
-  font-size: 14px;
-  color: #6b7280;
+  font-size: clamp(0.7rem, 1.1vw, 0.9rem);
+  color: var(--color-text);
   margin-top: 5px;
+  opacity: 0.8;
 }
 
 /* Материал */
 .material-showcase {
-  background: #fef4d1;
-  border: 2px solid #d8b86a;
-  border-radius: 15px;
+  background: var(--color-bg-menu);
+  border: 2px solid var(--color-buttons);
+  border-radius: 12px;
   padding: 20px;
-  margin-bottom: 20px;
+  margin: 0 20px 20px 20px;
+  box-shadow: 0 2px 4px var(--shadow-light);
 }
 
 .material-header {
@@ -567,8 +580,9 @@ onUnmounted(() => {
 }
 
 .material-icon {
-  font-size: 48px;
+  font-size: clamp(2.5rem, 4vw, 3rem);
   flex-shrink: 0;
+  /* Иконки материалов сохраняются как есть - это часть игры */
 }
 
 .material-info {
@@ -576,16 +590,18 @@ onUnmounted(() => {
 }
 
 .material-name {
-  font-size: 20px;
+  font-size: clamp(1.1rem, 1.8vw, 1.4rem);
   font-weight: 700;
-  color: #3a2b16;
+  color: var(--color-text);
   margin: 0 0 5px 0;
+  text-shadow: 1px 1px 0px var(--shadow-light);
 }
 
 .material-description {
-  font-size: 14px;
-  color: #6b7280;
+  font-size: clamp(0.7rem, 1.1vw, 0.9rem);
+  color: var(--color-text);
   margin: 0;
+  opacity: 0.8;
 }
 
 .material-stats {
@@ -595,35 +611,39 @@ onUnmounted(() => {
 }
 
 .stat-card {
-  background: rgba(216, 184, 106, 0.15);
+  background: var(--color-bg-menu-light);
+  border: 2px solid var(--color-buttons);
   border-radius: 8px;
   padding: 10px;
   text-align: center;
 }
 
 .stat-label {
-  font-size: 11px;
-  color: #6b7280;
+  font-size: clamp(0.6rem, 1vw, 0.8rem);
+  color: var(--color-text);
   margin-bottom: 5px;
+  opacity: 0.8;
 }
 
 .stat-value {
-  font-size: 18px;
+  font-size: clamp(1rem, 1.5vw, 1.2rem);
   font-weight: 700;
-  color: #3a2b16;
+  color: var(--color-text);
+  text-shadow: 1px 1px 0px var(--shadow-light);
 }
 
 .stat-value.quality {
-  color: #16a34a;
+  color: var(--color-accents);
 }
 
 /* Текущая ставка */
 .current-bid-section {
-  background: #fef4d1;
-  border: 3px solid #d8b86a;
-  border-radius: 15px;
+  background: var(--color-bg-menu);
+  border: 2px solid var(--color-buttons);
+  border-radius: 12px;
   padding: 20px;
-  margin-bottom: 20px;
+  margin: 0 20px 20px 20px;
+  box-shadow: 0 2px 4px var(--shadow-light);
 }
 
 .bid-info {
@@ -632,26 +652,29 @@ onUnmounted(() => {
 }
 
 .bid-label {
-  font-size: 14px;
-  color: #6b7280;
+  font-size: clamp(0.7rem, 1.1vw, 0.9rem);
+  color: var(--color-text);
   margin-bottom: 5px;
+  opacity: 0.8;
 }
 
 .bid-amount {
-  font-size: 42px;
-  font-weight: 800;
-  color: #16a34a;
+  font-size: clamp(2rem, 3.5vw, 2.5rem);
+  font-weight: 700;
+  color: var(--color-accents);
   margin-bottom: 10px;
+  text-shadow: 2px 2px 0px var(--shadow-light);
 }
 
 .bid-leader {
-  font-size: 16px;
-  color: #3a2b16;
+  font-size: clamp(0.9rem, 1.4vw, 1.1rem);
+  color: var(--color-text);
   font-weight: 600;
+  text-shadow: 1px 1px 0px var(--shadow-light);
 }
 
 .you-badge {
-  color: #d97706;
+  color: var(--color-highlights);
   font-weight: 700;
 }
 
@@ -670,33 +693,37 @@ onUnmounted(() => {
 
 .bid-btn {
   padding: 12px 20px;
-  border: 2px solid #d8b86a;
+  border: 2px solid var(--color-buttons);
   border-radius: 10px;
   font-weight: 600;
-  font-size: 14px;
+  font-size: clamp(0.7rem, 1.1vw, 0.9rem);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px var(--shadow-light);
 }
 
 .bid-btn.quick {
-  background: #fff7e6;
-  color: #3a2b16;
+  background: var(--color-bg-menu-light);
+  color: var(--color-text);
 }
 
 .bid-btn.quick:hover:not(:disabled) {
-  background: #f4dcb3;
-  transform: translateY(-2px);
+  background: var(--color-bg-menu);
+  border-color: var(--color-accents);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px var(--shadow-medium);
 }
 
 .bid-btn.primary {
-  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
-  color: white;
-  border: none;
+  background: var(--color-accents);
+  color: var(--color-text);
+  border-color: var(--color-highlights);
 }
 
 .bid-btn.primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, #15803d 0%, #166534 100%);
-  transform: translateY(-2px);
+  background: var(--color-highlights);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px var(--shadow-medium);
 }
 
 .bid-btn:disabled {
@@ -712,23 +739,40 @@ onUnmounted(() => {
 .bid-input {
   flex: 1;
   padding: 12px;
-  border: 2px solid #d8b86a;
+  border: 2px solid var(--color-buttons);
   border-radius: 10px;
-  font-size: 16px;
+  font-size: clamp(0.9rem, 1.4vw, 1.1rem);
   font-weight: 600;
   text-align: center;
-  background: #fff7e6;
+  background: var(--color-bg-menu-light);
+  color: var(--color-text);
 }
 
 .bid-input:focus {
   outline: none;
-  border-color: #b8860b;
+  border-color: var(--color-accents);
 }
 
 .player-balance {
   text-align: center;
-  font-size: 14px;
-  color: #6b7280;
+  font-size: clamp(0.7rem, 1.1vw, 0.9rem);
+  color: var(--color-text);
+  opacity: 0.8;
+}
+
+/* Контент секция */
+.content-section {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--color-bg-menu-light);
+  height: calc(700px - 120px);
+}
+
+.auction-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 /* Результат */
@@ -743,54 +787,61 @@ onUnmounted(() => {
 }
 
 .winner-icon {
-  font-size: 64px;
+  font-size: clamp(2.5rem, 4vw, 4rem);
   margin-bottom: 15px;
 }
 
 .winner-text {
-  font-size: 24px;
+  font-size: clamp(1.2rem, 1.8vw, 1.5rem);
   font-weight: 700;
-  color: #3a2b16;
+  color: var(--color-text);
   margin: 0 0 10px 0;
+  text-shadow: 2px 2px 0px var(--shadow-light);
 }
 
 .final-price {
-  font-size: 18px;
-  color: #16a34a;
+  font-size: clamp(1rem, 1.5vw, 1.2rem);
+  color: var(--color-accents);
   font-weight: 600;
+  text-shadow: 1px 1px 0px var(--shadow-light);
 }
 
 .no-winner {
   padding: 40px 20px;
-  color: #6b7280;
+  color: var(--color-text);
+  opacity: 0.8;
 }
 
 .participants-count {
-  font-size: 16px;
-  color: #6b7280;
+  font-size: clamp(0.9rem, 1.4vw, 1.1rem);
+  color: var(--color-text);
   margin-top: 10px;
+  opacity: 0.8;
 }
 
 .auto-start-info {
-  font-size: 14px;
-  color: #16a34a;
+  font-size: clamp(0.7rem, 1.1vw, 0.9rem);
+  color: var(--color-accents);
   margin: 10px 0;
   font-weight: 600;
 }
 
 /* История ставок */
 .bids-history {
-  background: rgba(216, 184, 106, 0.1);
+  background: var(--color-bg-menu);
+  border: 2px solid var(--color-buttons);
   border-radius: 12px;
   padding: 15px;
-  margin-bottom: 15px;
+  margin: 0 20px 15px 20px;
+  box-shadow: 0 2px 4px var(--shadow-light);
 }
 
 .bids-history h4 {
-  font-size: 16px;
+  font-size: clamp(1rem, 1.5vw, 1.2rem);
   font-weight: 700;
-  color: #3a2b16;
+  color: var(--color-text);
   margin: 0 0 10px 0;
+  text-shadow: 1px 1px 0px var(--shadow-light);
 }
 
 .bids-list {
@@ -804,38 +855,46 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 8px 12px;
-  background: #fef4d1;
+  background: var(--color-bg-menu-light);
+  border: 2px solid var(--color-buttons);
   border-radius: 8px;
-  font-size: 13px;
+  font-size: clamp(0.7rem, 1.1vw, 0.9rem);
 }
 
 .bid-player {
   font-weight: 600;
-  color: #3a2b16;
+  color: var(--color-text);
+  text-shadow: 1px 1px 0px var(--shadow-light);
 }
 
 .bid-value {
-  color: #16a34a;
+  color: var(--color-accents);
   font-weight: 700;
+  text-shadow: 1px 1px 0px var(--shadow-light);
 }
 
 .bid-time {
-  color: #6b7280;
-  font-size: 11px;
+  color: var(--color-text);
+  font-size: clamp(0.6rem, 1vw, 0.8rem);
+  opacity: 0.8;
 }
 
 /* Участники */
 .participants-panel {
-  background: rgba(216, 184, 106, 0.1);
+  background: var(--color-bg-menu);
+  border: 2px solid var(--color-buttons);
   border-radius: 12px;
   padding: 15px;
+  margin: 0 20px 20px 20px;
+  box-shadow: 0 2px 4px var(--shadow-light);
 }
 
 .participants-panel h4 {
-  font-size: 16px;
+  font-size: clamp(1rem, 1.5vw, 1.2rem);
   font-weight: 700;
-  color: #3a2b16;
+  color: var(--color-text);
   margin: 0 0 10px 0;
+  text-shadow: 1px 1px 0px var(--shadow-light);
 }
 
 .participants-list {
@@ -846,44 +905,62 @@ onUnmounted(() => {
 
 .participant-item {
   padding: 6px 12px;
-  background: #fef4d1;
+  background: var(--color-bg-menu-light);
+  border: 2px solid var(--color-buttons);
   border-radius: 8px;
-  font-size: 13px;
-  color: #3a2b16;
+  font-size: clamp(0.7rem, 1.1vw, 0.9rem);
+  color: var(--color-text);
 }
 
 .participant-item.is-you {
-  background: #dcfce7;
-  border: 2px solid #16a34a;
+  background: var(--color-accents);
+  border-color: var(--color-highlights);
 }
 
 .you-tag {
-  color: #16a34a;
+  color: var(--color-highlights);
   font-weight: 600;
 }
 
 .btn-primary {
   padding: 12px 24px;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
-  border: none;
+  background: var(--color-accents);
+  color: var(--color-text);
+  border: 2px solid var(--color-highlights);
   border-radius: 10px;
   font-weight: 600;
-  font-size: 14px;
+  font-size: clamp(0.7rem, 1.1vw, 0.9rem);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px var(--shadow-light);
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  background: var(--color-highlights);
   transform: translateY(-1px);
+  box-shadow: 0 4px 8px var(--shadow-medium);
 }
 
 /* Адаптивность */
+@media (max-width: 1024px) {
+  .auction-modal {
+    width: 95%;
+    height: 85vh;
+  }
+  
+  .content-section {
+    height: calc(85vh - 120px);
+  }
+}
+
 @media (max-width: 768px) {
   .auction-modal {
     width: 98%;
-    padding: 20px;
+    height: 90vh;
+  }
+  
+  .content-section {
+    height: calc(90vh - 120px);
   }
 
   .material-stats {
@@ -896,22 +973,22 @@ onUnmounted(() => {
 }
 
 /* Скроллбар */
-.auction-modal::-webkit-scrollbar {
+.content-section::-webkit-scrollbar {
   width: 8px;
 }
 
-.auction-modal::-webkit-scrollbar-track {
-  background: rgba(216, 184, 106, 0.1);
+.content-section::-webkit-scrollbar-track {
+  background: var(--color-bg-menu-light);
   border-radius: 10px;
 }
 
-.auction-modal::-webkit-scrollbar-thumb {
-  background: #d8b86a;
+.content-section::-webkit-scrollbar-thumb {
+  background: var(--color-buttons);
   border-radius: 10px;
 }
 
-.auction-modal::-webkit-scrollbar-thumb:hover {
-  background: #b8860b;
+.content-section::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accents);
 }
 
 /* Список аукционов */
@@ -926,40 +1003,47 @@ onUnmounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px;
-  border-bottom: 2px solid rgba(216, 184, 106, 0.3);
+  padding: 20px 25px;
+  background: var(--color-bg-menu);
+  border-bottom: 2px solid var(--color-buttons);
+  border-radius: 15px 15px 0 0;
 }
 
 .auctions-header h2 {
-  font-size: 28px;
-  color: #d8b86a;
+  font-size: clamp(1.4rem, 2.2vw, 1.8rem);
+  color: var(--color-text);
   margin: 0;
+  font-weight: 700;
+  text-shadow: 2px 2px 0px var(--shadow-light);
 }
 
 .auctions-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 20px;
-  padding: 24px;
+  padding: 20px;
   overflow-y: auto;
+  background: var(--color-bg-menu-light);
+  flex: 1;
 }
 
 .auction-card {
-  background: linear-gradient(135deg, rgba(216, 184, 106, 0.25) 0%, rgba(200, 90, 84, 0.15) 100%);
-  border: 2px solid rgba(216, 184, 106, 0.5);
-  border-radius: 16px;
+  background: var(--color-bg-menu);
+  border: 2px solid var(--color-buttons);
+  border-radius: 12px;
   padding: 20px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  box-shadow: 0 2px 4px var(--shadow-light);
 }
 
 .auction-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(216, 184, 106, 0.3);
-  border-color: #d8b86a;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--shadow-medium);
+  border-color: var(--color-accents);
 }
 
 .auction-card.finished {
@@ -986,50 +1070,57 @@ onUnmounted(() => {
 }
 
 .status-badge.waiting {
-  background: rgba(100, 180, 255, 0.2);
-  color: #64b4ff;
+  background: var(--color-bg-menu-light);
+  color: var(--color-text);
+  border: 2px solid var(--color-buttons);
 }
 
 .status-badge.active {
-  background: rgba(255, 140, 50, 0.2);
-  color: #ff8c32;
+  background: var(--color-accents);
+  color: var(--color-text);
+  border: 2px solid var(--color-highlights);
 }
 
 .status-badge.finished {
-  background: rgba(100, 200, 100, 0.2);
-  color: #64c864;
+  background: var(--color-bg-menu-light);
+  color: var(--color-text);
+  border: 2px solid var(--color-buttons);
+  opacity: 0.8;
 }
 
 .leading-badge {
   padding: 4px 10px;
-  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-  color: #2c1810;
+  background: var(--color-highlights);
+  color: var(--color-text);
+  border: 2px solid var(--color-accents);
   border-radius: 12px;
-  font-size: 12px;
+  font-size: clamp(0.6rem, 1vw, 0.8rem);
   font-weight: 700;
-  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
+  text-shadow: 1px 1px 0px var(--shadow-light);
 }
 
 .winner-badge {
   padding: 4px 10px;
-  background: linear-gradient(135deg, #c0c0c0 0%, #a8a8a8 100%);
-  color: #2c1810;
+  background: var(--color-bg-menu-light);
+  color: var(--color-text);
+  border: 2px solid var(--color-buttons);
   border-radius: 12px;
-  font-size: 12px;
+  font-size: clamp(0.6rem, 1vw, 0.8rem);
   font-weight: 700;
-  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
+  text-shadow: 1px 1px 0px var(--shadow-light);
 }
 
 .winner-badge.winner-you {
-  background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
-  color: #fff;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  background: var(--color-accents);
+  border-color: var(--color-highlights);
+  color: var(--color-text);
 }
 
 .time-left {
-  font-size: 14px;
+  font-size: clamp(0.7rem, 1.1vw, 0.9rem);
   font-weight: 600;
-  color: #ff8c32;
+  color: var(--color-accents);
+  text-shadow: 1px 1px 0px var(--shadow-light);
 }
 
 .card-material {
@@ -1039,22 +1130,24 @@ onUnmounted(() => {
 }
 
 .card-icon {
-  font-size: 48px;
+  font-size: clamp(2.5rem, 4vw, 3rem);
   line-height: 1;
+  /* Иконки материалов сохраняются как есть - это часть игры */
 }
 
 .card-info h3 {
-  font-size: 18px;
-  color: #f4e4c1;
+  font-size: clamp(1rem, 1.5vw, 1.2rem);
+  color: var(--color-text);
   font-weight: 600;
   margin: 0 0 4px 0;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  text-shadow: 1px 1px 0px var(--shadow-light);
 }
 
 .card-quantity {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.9);
+  font-size: clamp(0.7rem, 1.1vw, 0.9rem);
+  color: var(--color-text);
   margin: 0;
+  opacity: 0.8;
 }
 
 .card-stats {
@@ -1062,41 +1155,46 @@ onUnmounted(() => {
   flex-direction: column;
   gap: 8px;
   padding: 12px;
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--color-bg-menu-light);
+  border: 2px solid var(--color-buttons);
   border-radius: 8px;
 }
 
 .card-stat {
   display: flex;
   justify-content: space-between;
-  font-size: 14px;
+  font-size: clamp(0.7rem, 1.1vw, 0.9rem);
 }
 
 .stat-label {
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--color-text);
   font-weight: 500;
+  opacity: 0.8;
 }
 
 .stat-value {
-  color: #f4e4c1;
+  color: var(--color-text);
   font-weight: 700;
+  text-shadow: 1px 1px 0px var(--shadow-light);
 }
 
 .card-action {
   padding: 12px;
-  background: linear-gradient(135deg, #d8b86a 0%, #b8860b 100%);
-  color: #2c1810;
-  border: none;
+  background: var(--color-accents);
+  color: var(--color-text);
+  border: 2px solid var(--color-highlights);
   border-radius: 8px;
-  font-size: 16px;
+  font-size: clamp(0.9rem, 1.4vw, 1.1rem);
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px var(--shadow-light);
 }
 
 .card-action:hover:not(:disabled) {
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(216, 184, 106, 0.5);
+  background: var(--color-highlights);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px var(--shadow-medium);
 }
 
 .card-action:disabled {
@@ -1106,18 +1204,21 @@ onUnmounted(() => {
 
 .back-btn {
   padding: 8px 16px;
-  background: rgba(216, 184, 106, 0.2);
-  color: #d8b86a;
-  border: 1px solid rgba(216, 184, 106, 0.3);
+  background: var(--color-bg-menu-light);
+  color: var(--color-text);
+  border: 2px solid var(--color-buttons);
   border-radius: 8px;
-  font-size: 14px;
+  font-size: clamp(0.7rem, 1.1vw, 0.9rem);
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px var(--shadow-light);
 }
 
 .back-btn:hover {
-  background: rgba(216, 184, 106, 0.3);
-  border-color: #d8b86a;
+  background: var(--color-bg-menu);
+  border-color: var(--color-accents);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px var(--shadow-medium);
 }
 </style>

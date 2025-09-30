@@ -1,11 +1,11 @@
 <template>
   <div class="modal-overlay" @click.self="close">
-    <div class="modal-content">
+    <div class="minigames-modal">
       <div class="modal-header">
-        <h2>🎮 Мини-игры</h2>
+        <h2 class="modal-title">● Мини-игры</h2>
         <button class="close-btn" @click="close">✕</button>
       </div>
-
+      
       <div class="modal-body">
         <!-- Онлайн статус -->
         <div class="online-banner">
@@ -14,15 +14,15 @@
             <span class="online-text">Онлайн: <strong>{{ onlinePlayers }}</strong> игроков</span>
           </div>
           <button class="quick-join-btn" @click="quickJoinGame">
-            🚀 Быстрая игра
+            ◆ Быстрая игра
           </button>
         </div>
-
+        
         <!-- Прокручиваемая область -->
         <div class="scrollable-content">
           <!-- Активные события (еженедельные/ежемесячные) -->
           <div class="section" v-if="activeEvents.length > 0">
-            <h3 class="section-title">🎉 Активные события</h3>
+            <h3 class="section-title">◉ Активные события</h3>
             <div class="events-grid">
               <div 
                 v-for="event in activeEvents" 
@@ -37,18 +37,18 @@
                   <div class="event-description">{{ event.description }}</div>
                   <div class="event-meta">
                     <span class="event-badge" :class="event.eventType">
-                      {{ event.eventType === 'weekly' ? '📅 Неделя' : '📆 Месяц' }}
+                      {{ event.eventType === 'weekly' ? '■ Неделя' : '● Месяц' }}
                     </span>
-                    <span class="event-participants">👥 {{ event.onlinePlayers }}</span>
-                  </div>
-                </div>
+                    <span class="event-participants">▲ {{ event.onlinePlayers }}</span>
               </div>
             </div>
-          </div>
-
+                </div>
+                </div>
+              </div>
+              
           <!-- Социальные игры -->
           <div class="section">
-            <h3 class="section-title">👥 Социальные игры</h3>
+            <h3 class="section-title">● Социальные игры</h3>
             <div class="games-list">
               <div 
                 v-for="game in socialGames" 
@@ -61,20 +61,20 @@
                   <div class="game-name">{{ game.name }}</div>
                   <div class="game-description">{{ game.description }}</div>
                   <div class="game-meta">
-                    <span class="meta-item">👥 {{ game.players }}</span>
-                    <span class="meta-item">⏱️ {{ game.duration }}</span>
+                    <span class="meta-item">▲ {{ game.players }}</span>
+                    <span class="meta-item">◉ {{ game.duration }}</span>
                     <span class="meta-item online" v-if="game.onlinePlayers > 0">
-                      🟢 {{ game.onlinePlayers }} онлайн
-                    </span>
-                  </div>
+                      ● {{ game.onlinePlayers }} онлайн
+                  </span>
                 </div>
               </div>
+              </div>
+              </div>
             </div>
-          </div>
-
+            
           <!-- Кооперативные игры -->
           <div class="section">
-            <h3 class="section-title">🤝 Кооперативные игры</h3>
+            <h3 class="section-title">◆ Кооперативные игры</h3>
             <div class="games-list">
               <div 
                 v-for="game in cooperativeGames" 
@@ -88,38 +88,64 @@
                   <div class="game-name">{{ game.name }}</div>
                   <div class="game-description">{{ game.description }}</div>
                   <div class="game-meta">
-                    <span class="meta-item">👥 {{ game.players }}</span>
-                    <span class="meta-item">⏱️ {{ game.duration }}</span>
-                    <span class="meta-item" v-if="game.locked">🔒 {{ game.unlockRequirement }}</span>
+                    <span class="meta-item">▲ {{ game.players }}</span>
+                    <span class="meta-item">◉ {{ game.duration }}</span>
+                    <span class="meta-item" v-if="game.locked">■ {{ game.unlockRequirement }}</span>
                     <span class="meta-item online" v-else-if="game.onlinePlayers > 0">
-                      🟢 {{ game.onlinePlayers }} онлайн
+                      ● {{ game.onlinePlayers }} онлайн
                     </span>
+                  </div>
+                </div>
+              </div>
+          </div>
+<<<<<<< HEAD
+
+          
+=======
+        </div>
+        
+          <!-- Одиночные игры -->
+          <div class="section">
+            <h3 class="section-title">▲ Одиночные игры</h3>
+            <div class="games-list">
+              <div 
+                v-for="game in soloGames" 
+              :key="game.id"
+                class="game-card"
+              @click="playGame(game)"
+            >
+                <div class="game-icon">{{ game.icon }}</div>
+                <div class="game-info">
+                  <div class="game-name">{{ game.name }}</div>
+                  <div class="game-description">{{ game.description }}</div>
+                  <div class="game-meta">
+                    <span class="meta-item">● Одиночная</span>
+                    <span class="meta-item">◉ {{ game.duration }}</span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-
-          
+>>>>>>> 2b3aa131958cdd34f3127d5e926dc9786a129b1e
         </div>
-
+        
         <!-- Статистика игрока (фиксированная панель) -->
         <div class="stats-panel">
-          <div class="stat-item">
+            <div class="stat-item">
             <span class="stat-label">Игр сыграно</span>
-            <span class="stat-value">{{ gamesPlayed }}</span>
-          </div>
-          <div class="stat-item">
+              <span class="stat-value">{{ gamesPlayed }}</span>
+            </div>
+            <div class="stat-item">
             <span class="stat-label">Побед</span>
-            <span class="stat-value">{{ gamesWon }}</span>
-          </div>
-          <div class="stat-item">
+              <span class="stat-value">{{ gamesWon }}</span>
+            </div>
+            <div class="stat-item">
             <span class="stat-label">Заработано</span>
             <span class="stat-value">₽{{ totalEarned.toLocaleString() }}</span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
     <!-- Модальное окно авторизации -->
     <AuthModal 
@@ -164,7 +190,7 @@ const allGames = ref([
     id: 'material_auction',
     name: 'Аукцион материалов',
     description: 'Соревнуйтесь за дефицитную ткань в режиме реального времени',
-    icon: '🔨',
+    icon: '■',
     category: 'social',
     players: '2-8',
     duration: '5 мин',
@@ -175,7 +201,7 @@ const allGames = ref([
     id: 'fashion_battle',
     name: 'Fashion Battle',
     description: 'Покажите свои дизайны и победите в модном состязании',
-    icon: '👗',
+    icon: '◆',
     category: 'social',
     players: '2-4',
     duration: '8 мин',
@@ -186,7 +212,7 @@ const allGames = ref([
     id: 'logistics_race',
     name: 'Логистическая гонка',
     description: 'Разведите заказы по городам быстрее всех',
-    icon: '🚚',
+    icon: '●',
     category: 'social',
     players: '2-6',
     duration: '10 мин',
@@ -199,7 +225,7 @@ const allGames = ref([
     id: 'team_production',
     name: 'Командное производство',
     description: 'Создавайте одежду вместе с друзьями',
-    icon: '🏭',
+    icon: '◉',
     category: 'cooperative',
     players: '2-4',
     duration: '12 мин',
@@ -211,7 +237,7 @@ const allGames = ref([
     id: 'fashion_collaboration',
     name: 'Модная коллаборация',
     description: 'Разработайте коллекцию в команде',
-    icon: '🎨',
+    icon: '▲',
     category: 'cooperative',
     players: '2-6',
     duration: '15 мин',
@@ -226,7 +252,7 @@ const allGames = ref([
     id: 'weekly_challenge',
     name: 'Челлендж недели',
     description: 'Достигните максимальной капитализации за игровой год',
-    icon: '📈',
+    icon: '◆',
     category: 'events',
     players: '1',
     duration: '20 мин',
@@ -238,7 +264,7 @@ const allGames = ref([
     id: 'eco_challenge',
     name: 'Эко-инициатива',
     description: 'Изготовьте 1,000,000 масок за неделю с другими игроками',
-    icon: '🌱',
+    icon: '●',
     category: 'events',
     players: '∞',
     duration: '7 дней',
@@ -247,7 +273,33 @@ const allGames = ref([
     eventType: 'monthly'
   },
   
+<<<<<<< HEAD
   
+=======
+  // Одиночные игры
+  {
+    id: 'design_master',
+    name: 'Мастер дизайна',
+    description: 'Создавайте уникальные дизайны одежды',
+    icon: '■',
+    category: 'solo',
+    players: '1',
+    duration: '6 мин',
+    onlinePlayers: 0,
+    type: 'solo'
+  },
+  {
+    id: 'business_simulator',
+    name: 'Бизнес-симулятор',
+    description: 'Управляйте своим модным бизнесом',
+    icon: '◉',
+    category: 'solo',
+    players: '1',
+    duration: '15 мин',
+    onlinePlayers: 0,
+    type: 'solo'
+  }
+>>>>>>> 2b3aa131958cdd34f3127d5e926dc9786a129b1e
 ])
 
 // Фильтрованные игры по категориям
@@ -347,86 +399,95 @@ const close = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 100;
+  z-index: 1000;
   backdrop-filter: blur(5px);
 }
 
-.modal-content {
-  background: linear-gradient(135deg, #fff7e6 0%, #fef3c7 100%);
-  border: 4px solid #d8b86a;
-  border-radius: 20px;
-  padding: 30px;
-  width: 95%;
-  max-width: 900px;
-  max-height: 90vh;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+.minigames-modal {
+  background: var(--color-bg-menu-light);
+  border-radius: 15px;
+  width: 1000px;
+  height: 700px;
+  overflow: hidden;
+  box-shadow: 0 8px 16px var(--shadow-medium);
+  border: 2px solid var(--color-buttons);
+  display: flex;
+  flex-direction: column;
+  position: relative;
 }
 
 .modal-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 2px solid #d8b86a;
+  justify-content: space-between;
+  padding: 20px 25px;
+  background: var(--color-bg-menu);
+  border-bottom: 2px solid var(--color-buttons);
+  border-radius: 15px 15px 0 0;
 }
 
-.modal-header h2 {
-  font-size: 24px;
-  font-weight: 800;
-  color: #3a2b16;
+.modal-title {
   margin: 0;
+  color: var(--color-text);
+  font-size: clamp(1.4rem, 2.2vw, 1.8rem);
+  font-weight: 700;
+  text-shadow: 2px 2px 0px var(--shadow-light);
 }
 
 .close-btn {
-  background: none;
-  border: none;
-  font-size: 24px;
+  background: var(--color-buttons);
+  border: 2px solid var(--color-accents);
+  border-radius: 12px;
+  color: var(--color-text);
+  font-size: clamp(1rem, 1.5vw, 1.2rem);
+  font-weight: 600;
+  padding: 8px 12px;
   cursor: pointer;
-  color: #7a4b16;
-  padding: 5px;
-  border-radius: 50%;
-  width: 35px;
-  height: 35px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px var(--shadow-light);
 }
 
 .close-btn:hover {
-  background: rgba(0, 0, 0, 0.1);
+  background: var(--color-accents);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px var(--shadow-medium);
 }
 
 .modal-body {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--color-bg-menu-light);
+  height: calc(700px - 140px);
 }
 
 /* Онлайн баннер */
 .online-banner {
-  background: #fef4d1;
-  border: 2px solid #d8b86a;
+  background: var(--color-bg-menu);
+  border: 2px solid var(--color-buttons);
   border-radius: 12px;
   padding: 15px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px var(--shadow-light);
 }
 
 .online-info {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 14px;
-  color: #3a2b16;
+  font-size: clamp(0.8rem, 1.2vw, 1rem);
+  color: var(--color-text);
+  font-weight: 600;
 }
 
 .online-dot {
   width: 10px;
   height: 10px;
-  background: #16a34a;
+  background: var(--color-accents);
   border-radius: 50%;
   animation: pulse 2s infinite;
 }
@@ -438,31 +499,33 @@ const close = () => {
 
 .online-text strong {
   font-weight: 700;
-  color: #16a34a;
+  color: var(--color-accents);
 }
 
 .quick-join-btn {
   padding: 10px 20px;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
+  background: var(--color-buttons);
+  color: var(--color-text);
+  border: 2px solid var(--color-accents);
+  border-radius: 12px;
   font-weight: 600;
-  font-size: 14px;
+  font-size: clamp(0.8rem, 1.2vw, 1rem);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px var(--shadow-light);
 }
 
 .quick-join-btn:hover {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  background: var(--color-accents);
   transform: translateY(-1px);
+  box-shadow: 0 4px 8px var(--shadow-medium);
 }
 
 /* Прокручиваемая область */
 .scrollable-content {
   flex: 1;
   overflow-y: auto;
-  max-height: 500px;
+  overflow-x: hidden;
   padding-right: 10px;
 }
 
@@ -472,12 +535,13 @@ const close = () => {
 }
 
 .section-title {
-  font-size: 18px;
+  font-size: clamp(1.1rem, 1.6vw, 1.3rem);
   font-weight: 700;
-  color: #3a2b16;
+  color: var(--color-text);
   margin: 0 0 15px 0;
   padding-bottom: 8px;
-  border-bottom: 2px solid #d8b86a;
+  border-bottom: 2px solid var(--color-buttons);
+  text-shadow: 1px 1px 0px var(--shadow-light);
 }
 
 /* События */
@@ -489,32 +553,35 @@ const close = () => {
 }
 
 .event-card {
-  background: #fef4d1;
-  border: 2px solid #d8b86a;
+  background: var(--color-bg-menu);
+  border: 2px solid var(--color-buttons);
   border-radius: 12px;
   padding: 15px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   display: flex;
   gap: 15px;
+  box-shadow: 0 2px 4px var(--shadow-light);
 }
 
 .event-card.event-weekly {
-  border-left: 4px solid #3b82f6;
+  border-left: 4px solid var(--color-accents);
 }
 
 .event-card.event-monthly {
-  border-left: 4px solid #16a34a;
+  border-left: 4px solid var(--color-highlights);
 }
 
 .event-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px var(--shadow-medium);
+  border-color: var(--color-accents);
 }
 
 .event-icon {
-  font-size: 40px;
+  font-size: clamp(2rem, 3vw, 2.5rem);
   flex-shrink: 0;
+  color: var(--color-accents);
 }
 
 .event-info {
@@ -523,42 +590,47 @@ const close = () => {
 
 .event-name {
   font-weight: 700;
-  font-size: 16px;
-  color: #3a2b16;
+  font-size: clamp(0.9rem, 1.4vw, 1.1rem);
+  color: var(--color-text);
   margin-bottom: 5px;
+  text-shadow: 1px 1px 0px var(--shadow-light);
 }
 
 .event-description {
-  font-size: 13px;
-  color: #6b7280;
+  font-size: clamp(0.7rem, 1.1vw, 0.85rem);
+  color: var(--color-text);
   margin-bottom: 10px;
   line-height: 1.4;
+  opacity: 0.8;
 }
 
 .event-meta {
   display: flex;
   gap: 10px;
-  font-size: 12px;
+  font-size: clamp(0.6rem, 1vw, 0.8rem);
 }
 
 .event-badge {
   padding: 3px 8px;
   border-radius: 6px;
   font-weight: 600;
+  background: var(--color-bg-menu-light);
+  border: 1px solid var(--color-buttons);
+  color: var(--color-text);
 }
 
 .event-badge.weekly {
-  background: rgba(59, 130, 246, 0.15);
-  color: #2563eb;
+  background: var(--color-bg-menu-light);
+  color: var(--color-accents);
 }
 
 .event-badge.monthly {
-  background: rgba(22, 163, 74, 0.15);
-  color: #16a34a;
+  background: var(--color-bg-menu-light);
+  color: var(--color-highlights);
 }
 
 .event-participants {
-  color: #16a34a;
+  color: var(--color-accents);
   font-weight: 600;
 }
 
@@ -570,31 +642,33 @@ const close = () => {
 }
 
 .game-card {
-  background: #fef4d1;
-  border: 2px solid #e5e7eb;
+  background: var(--color-bg-menu);
+  border: 2px solid var(--color-buttons);
   border-radius: 12px;
   padding: 15px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   display: flex;
   gap: 15px;
+  box-shadow: 0 2px 4px var(--shadow-light);
 }
 
 .game-card.locked {
   opacity: 0.6;
   cursor: not-allowed;
-  background: #f5f5f5;
+  background: var(--color-bg-menu-light);
 }
 
 .game-card:hover:not(.locked) {
-  border-color: #d8b86a;
+  border-color: var(--color-accents);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px var(--shadow-medium);
 }
 
 .game-icon {
-  font-size: 32px;
+  font-size: clamp(1.8rem, 2.5vw, 2.2rem);
   flex-shrink: 0;
+  color: var(--color-accents);
 }
 
 .game-info {
@@ -603,44 +677,49 @@ const close = () => {
 
 .game-name {
   font-weight: 700;
-  font-size: 15px;
-  color: #3a2b16;
+  font-size: clamp(0.9rem, 1.3vw, 1rem);
+  color: var(--color-text);
   margin-bottom: 5px;
+  text-shadow: 1px 1px 0px var(--shadow-light);
 }
 
 .game-description {
-  font-size: 13px;
-  color: #6b7280;
+  font-size: clamp(0.7rem, 1.1vw, 0.85rem);
+  color: var(--color-text);
   margin-bottom: 8px;
   line-height: 1.4;
+  opacity: 0.8;
 }
 
 .game-meta {
   display: flex;
   gap: 12px;
-  font-size: 12px;
-  color: #6b7280;
+  font-size: clamp(0.6rem, 1vw, 0.8rem);
+  color: var(--color-text);
 }
 
 .meta-item {
   display: flex;
   align-items: center;
+  font-weight: 600;
 }
 
 .meta-item.online {
-  color: #16a34a;
+  color: var(--color-accents);
   font-weight: 600;
 }
 
 /* Статистика */
 .stats-panel {
-  background: rgba(216, 184, 106, 0.15);
-  border: 2px solid #d8b86a;
+  background: var(--color-bg-menu);
+  border: 2px solid var(--color-buttons);
   border-radius: 12px;
   padding: 15px;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 15px;
+  margin-top: 20px;
+  box-shadow: 0 2px 4px var(--shadow-light);
 }
 
 .stat-item {
@@ -651,23 +730,40 @@ const close = () => {
 }
 
 .stat-label {
-  font-size: 12px;
-  color: #6b7280;
-  font-weight: 500;
+  font-size: clamp(0.6rem, 1vw, 0.8rem);
+  color: var(--color-text);
+  font-weight: 600;
   margin-bottom: 5px;
+  opacity: 0.8;
 }
 
 .stat-value {
-  font-size: 18px;
+  font-size: clamp(1rem, 1.5vw, 1.2rem);
   font-weight: 700;
-  color: #3a2b16;
+  color: var(--color-text);
+  text-shadow: 1px 1px 0px var(--shadow-light);
 }
 
 /* Адаптивность */
+@media (max-width: 1024px) {
+  .minigames-modal {
+    width: 95%;
+    height: 85vh;
+  }
+  
+  .modal-body {
+    height: calc(85vh - 140px);
+  }
+}
+
 @media (max-width: 768px) {
-  .modal-content {
+  .minigames-modal {
     width: 98%;
-    padding: 20px;
+    height: 90vh;
+  }
+  
+  .modal-body {
+    height: calc(90vh - 140px);
   }
 
   .events-grid {
@@ -691,16 +787,16 @@ const close = () => {
 }
 
 .scrollable-content::-webkit-scrollbar-track {
-  background: rgba(216, 184, 106, 0.1);
+  background: var(--color-bg-menu-light);
   border-radius: 10px;
 }
 
 .scrollable-content::-webkit-scrollbar-thumb {
-  background: #d8b86a;
+  background: var(--color-buttons);
   border-radius: 10px;
 }
 
 .scrollable-content::-webkit-scrollbar-thumb:hover {
-  background: #b8860b;
+  background: var(--color-accents);
 }
 </style>

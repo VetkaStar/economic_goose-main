@@ -10,16 +10,16 @@ export const useAuctionStore = defineStore('auction', () => {
   
   // Состояние
   const currentAuction = ref<Auction | null>(null)
-  const availableAuctions = ref<Auction[]>([])  // Список всех активных аукционов
+  const availableAuctions = ref<Auction[]>([])
   const isConnected = ref(false)
   const isLoading = ref(false)
   const error = ref<string | null>(null)
   
   let auctionChannel: RealtimeChannel | null = null
-  let auctionsListChannel: RealtimeChannel | null = null // Канал для списка аукционов
+  let auctionsListChannel: RealtimeChannel | null = null
   let timerInterval: number | null = null
-  let listTimerInterval: number | null = null // Таймер для списка аукционов
-  let heartbeatInterval: number | null = null // Heartbeat для автоматического завершения аукционов
+  let listTimerInterval: number | null = null
+  let heartbeatInterval: number | null = null
 
   // Computed
   const isParticipating = computed(() => {
@@ -40,10 +40,19 @@ export const useAuctionStore = defineStore('auction', () => {
 
   const minimumNextBid = computed(() => {
     if (!currentAuction.value) return 0
-    // Минимальная следующая ставка = текущая + 10% или минимум +100
     const increment = Math.max(Math.ceil(currentAuction.value.current_bid * 0.1), 100)
     return currentAuction.value.current_bid + increment
   })
+
+  // ИСПРАВЛЕНО: Функция для вычисления времени на основе started_at
+  function calculateTimeLeft(startedAt: string | null): number {
+    if (!startedAt) return 60
+    
+    const startTime = new Date(startedAt).getTime()
+    const now = Date.now()
+    const elapsed = Math.floor((now - startTime) / 1000)
+    return Math.max(0, 60 - elapsed)
+  }
 
   // Загрузить список доступных аукционов
   async function loadAvailableAuctions() {
@@ -60,38 +69,26 @@ export const useAuctionStore = defineStore('auction', () => {
 
       if (fetchError) throw fetchError
 
-      availableAuctions.value = (auctions || []).map(a => {
-        // Вычисляем реальное время сразу при загрузке
-        let realTimeLeft = a.time_left
-        if (a.status === 'active' && a.started_at) {
-          const startedAt = new Date(a.started_at).getTime()
-          const now = Date.now()
-          const elapsed = Math.floor((now - startedAt) / 1000)
-          realTimeLeft = Math.max(0, 60 - elapsed)
-        }
-
-        return {
-          id: a.id,
-          material: a.material_data,
-          starting_price: a.starting_price,
-          current_bid: a.current_bid,
-          current_bidder_id: a.current_bidder_id,
-          current_bidder_name: a.current_bidder_name,
-          time_left: realTimeLeft,  // Используем вычисленное время
-          status: a.status,
-          participants: [],
-          bids_history: [],
-          winner_id: a.winner_id,
-          winner_name: a.winner_name,
-          created_at: a.created_at,
-          started_at: a.started_at,
-          finished_at: a.finished_at
-        }
-      })
+      availableAuctions.value = (auctions || []).map(a => ({
+        id: a.id,
+        material: a.material_data,
+        starting_price: a.starting_price,
+        current_bid: a.current_bid,
+        current_bidder_id: a.current_bidder_id,
+        current_bidder_name: a.current_bidder_name,
+        time_left: a.status === 'active' ? calculateTimeLeft(a.started_at) : a.time_left,
+        status: a.status,
+        participants: [],
+        bids_history: [],
+        winner_id: a.winner_id,
+        winner_name: a.winner_name,
+        created_at: a.created_at,
+        started_at: a.started_at,
+        finished_at: a.finished_at
+      }))
 
       console.log(`📋 Загружено ${availableAuctions.value.length} аукционов`)
       
-      // Подписываемся на обновления списка аукционов
       subscribeToAuctionsList()
 
       return true
@@ -104,14 +101,12 @@ export const useAuctionStore = defineStore('auction', () => {
     }
   }
 
-  // Подписка на обновления списка аукционов (Realtime)
+  // Подписка на обновления списка аукционов
   async function subscribeToAuctionsList() {
-    // Отписываемся от предыдущего канала
     if (auctionsListChannel) {
       await supabase.removeChannel(auctionsListChannel)
     }
 
-    // Останавливаем предыдущий таймер
     if (listTimerInterval) {
       clearInterval(listTimerInterval)
       listTimerInterval = null
@@ -119,19 +114,17 @@ export const useAuctionStore = defineStore('auction', () => {
 
     auctionsListChannel = supabase.channel('auctions_list')
 
-    // Подписка на изменения в таблице auctions
     auctionsListChannel
       .on(
         'postgres_changes',
         {
-          event: '*', // Все события (INSERT, UPDATE, DELETE)
+          event: '*',
           schema: 'public',
           table: 'auctions'
         },
         async (payload) => {
           console.log('🔄 Realtime изменение в списке аукционов:', payload.eventType)
           
-          // Перезагружаем список аукционов
           const { data: auctionsData } = await supabase
             .from('auctions')
             .select('*')
@@ -140,34 +133,23 @@ export const useAuctionStore = defineStore('auction', () => {
             .limit(20)
 
           if (auctionsData) {
-            availableAuctions.value = auctionsData.map(a => {
-              // Вычисляем реальное время сразу
-              let realTimeLeft = a.time_left
-              if (a.status === 'active' && a.started_at) {
-                const startedAt = new Date(a.started_at).getTime()
-                const now = Date.now()
-                const elapsed = Math.floor((now - startedAt) / 1000)
-                realTimeLeft = Math.max(0, 60 - elapsed)
-              }
-
-              return {
-                id: a.id,
-                material: a.material_data,
-                starting_price: a.starting_price,
-                current_bid: a.current_bid,
-                current_bidder_id: a.current_bidder_id,
-                current_bidder_name: a.current_bidder_name,
-                time_left: realTimeLeft,
-                status: a.status,
-                participants: [],
-                bids_history: [],
-                winner_id: a.winner_id,
-                winner_name: a.winner_name,
-                created_at: a.created_at,
-                started_at: a.started_at,
-                finished_at: a.finished_at
-              }
-            })
+            availableAuctions.value = auctionsData.map(a => ({
+              id: a.id,
+              material: a.material_data,
+              starting_price: a.starting_price,
+              current_bid: a.current_bid,
+              current_bidder_id: a.current_bidder_id,
+              current_bidder_name: a.current_bidder_name,
+              time_left: a.status === 'active' ? calculateTimeLeft(a.started_at) : a.time_left,
+              status: a.status,
+              participants: [],
+              bids_history: [],
+              winner_id: a.winner_id,
+              winner_name: a.winner_name,
+              created_at: a.created_at,
+              started_at: a.started_at,
+              finished_at: a.finished_at
+            }))
           }
         }
       )
@@ -175,38 +157,31 @@ export const useAuctionStore = defineStore('auction', () => {
         console.log('📡 Статус подписки на список аукционов:', status)
       })
 
-    // Запускаем таймер для обновления времени локально (каждую секунду)
+    // ИСПРАВЛЕНО: Таймер обновляет время локально
     listTimerInterval = window.setInterval(() => {
       availableAuctions.value.forEach(auction => {
         if (auction.status === 'active' && auction.started_at) {
-          const startedAt = new Date(auction.started_at).getTime()
-          const now = Date.now()
-          const elapsed = Math.floor((now - startedAt) / 1000)
-          auction.time_left = Math.max(0, 60 - elapsed)
+          auction.time_left = calculateTimeLeft(auction.started_at)
         }
       })
     }, 1000)
 
-    // Запускаем heartbeat для автоматического завершения аукционов (каждые 10 секунд)
     startHeartbeat()
   }
 
-  // Запуск heartbeat для автоматического завершения аукционов
+  // Heartbeat
   function startHeartbeat() {
     if (heartbeatInterval) {
       clearInterval(heartbeatInterval)
     }
 
-    // Вызываем сразу при запуске
     callHeartbeat()
 
-    // И затем каждые 10 секунд
     heartbeatInterval = window.setInterval(() => {
       callHeartbeat()
     }, 10000)
   }
 
-  // Вызов heartbeat функции на сервере
   async function callHeartbeat() {
     try {
       const { data, error } = await supabase.rpc('heartbeat_check_auctions')
@@ -222,7 +197,6 @@ export const useAuctionStore = defineStore('auction', () => {
     }
   }
 
-  // Остановка heartbeat
   function stopHeartbeat() {
     if (heartbeatInterval) {
       clearInterval(heartbeatInterval)
@@ -230,7 +204,6 @@ export const useAuctionStore = defineStore('auction', () => {
     }
   }
 
-  // Отписаться от списка аукционов
   async function unsubscribeFromAuctionsList() {
     if (auctionsListChannel) {
       await supabase.removeChannel(auctionsListChannel)
@@ -245,11 +218,9 @@ export const useAuctionStore = defineStore('auction', () => {
     stopHeartbeat()
   }
 
-  // Найти доступный аукцион или создать новый (DEPRECATED - использовать loadAvailableAuctions)
   async function findOrCreateAuction() {
     await loadAvailableAuctions()
     
-    // Присоединяемся к первому доступному
     const availableAuction = availableAuctions.value.find(a => 
       a.status === 'waiting' || a.status === 'active'
     )
@@ -262,8 +233,6 @@ export const useAuctionStore = defineStore('auction', () => {
     return null
   }
 
-  // Создание аукционов теперь на сервере через heartbeat_check_auctions()
-
   // Присоединиться к аукциону
   async function joinAuction(auctionId: string) {
     if (!authStore.user) {
@@ -272,7 +241,6 @@ export const useAuctionStore = defineStore('auction', () => {
     }
 
     try {
-      // Добавляем игрока в участники
       const { error: joinError } = await supabase
         .from('auction_participants')
         .insert({
@@ -281,18 +249,13 @@ export const useAuctionStore = defineStore('auction', () => {
           player_name: authStore.user.email || 'Игрок'
         })
 
-      if (joinError && joinError.code !== '23505') { // Игнорируем ошибку дубликата
+      if (joinError && joinError.code !== '23505') {
         throw joinError
       }
 
-      // Загружаем данные аукциона
       await loadAuction(auctionId)
-
-      // Подключаемся к real-time каналу
       await subscribeToAuction(auctionId)
 
-      // Пытаемся автоматически запустить аукцион через 3 секунды
-      // (даёт время другим игрокам присоединиться)
       setTimeout(async () => {
         await tryStartAuction(auctionId)
       }, 3000)
@@ -305,7 +268,6 @@ export const useAuctionStore = defineStore('auction', () => {
     }
   }
 
-  // Попытка запустить аукцион
   async function tryStartAuction(auctionId: string) {
     try {
       const { data, error: startError } = await supabase.rpc('auto_start_auction', {
@@ -334,7 +296,6 @@ export const useAuctionStore = defineStore('auction', () => {
 
     if (auctionError) throw auctionError
 
-    // Загружаем участников
     const { data: participants, error: participantsError } = await supabase
       .from('auction_participants')
       .select('player_id, player_name, is_ready')
@@ -342,7 +303,6 @@ export const useAuctionStore = defineStore('auction', () => {
 
     if (participantsError) throw participantsError
 
-    // Загружаем историю ставок
     const { data: bids, error: bidsError } = await supabase
       .from('auction_bids')
       .select('*')
@@ -352,16 +312,7 @@ export const useAuctionStore = defineStore('auction', () => {
 
     if (bidsError) throw bidsError
 
-    // Вычисляем реальное время
-    let realTimeLeft = auctionData.time_left
-    if (auctionData.status === 'active' && auctionData.started_at) {
-      const startedAt = new Date(auctionData.started_at).getTime()
-      const now = Date.now()
-      const elapsed = Math.floor((now - startedAt) / 1000)
-      realTimeLeft = Math.max(0, 60 - elapsed)
-    }
-
-    // Формируем объект аукциона
+    // ИСПРАВЛЕНО: Используем calculateTimeLeft
     currentAuction.value = {
       id: auctionData.id,
       material: auctionData.material_data,
@@ -369,7 +320,7 @@ export const useAuctionStore = defineStore('auction', () => {
       current_bid: auctionData.current_bid,
       current_bidder_id: auctionData.current_bidder_id,
       current_bidder_name: auctionData.current_bidder_name,
-      time_left: realTimeLeft,
+      time_left: auctionData.status === 'active' ? calculateTimeLeft(auctionData.started_at) : auctionData.time_left,
       status: auctionData.status,
       participants: participants.map(p => ({
         id: p.player_id,
@@ -384,7 +335,6 @@ export const useAuctionStore = defineStore('auction', () => {
       finished_at: auctionData.finished_at
     }
 
-    // Запускаем таймер если аукцион активен
     console.log('📊 Аукцион загружен:', {
       status: currentAuction.value.status,
       time_left: currentAuction.value.time_left,
@@ -392,23 +342,19 @@ export const useAuctionStore = defineStore('auction', () => {
     })
     
     if (currentAuction.value.status === 'active') {
-      console.log('🚀 Запускаем таймер при загрузке (статус active)')
+      console.log('🚀 Запускаем таймер при загрузке')
       startTimer()
-    } else {
-      console.log('⏸️ Таймер не запущен, статус:', currentAuction.value.status)
     }
   }
 
-  // Подписаться на обновления аукциона через Realtime
+  // ИСПРАВЛЕНО: Подписка на Realtime БЕЗ обновления time_left
   async function subscribeToAuction(auctionId: string) {
-    // Отписываемся от предыдущего канала
     if (auctionChannel) {
       await supabase.removeChannel(auctionChannel)
     }
 
     auctionChannel = supabase.channel(`auction:${auctionId}`)
 
-    // Подписка на изменения в таблице auctions
     auctionChannel
       .on(
         'postgres_changes',
@@ -422,28 +368,27 @@ export const useAuctionStore = defineStore('auction', () => {
           if (currentAuction.value) {
             console.log('🔄 Realtime UPDATE auction:', {
               old_status: currentAuction.value.status,
-              new_status: payload.new.status,
-              old_bid: currentAuction.value.current_bid,
-              new_bid: payload.new.current_bid
+              new_status: payload.new.status
             })
 
-            // Сохраняем старый статус ДО обновления
             const oldStatus = currentAuction.value.status
 
-            // Обновляем данные аукциона
+            // ИСПРАВЛЕНО: НЕ обновляем time_left из payload!
             currentAuction.value.current_bid = payload.new.current_bid
             currentAuction.value.current_bidder_id = payload.new.current_bidder_id
             currentAuction.value.current_bidder_name = payload.new.current_bidder_name
             currentAuction.value.status = payload.new.status
-            currentAuction.value.time_left = payload.new.time_left
+            
+            // ИСПРАВЛЕНО: Сохраняем started_at для локального вычисления
+            if (payload.new.started_at) {
+              currentAuction.value.started_at = payload.new.started_at
+            }
 
-            // Если аукцион начался (переход waiting -> active)
             if (payload.new.status === 'active' && oldStatus !== 'active') {
               console.log('🚀 Аукцион запущен через Realtime!')
               startTimer()
             }
 
-            // Если аукцион завершён
             if (payload.new.status === 'finished') {
               console.log('🏁 Аукцион завершён через Realtime!')
               stopTimer()
@@ -481,7 +426,6 @@ export const useAuctionStore = defineStore('auction', () => {
         },
         async (payload) => {
           console.log('👤 Realtime NEW PARTICIPANT:', payload.new)
-          // Перезагружаем список участников
           if (currentAuction.value) {
             const { data } = await supabase
               .from('auction_participants')
@@ -532,8 +476,6 @@ export const useAuctionStore = defineStore('auction', () => {
         return false
       }
 
-      // Оптимистичное обновление UI (сразу показываем изменения)
-      // Realtime подтвердит через секунду
       if (currentAuction.value) {
         currentAuction.value.current_bid = amount
         currentAuction.value.current_bidder_id = authStore.user.id
@@ -550,66 +492,18 @@ export const useAuctionStore = defineStore('auction', () => {
     }
   }
 
-  // Получить актуальное время с сервера (защита от подкрутки времени)
-  async function getServerTimeLeft(): Promise<number> {
-    if (!currentAuction.value?.id) return 0
-    
-    try {
-      const { data, error } = await supabase.rpc('get_auction_time_left', {
-        p_auction_id: currentAuction.value.id
-      })
-      
-      if (error) {
-        console.error('Ошибка получения времени с сервера:', error)
-        return calculateTimeLeftLocally() // Fallback на локальное вычисление
-      }
-      
-      return data || 0
-    } catch (err) {
-      console.error('Ошибка при запросе времени:', err)
-      return calculateTimeLeftLocally()
-    }
-  }
-
-  // Локальное вычисление времени (fallback)
-  function calculateTimeLeftLocally(): number {
-    if (!currentAuction.value?.started_at) return 60
-    
-    const startedAt = new Date(currentAuction.value.started_at).getTime()
-    const now = Date.now()
-    const elapsed = Math.floor((now - startedAt) / 1000)
-    const timeLeft = Math.max(0, 60 - elapsed)
-    
-    return timeLeft
-  }
-
-  // Таймер обратного отсчёта (синхронизация с сервером каждые 5 секунд)
+  // ИСПРАВЛЕНО: Упрощённый таймер без запросов к серверу
   function startTimer() {
-    stopTimer() // Останавливаем предыдущий таймер если есть
+    stopTimer()
 
-    let tickCount = 0
-
-    timerInterval = window.setInterval(async () => {
-      if (currentAuction.value) {
-        tickCount++
-
-        // Каждые 5 секунд запрашиваем время с сервера для синхронизации
-        if (tickCount % 5 === 0) {
-          const serverTime = await getServerTimeLeft()
-          currentAuction.value.time_left = serverTime
-          
-          // Если сервер говорит что время вышло
-          if (serverTime <= 0) {
-            console.log('⏰ Сервер подтвердил окончание времени')
-            stopTimer()
-            // Перезагружаем аукцион для получения обновлённого статуса
-            await loadAvailableAuctions()
-            return
-          }
-        } else {
-          // Между запросами к серверу используем локальное вычисление
-          const localTime = calculateTimeLeftLocally()
-          currentAuction.value.time_left = localTime
+    timerInterval = window.setInterval(() => {
+      if (currentAuction.value && currentAuction.value.started_at) {
+        const timeLeft = calculateTimeLeft(currentAuction.value.started_at)
+        currentAuction.value.time_left = timeLeft
+        
+        if (timeLeft <= 0) {
+          console.log('⏰ Время вышло локально')
+          stopTimer()
         }
       }
     }, 1000)
@@ -637,9 +531,7 @@ export const useAuctionStore = defineStore('auction', () => {
 
       console.log('Аукцион завершён:', data)
 
-      // Обновляем баланс пользователя если он победитель
       if (data.winner_id === authStore.user?.id) {
-        // Перезагружаем профиль пользователя
         const { data: profile, error: profileError } = await supabase
           .from('user_profiles')
           .select('*')
@@ -651,9 +543,6 @@ export const useAuctionStore = defineStore('auction', () => {
           console.log('✅ Баланс обновлён:', profile.money)
         }
       }
-
-        // Новые аукционы создаются автоматически через heartbeat на сервере
-
     } catch (err: any) {
       error.value = err.message
       console.error('Ошибка при завершении аукциона:', err)
@@ -685,21 +574,16 @@ export const useAuctionStore = defineStore('auction', () => {
   }
 
   return {
-    // State
     currentAuction,
-    availableAuctions,  // Новое!
+    availableAuctions,
     isConnected,
     isLoading,
     error,
-
-    // Computed
     isParticipating,
     isCurrentBidder,
     canPlaceBid,
     minimumNextBid,
-
-    // Actions
-    loadAvailableAuctions,  // Новое!
+    loadAvailableAuctions,
     subscribeToAuctionsList,
     unsubscribeFromAuctionsList,
     findOrCreateAuction,

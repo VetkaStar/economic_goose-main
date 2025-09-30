@@ -188,6 +188,13 @@
           </div>
         </div>
 
+        <!-- Маркер гуся (текущая позиция игрока) -->
+        <img v-if="gooseMarker"
+             class="goose-marker"
+             :src="gooseImage"
+             alt="Гусь"
+             :style="gooseStyle" />
+
        <!-- Система дорог -->
        <div class="roads-network">
          <!-- Основная замкнутая дорога: 2→3→4→9→14→13→18→17→16→11→12→7→2 -->
@@ -380,8 +387,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 // import { useAuthStore } from '@/stores/authStore' // Пока не используется
+import { useCompanyStore } from '@/stores/companyStore'
+import { useCharacterStore } from '@/stores/characterStore'
 import GameStats from './GameStats.vue'
 import SettingsModal from './SettingsModal.vue'
 import HotkeysModal from './HotkeysModal.vue'
@@ -439,6 +448,25 @@ const allGridIntersections = ref([
   { x: 66.66, y: 80, number: 19 }, // Колонка 4
   { x: 83.33, y: 80, number: 20 }  // Колонка 5 (правая)
 ])
+
+// Позиция гуся на карте — синхронизируем с companyStore.location.currentPointId
+const companyStore = useCompanyStore()
+const characterStore = useCharacterStore()
+const gooseMarker = ref(true)
+const gooseStyle = computed(() => {
+  const point = allGridIntersections.value.find(p => p.number === companyStore.state.location.currentPointId)
+  if (!point) return { display: 'none' }
+  return {
+    left: point.x + '%',
+    top: point.y + '%',
+    transform: 'translate(-50%, -80%)',
+  }
+})
+
+// Текущий арт гуся — берем из выбранного персонажа, иначе дефолтная иконка
+const gooseImage = computed(() => {
+  return characterStore.selectedCharacter?.image || '/main-menu/герой.svg'
+})
 
 
 
@@ -701,6 +729,21 @@ const closeMarket = () => {
   width: 100%;
   height: 100%;
   background: transparent;
+}
+
+.goose-marker {
+  position: absolute;
+  width: 72px;
+  height: auto;
+  z-index: 40;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,.25));
+  animation: gentleFloat 4s ease-in-out infinite;
+}
+
+@keyframes gentleFloat {
+  0%, 100% { transform: translate(-50%, -80%) }
+  50% { transform: translate(-50%, -85%) }
 }
 
 /* Отладочные направляющие */

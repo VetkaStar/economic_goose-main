@@ -66,7 +66,7 @@
 
     <!-- 2D Карта города -->
     <CityMap 
-      v-if="businessTypeSelected && selectedBusinessType === 'production'"
+      v-if="businessTypeSelected"
       @exit-to-main-menu="exitToMainMenu"
     />
     
@@ -80,7 +80,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import CityMap from './CityMap.vue'
 import AuthModal from './AuthModal.vue'
 import { useAuthGuard } from '@/composables/useAuthGuard'
@@ -113,6 +113,12 @@ const selectBusinessType = (type: string) => {
     alert('Эта опция находится в разработке!')
   }
 }
+
+// Автоматически выбираем production для тестирования
+onMounted(() => {
+  selectedBusinessType.value = 'production'
+  businessTypeSelected.value = true
+})
 
 const exitToMainMenu = () => {
   emit('exitToMainMenu')
