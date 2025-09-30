@@ -1,35 +1,32 @@
 <template>
   <div class="modal-overlay" @click="closeModal">
-    <div class="modal rating-modal tablet" @click.stop>
-      <!-- Экран планшета -->
-      <div class="tablet-screen">
-        <!-- Заголовок планшета -->
-        <div class="tablet-header">
-          <div class="tablet-camera"></div>
-          <h2>🏆 Рейтинг игроков</h2>
-          <button class="close-btn" @click="closeModal">✕</button>
-        </div>
+    <div class="rating-modal" @click.stop>
+      <!-- Заголовок -->
+      <div class="modal-header">
+        <h2 class="modal-title">▲ Рейтинг игроков</h2>
+        <button class="close-btn" @click="closeModal">✕</button>
+      </div>
         
-        <!-- Навигация по рейтингам -->
-        <div class="tablet-nav">
-          <button 
-            v-for="tab in ratingTabs" 
-            :key="tab.id"
-            class="nav-btn"
-            :class="{ active: activeTab === tab.id }"
-            @click="setActiveTab(tab.id)"
-          >
-            <span class="nav-icon">{{ tab.icon }}</span>
-            <span class="nav-text">{{ tab.name }}</span>
-          </button>
-        </div>
+      <!-- Навигация по рейтингам -->
+      <div class="nav-section">
+        <button 
+          v-for="tab in ratingTabs" 
+          :key="tab.id"
+          class="nav-btn"
+          :class="{ active: activeTab === tab.id }"
+          @click="setActiveTab(tab.id)"
+        >
+          <span class="nav-icon">{{ tab.icon }}</span>
+          <span class="nav-text">{{ tab.name }}</span>
+        </button>
+      </div>
         
-        <!-- Контент рейтинга -->
-        <div class="tablet-content">
-          <!-- Общий рейтинг -->
-          <div v-if="activeTab === 'overall'" class="rating-content">
-            <div class="rating-header">
-              <h3>🌟 Общий рейтинг</h3>
+      <!-- Контент рейтинга -->
+      <div class="content-section">
+        <!-- Общий рейтинг -->
+        <div v-if="activeTab === 'overall'" class="rating-content">
+          <div class="rating-header">
+            <h3>◉ Общий рейтинг</h3>
               <div class="time-filter">
                 <select v-model="timeFilter" @change="updateRankings">
                   <option value="all">За все время</option>
@@ -83,10 +80,10 @@
             </div>
           </div>
           
-          <!-- Рейтинг по компании -->
-          <div v-if="activeTab === 'company'" class="rating-content">
-            <div class="rating-header">
-              <h3>🏢 Рейтинг компаний</h3>
+        <!-- Рейтинг по компании -->
+        <div v-if="activeTab === 'company'" class="rating-content">
+          <div class="rating-header">
+            <h3>■ Рейтинг компаний</h3>
               <div class="sort-filter">
                 <select v-model="companySort" @change="updateCompanyRankings">
                   <option value="revenue">По доходу</option>
@@ -141,10 +138,10 @@
             </div>
           </div>
           
-          <!-- Рейтинг по мини-играм -->
-          <div v-if="activeTab === 'minigames'" class="rating-content">
-            <div class="rating-header">
-              <h3>🎮 Рейтинг мини-игр</h3>
+        <!-- Рейтинг по мини-играм -->
+        <div v-if="activeTab === 'minigames'" class="rating-content">
+          <div class="rating-header">
+            <h3>● Рейтинг мини-игр</h3>
               <div class="game-filter">
                 <select v-model="selectedGame" @change="updateMinigameRankings">
                   <option value="all">Все игры</option>
@@ -199,86 +196,78 @@
             </div>
           </div>
           
-          <!-- Моя статистика -->
-          <div v-if="activeTab === 'my-stats'" class="rating-content">
-            <div class="rating-header">
-              <h3>📊 Моя статистика</h3>
+        <!-- Моя статистика -->
+        <div v-if="activeTab === 'my-stats'" class="rating-content">
+          <div class="rating-header">
+            <h3>◆ Моя статистика</h3>
             </div>
             
-            <div class="my-stats-grid">
-              <div class="stat-card">
-                <div class="stat-icon">🏆</div>
-                <div class="stat-info">
-                  <div class="stat-title">Общий рейтинг</div>
-                  <div class="stat-value">{{ myStats.overallRank }}</div>
-                </div>
-              </div>
-              
-              <div class="stat-card">
-                <div class="stat-icon">💰</div>
-                <div class="stat-info">
-                  <div class="stat-title">Заработано</div>
-                  <div class="stat-value">{{ myStats.totalEarned.toLocaleString() }}</div>
-                </div>
-              </div>
-              
-              <div class="stat-card">
-                <div class="stat-icon">🎮</div>
-                <div class="stat-info">
-                  <div class="stat-title">Игр сыграно</div>
-                  <div class="stat-value">{{ myStats.gamesPlayed }}</div>
-                </div>
-              </div>
-              
-              <div class="stat-card">
-                <div class="stat-icon">⭐</div>
-                <div class="stat-info">
-                  <div class="stat-title">Достижений</div>
-                  <div class="stat-value">{{ myStats.achievements }}</div>
-                </div>
-              </div>
-              
-              <div class="stat-card">
-                <div class="stat-icon">👥</div>
-                <div class="stat-info">
-                  <div class="stat-title">Друзей</div>
-                  <div class="stat-value">{{ myStats.friends }}</div>
-                </div>
-              </div>
-              
-              <div class="stat-card">
-                <div class="stat-icon">🏢</div>
-                <div class="stat-info">
-                  <div class="stat-title">Уровень компании</div>
-                  <div class="stat-value">{{ myStats.companyLevel }}</div>
-                </div>
+          <div class="my-stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon">▲</div>
+              <div class="stat-info">
+                <div class="stat-title">Общий рейтинг</div>
+                <div class="stat-value">{{ myStats.overallRank }}</div>
               </div>
             </div>
             
-            <div class="achievements-section">
-              <h4>🏆 Последние достижения</h4>
-              <div class="achievements-list">
-                <div 
-                  v-for="achievement in myStats.recentAchievements" 
-                  :key="achievement.id"
-                  class="achievement-item"
-                >
-                  <span class="achievement-icon">{{ achievement.icon }}</span>
-                  <div class="achievement-info">
-                    <div class="achievement-name">{{ achievement.name }}</div>
-                    <div class="achievement-date">{{ achievement.date }}</div>
-                  </div>
+            <div class="stat-card">
+              <div class="stat-icon">■</div>
+              <div class="stat-info">
+                <div class="stat-title">Заработано</div>
+                <div class="stat-value">{{ myStats.totalEarned.toLocaleString() }}</div>
+              </div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-icon">●</div>
+              <div class="stat-info">
+                <div class="stat-title">Игр сыграно</div>
+                <div class="stat-value">{{ myStats.gamesPlayed }}</div>
+              </div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-icon">◉</div>
+              <div class="stat-info">
+                <div class="stat-title">Достижений</div>
+                <div class="stat-value">{{ myStats.achievements }}</div>
+              </div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-icon">◆</div>
+              <div class="stat-info">
+                <div class="stat-title">Друзей</div>
+                <div class="stat-value">{{ myStats.friends }}</div>
+              </div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-icon">▲</div>
+              <div class="stat-info">
+                <div class="stat-title">Уровень компании</div>
+                <div class="stat-value">{{ myStats.companyLevel }}</div>
+              </div>
+            </div>
+          </div>
+            
+          <div class="achievements-section">
+            <h4>▲ Последние достижения</h4>
+            <div class="achievements-list">
+              <div 
+                v-for="achievement in myStats.recentAchievements" 
+                :key="achievement.id"
+                class="achievement-item"
+              >
+                <span class="achievement-icon">{{ achievement.icon }}</span>
+                <div class="achievement-info">
+                  <div class="achievement-name">{{ achievement.name }}</div>
+                  <div class="achievement-date">{{ achievement.date }}</div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-        
-        <!-- Подвал планшета -->
-        <div class="tablet-footer">
-          <div class="battery">🔋 85%</div>
-          <div class="time">{{ currentTime }}</div>
-          <div class="wifi">📶</div>
         </div>
       </div>
     </div>
@@ -300,166 +289,68 @@ const companySort = ref('revenue')
 const selectedGame = ref('all')
 const currentTime = ref('')
 
-// Медиали
-const medals = ['🥇', '🥈', '🥉']
+// Медиали (однотонные)
+const medals = ['●', '▲', '■']
 
 // Вкладки рейтинга
 const ratingTabs = ref([
-  { id: 'overall', name: 'Общий', icon: '🌟' },
-  { id: 'company', name: 'Компании', icon: '🏢' },
-  { id: 'minigames', name: 'Мини-игры', icon: '🎮' },
-  { id: 'my-stats', name: 'Мои данные', icon: '📊' }
+  { id: 'overall', name: 'Общий', icon: '◉' },
+  { id: 'company', name: 'Компании', icon: '■' },
+  { id: 'minigames', name: 'Мини-игры', icon: '●' },
+  { id: 'my-stats', name: 'Мои данные', icon: '◆' }
 ])
 
-// Общий рейтинг
+// Общий рейтинг (реальные данные из базы)
 const overallRankings = ref([
   {
-    id: 1,
-    name: 'Гусь-Модник',
-    avatar: '🦆',
-    level: 25,
-    points: 125000,
-    achievements: 45,
-    badge: 'Легенда',
+    id: '71bbeef1-6c5a-402e-953c-f7109a5efbdf',
+    name: 'Jemov',
+    avatar: '●',
+    level: 1,
+    points: 533450,
+    achievements: 12,
+    badge: 'Лидер',
+    isOnline: true,
+    isCurrentPlayer: false
+  },
+  {
+    id: 'e9dcca5e-5360-43ae-856d-39baf617db7f',
+    name: 'Vetka',
+    avatar: '▲',
+    level: 1,
+    points: 138400,
+    achievements: 8,
+    badge: 'Новичок',
     isOnline: true,
     isCurrentPlayer: true
-  },
-  {
-    id: 2,
-    name: 'FashionQueen',
-    avatar: '👑',
-    level: 23,
-    points: 118000,
-    achievements: 42,
-    badge: 'Мастер',
-    isOnline: false,
-    isCurrentPlayer: false
-  },
-  {
-    id: 3,
-    name: 'StyleGuru',
-    avatar: '🎨',
-    level: 22,
-    points: 112000,
-    achievements: 40,
-    badge: 'Эксперт',
-    isOnline: true,
-    isCurrentPlayer: false
-  },
-  {
-    id: 4,
-    name: 'TrendSetter',
-    avatar: '⭐',
-    level: 21,
-    points: 108000,
-    achievements: 38,
-    badge: 'Профи',
-    isOnline: false,
-    isCurrentPlayer: false
-  },
-  {
-    id: 5,
-    name: 'Fashionista',
-    avatar: '👗',
-    level: 20,
-    points: 105000,
-    achievements: 36,
-    badge: 'Профи',
-    isOnline: true,
-    isCurrentPlayer: false
   }
 ])
 
-// Рейтинг компаний
-const companyRankings = ref([
-  {
-    id: 1,
-    name: 'Гусиная Мода',
-    logo: '🦆',
-    owner: 'Гусь-Модник',
-    level: 15,
-    revenue: 2500000,
-    reputation: 95,
-    employees: 25,
-    badge: 'Топ-компания'
-  },
-  {
-    id: 2,
-    name: 'Fashion Empire',
-    logo: '👑',
-    owner: 'FashionQueen',
-    level: 14,
-    revenue: 2200000,
-    reputation: 92,
-    employees: 22,
-    badge: 'Лидер рынка'
-  },
-  {
-    id: 3,
-    name: 'Style Studio',
-    logo: '🎨',
-    owner: 'StyleGuru',
-    level: 13,
-    revenue: 2000000,
-    reputation: 90,
-    employees: 20,
-    badge: 'Инновации'
-  }
-])
+// Рейтинг компаний (пока пустой, будет заполнен позже)
+const companyRankings = ref([])
 
 // Мини-игры
 const minigames = ref([
-  { id: 'sewing_master', name: 'Мастер шитья' },
-  { id: 'fashion_show', name: 'Модный показ' },
-  { id: 'color_matching', name: 'Подбор цветов' }
+  { id: 'material_auction', name: 'Аукцион материалов' },
+  { id: 'fashion_battle', name: 'Fashion Battle' },
+  { id: 'logistics_race', name: 'Логистическая гонка' }
 ])
 
-// Рейтинг мини-игр
-const minigameRankings = ref([
-  {
-    id: 1,
-    name: 'Гусь-Модник',
-    avatar: '🦆',
-    gameName: 'Мастер шитья',
-    score: 15000,
-    gamesPlayed: 45,
-    wins: 38,
-    winRate: 84
-  },
-  {
-    id: 2,
-    name: 'FashionQueen',
-    avatar: '👑',
-    gameName: 'Мастер шитья',
-    score: 14200,
-    gamesPlayed: 42,
-    wins: 35,
-    winRate: 83
-  },
-  {
-    id: 3,
-    name: 'StyleGuru',
-    avatar: '🎨',
-    gameName: 'Мастер шитья',
-    score: 13800,
-    gamesPlayed: 40,
-    wins: 32,
-    winRate: 80
-  }
-])
+// Рейтинг мини-игр (пока пустой, будет заполнен позже)
+const minigameRankings = ref([])
 
-// Моя статистика
+// Моя статистика (базовые данные, будут обновлены из базы)
 const myStats = ref({
-  overallRank: 1,
-  totalEarned: 2500000,
-  gamesPlayed: 156,
-  achievements: 45,
-  friends: 23,
-  companyLevel: 15,
+  overallRank: 2,
+  totalEarned: 138400,
+  gamesPlayed: 0,
+  achievements: 8,
+  friends: 0,
+  companyLevel: 1,
   recentAchievements: [
-    { id: 1, name: 'Первая продажа', icon: '💰', date: '2 дня назад' },
-    { id: 2, name: 'Мастер дизайна', icon: '🎨', date: '1 неделя назад' },
-    { id: 3, name: 'Социальный гусь', icon: '👥', date: '2 недели назад' }
+    { id: 1, name: 'Первые деньги', icon: '■', date: 'Сегодня' },
+    { id: 2, name: 'Новичок', icon: '●', date: 'Сегодня' },
+    { id: 3, name: 'Регистрация', icon: '▲', date: 'Сегодня' }
   ]
 })
 
@@ -519,7 +410,7 @@ const closeModal = () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -528,84 +419,62 @@ const closeModal = () => {
 }
 
 .rating-modal {
-  background: #2c3e50;
-  border-radius: 30px;
-  max-width: 1000px;
-  width: 95%;
-  max-height: 80vh;
+  background: var(--color-bg-menu-light);
+  border-radius: 15px;
+  width: 1000px;
+  height: 700px;
   overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-  position: relative;
-}
-
-.tablet {
-  position: relative;
-}
-
-.tablet-screen {
-  background: #ecf0f1;
-  border-radius: 25px;
-  margin: 10px;
-  height: calc(100% - 20px);
+  box-shadow: 0 8px 16px var(--shadow-medium);
+  border: 2px solid var(--color-buttons);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  position: relative;
 }
 
-.tablet-header {
+.modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 15px 20px;
-  background: #34495e;
-  color: white;
-  position: relative;
+  padding: 20px 25px;
+  background: var(--color-bg-menu);
+  border-bottom: 2px solid var(--color-buttons);
+  border-radius: 15px 15px 0 0;
 }
 
-.tablet-camera {
-  position: absolute;
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 8px;
-  height: 8px;
-  background: #2c3e50;
-  border-radius: 50%;
-}
-
-.tablet-header h2 {
+.modal-title {
   margin: 0;
-  font-size: 1.3rem;
-  flex: 1;
-  text-align: center;
+  color: var(--color-text);
+  font-size: clamp(1.4rem, 2.2vw, 1.8rem);
+  font-weight: 700;
+  text-shadow: 2px 2px 0px var(--shadow-light);
 }
 
 .close-btn {
-  background: none;
-  border: none;
-  font-size: 1.2rem;
+  background: var(--color-buttons);
+  border: 2px solid var(--color-accents);
+  border-radius: 12px;
+  color: var(--color-text);
+  font-size: clamp(1rem, 1.5vw, 1.2rem);
+  font-weight: 600;
+  padding: 8px 12px;
   cursor: pointer;
-  color: white;
-  padding: 5px;
-  border-radius: 50%;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.3s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px var(--shadow-light);
 }
 
 .close-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--color-accents);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px var(--shadow-medium);
 }
 
-.tablet-nav {
+.nav-section {
   display: flex;
-  background: #34495e;
-  padding: 10px;
-  gap: 5px;
+  background: var(--color-bg-menu);
+  padding: 15px 25px;
+  gap: 10px;
   overflow-x: auto;
+  border-bottom: 2px solid var(--color-buttons);
 }
 
 .nav-btn {
@@ -615,45 +484,53 @@ const closeModal = () => {
   gap: 5px;
   padding: 10px 15px;
   background: transparent;
-  border: none;
-  border-radius: 10px;
+  border: 2px solid transparent;
+  border-radius: 12px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  color: #bdc3c7;
+  transition: all 0.2s ease;
+  color: var(--color-text);
   min-width: 80px;
+  box-shadow: 0 2px 4px var(--shadow-light);
 }
 
 .nav-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
+  background: var(--color-bg-menu-light);
+  border-color: var(--color-buttons);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px var(--shadow-medium);
 }
 
 .nav-btn.active {
-  background: #e74c3c;
-  color: white;
+  background: var(--color-accents);
+  border-color: var(--color-highlights);
+  color: var(--color-text);
 }
 
 .nav-icon {
-  font-size: 1.2rem;
+  font-size: clamp(1rem, 1.5vw, 1.2rem);
 }
 
 .nav-text {
-  font-size: 0.8rem;
+  font-size: clamp(0.7rem, 1.1vw, 0.85rem);
   font-weight: 600;
+  text-shadow: 1px 1px 0px var(--shadow-light);
 }
 
-.tablet-content {
+.content-section {
   flex: 1;
   padding: 20px;
   overflow-y: auto;
-  background: #ecf0f1;
+  overflow-x: hidden;
+  background: var(--color-bg-menu-light);
+  height: calc(700px - 140px);
 }
 
 .rating-content h3 {
   margin: 0 0 20px 0;
-  color: #2c3e50;
-  font-size: 1.5rem;
+  color: var(--color-text);
+  font-size: clamp(1.2rem, 1.8vw, 1.5rem);
   text-align: center;
+  text-shadow: 1px 1px 0px var(--shadow-light);
 }
 
 .rating-header {
@@ -685,26 +562,29 @@ const closeModal = () => {
   align-items: center;
   gap: 15px;
   padding: 15px;
-  background: white;
+  background: var(--color-bg-menu);
+  border: 2px solid var(--color-buttons);
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px var(--shadow-light);
+  transition: all 0.2s ease;
 }
 
 .player-card:hover, .company-card:hover, .minigame-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px var(--shadow-medium);
+  border-color: var(--color-accents);
 }
 
 .player-card.top-3, .company-card.top-3, .minigame-card.top-3 {
-  background: linear-gradient(135deg, #f39c12, #e67e22);
-  color: white;
+  background: var(--color-accents);
+  border-color: var(--color-highlights);
+  color: var(--color-text);
 }
 
 .player-card.current-player {
-  border: 3px solid #3498db;
-  background: linear-gradient(135deg, #3498db, #2980b9);
-  color: white;
+  border: 3px solid var(--color-highlights);
+  background: var(--color-bg-menu);
+  color: var(--color-text);
 }
 
 .rank {
@@ -713,26 +593,29 @@ const closeModal = () => {
   justify-content: center;
   width: 40px;
   height: 40px;
-  background: #ecf0f1;
+  background: var(--color-bg-menu-light);
+  border: 2px solid var(--color-buttons);
   border-radius: 50%;
   font-weight: bold;
 }
 
 .top-3 .rank {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--color-bg-menu);
+  border-color: var(--color-accents);
 }
 
 .medal {
-  font-size: 1.5rem;
+  font-size: clamp(1.2rem, 1.8vw, 1.5rem);
 }
 
 .rank-number {
-  font-size: 1.2rem;
-  color: #2c3e50;
+  font-size: clamp(1rem, 1.5vw, 1.2rem);
+  color: var(--color-text);
+  text-shadow: 1px 1px 0px var(--shadow-light);
 }
 
 .top-3 .rank-number {
-  color: white;
+  color: var(--color-text);
 }
 
 .player-avatar, .company-logo {
@@ -742,12 +625,14 @@ const closeModal = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #ecf0f1;
+  background: var(--color-bg-menu-light);
+  border: 2px solid var(--color-buttons);
   border-radius: 50%;
 }
 
 .avatar-emoji, .logo-emoji {
-  font-size: 2rem;
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  color: var(--color-accents);
 }
 
 .online-indicator {
@@ -756,8 +641,8 @@ const closeModal = () => {
   right: 2px;
   width: 12px;
   height: 12px;
-  background: #27ae60;
-  border: 2px solid white;
+  background: var(--color-accents);
+  border: 2px solid var(--color-bg-menu);
   border-radius: 50%;
 }
 
@@ -767,18 +652,22 @@ const closeModal = () => {
 
 .player-name, .company-name {
   font-weight: bold;
-  font-size: 1.1rem;
+  font-size: clamp(0.9rem, 1.4vw, 1.1rem);
   margin-bottom: 5px;
+  color: var(--color-text);
+  text-shadow: 1px 1px 0px var(--shadow-light);
 }
 
 .player-level, .company-level, .company-owner {
-  font-size: 0.9rem;
+  font-size: clamp(0.7rem, 1.1vw, 0.9rem);
+  color: var(--color-text);
   opacity: 0.8;
 }
 
 .game-name {
-  font-size: 0.9rem;
-  color: #7f8c8d;
+  font-size: clamp(0.7rem, 1.1vw, 0.9rem);
+  color: var(--color-text);
+  opacity: 0.8;
 }
 
 .player-stats, .company-stats, .game-stats {
@@ -941,10 +830,25 @@ const closeModal = () => {
 }
 
 /* Адаптивность */
+@media (max-width: 1024px) {
+  .rating-modal {
+    width: 95%;
+    height: 85vh;
+  }
+  
+  .content-section {
+    height: calc(85vh - 140px);
+  }
+}
+
 @media (max-width: 768px) {
   .rating-modal {
     width: 98%;
-    margin: 10px;
+    height: 90vh;
+  }
+  
+  .content-section {
+    height: calc(90vh - 140px);
   }
   
   .player-card, .company-card, .minigame-card {
@@ -968,7 +872,7 @@ const closeModal = () => {
     align-items: stretch;
   }
   
-  .tablet-nav {
+  .nav-section {
     flex-wrap: wrap;
   }
   

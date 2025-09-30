@@ -138,14 +138,14 @@
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Подсказка наставника -->
-    <div class="mentor-tip" v-if="selectedCharacter">
-      <div class="tip-content">
-        <div class="tip-icon">🎓</div>
-        <div class="tip-text">
-          <strong>Наставник:</strong> {{ getMentorTip(selectedCharacter) }}
+      <!-- Подсказка наставника -->
+      <div class="mentor-tip" v-if="selectedCharacter">
+        <div class="tip-content">
+          <div class="tip-icon">🎓</div>
+          <div class="tip-text">
+            <strong>Наставник:</strong> {{ getMentorTip(selectedCharacter) }}
+          </div>
         </div>
       </div>
     </div>
@@ -235,19 +235,19 @@ const goBack = () => {
 
 .back-btn {
   position: absolute;
-  top: clamp(15px, 2vw, 25px);
-  left: clamp(15px, 2vw, 25px);
+  top: clamp(10px, 1.5vh, 20px);
+  left: clamp(10px, 1.5vw, 20px);
   background: var(--gradient-buttons);
   color: white;
-  border: clamp(2px, 0.3vw, 4px) solid var(--color-text);
-  border-radius: clamp(8px, 1.5vw, 15px);
-  padding: clamp(8px, 1.5vw, 15px) clamp(15px, 3vw, 30px);
-  font-size: clamp(0.8rem, 1.5vw, 1.2rem);
+  border: clamp(2px, 0.25vw, 3px) solid var(--color-text);
+  border-radius: clamp(6px, 1vw, 12px);
+  padding: clamp(6px, 1vh, 10px) clamp(12px, 2vw, 20px);
+  font-size: clamp(0.7rem, 1.2vw, 1rem);
   font-weight: 700;
   font-family: 'Orbitron', sans-serif;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 clamp(4px, 0.8vw, 8px) clamp(8px, 1.6vw, 16px) var(--shadow-medium);
+  box-shadow: 0 clamp(3px, 0.6vw, 6px) clamp(6px, 1vw, 10px) var(--shadow-medium);
   text-shadow: 1px 1px 0px var(--shadow-light);
   z-index: 100;
 }
@@ -255,15 +255,15 @@ const goBack = () => {
 .back-btn:hover {
   background: var(--gradient-accents);
   transform: translateY(-2px);
-  box-shadow: 0 clamp(6px, 1.2vw, 12px) clamp(10px, 2vw, 20px) var(--shadow-dark);
+  box-shadow: 0 clamp(4px, 0.8vw, 8px) clamp(8px, 1.5vw, 15px) var(--shadow-dark);
 }
 
 .hero-content {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  grid-template-rows: auto 1fr auto;
-  gap: 12px;
-  padding: 60px 15px 15px;
+  grid-template-columns: 18% 1fr 35%;
+  grid-template-rows: 1fr auto;
+  gap: clamp(8px, 1vw, 12px);
+  padding: clamp(45px, 5vh, 65px) clamp(10px, 1vw, 15px) clamp(10px, 1vh, 15px);
   height: 100vh;
   box-sizing: border-box;
   overflow: hidden;
@@ -271,10 +271,10 @@ const goBack = () => {
 
 .character-selection {
   grid-column: 1 / 2;
-  grid-row: 1 / 3;
+  grid-row: 1 / 2;
   background: var(--color-bg-menu-light);
-  border-radius: 12px;
-  padding: 15px;
+  border-radius: clamp(8px, 1vw, 12px);
+  padding: clamp(10px, 1.2vw, 15px);
   border: 2px solid var(--color-buttons);
   backdrop-filter: blur(5px);
   box-shadow: 0 8px 16px var(--shadow-medium);
@@ -284,11 +284,11 @@ const goBack = () => {
 }
 
 .skills-section {
-  grid-column: 4 / 6;
-  grid-row: 1 / 3;
+  grid-column: 3 / 4;
+  grid-row: 1 / 2;
   background: var(--color-bg-menu-light);
-  border-radius: 12px;
-  padding: 15px;
+  border-radius: clamp(8px, 1vw, 12px);
+  padding: clamp(10px, 1.2vw, 15px);
   border: 2px solid var(--color-buttons);
   backdrop-filter: blur(5px);
   box-shadow: 0 8px 16px var(--shadow-medium);
@@ -298,21 +298,21 @@ const goBack = () => {
 }
 
 .section-title {
-  font-size: clamp(0.9rem, 1.3vw, 1.1rem);
+  font-size: clamp(0.75rem, 1.1vw, 0.95rem);
   font-weight: 700;
   color: var(--color-text);
   text-shadow: 1px 1px 0px var(--shadow-light);
-  margin: 0 0 10px 0;
+  margin: 0 0 clamp(6px, 0.8vh, 10px) 0;
   text-align: center;
   border-bottom: 2px solid var(--color-buttons);
-  padding-bottom: 8px;
+  padding-bottom: clamp(5px, 0.6vh, 8px);
   flex-shrink: 0;
 }
 
 .characters-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: clamp(5px, 0.8vh, 8px);
   flex: 1;
   overflow: hidden;
   padding-right: 0;
@@ -321,8 +321,8 @@ const goBack = () => {
 
 .character-card {
   background: var(--color-bg-menu);
-  border-radius: 10px;
-  padding: 8px;
+  border-radius: clamp(6px, 0.8vw, 10px);
+  padding: clamp(5px, 0.8vw, 8px);
   border: 2px solid transparent;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -351,19 +351,19 @@ const goBack = () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: clamp(6px, 1vw, 8px);
+  margin-bottom: clamp(4px, 0.6vh, 6px);
   position: relative;
 }
 
 .character-avatar {
-  width: clamp(40px, 5vw, 60px);
-  height: clamp(40px, 5vw, 60px);
+  width: clamp(35px, 4.5vw, 55px);
+  height: clamp(35px, 4.5vw, 55px);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: clamp(2px, 0.3vw, 3px) solid var(--color-highlights);
-  box-shadow: 0 clamp(2px, 0.4vw, 4px) clamp(4px, 0.8vw, 8px) var(--shadow-medium);
+  border: clamp(2px, 0.25vw, 3px) solid var(--color-highlights);
+  box-shadow: 0 clamp(2px, 0.3vw, 4px) clamp(3px, 0.6vw, 6px) var(--shadow-medium);
   position: relative;
   z-index: 2;
   overflow: hidden;
@@ -379,16 +379,16 @@ const goBack = () => {
 
 .selected-badge {
   position: absolute;
-  top: -8px;
-  right: -8px;
+  top: -6px;
+  right: -6px;
   background: var(--gradient-accents);
   color: white;
-  padding: clamp(4px, 0.8vw, 8px) clamp(8px, 1.5vw, 15px);
-  border-radius: clamp(8px, 1.5vw, 15px);
-  font-size: clamp(0.7rem, 1.2vw, 1rem);
+  padding: clamp(3px, 0.5vh, 5px) clamp(6px, 1vw, 10px);
+  border-radius: clamp(5px, 0.8vw, 10px);
+  font-size: clamp(0.55rem, 0.9vw, 0.75rem);
   font-weight: 700;
   text-shadow: 1px 1px 0px var(--shadow-dark);
-  box-shadow: 0 clamp(2px, 0.4vw, 4px) clamp(4px, 0.8vw, 8px) var(--shadow-medium);
+  box-shadow: 0 clamp(2px, 0.3vw, 3px) clamp(3px, 0.5vw, 5px) var(--shadow-medium);
   z-index: 3;
 }
 
@@ -397,25 +397,25 @@ const goBack = () => {
 }
 
 .character-name {
-  font-size: clamp(0.75rem, 1.2vw, 0.95rem);
+  font-size: clamp(0.65rem, 1vw, 0.85rem);
   font-weight: 700;
   color: var(--color-text);
   text-shadow: 1px 1px 0px var(--shadow-light);
-  margin: 0 0 3px 0;
+  margin: 0 0 2px 0;
 }
 
 .character-title {
-  font-size: clamp(0.65rem, 1vw, 0.8rem);
+  font-size: clamp(0.55rem, 0.9vw, 0.7rem);
   color: var(--color-accents);
   text-shadow: 1px 1px 0px var(--shadow-light);
-  margin: 0 0 5px 0;
+  margin: 0 0 4px 0;
   line-height: 1.2;
 }
 
 .character-details {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   flex: 1;
 }
 
@@ -423,45 +423,45 @@ const goBack = () => {
 .character-location {
   display: flex;
   flex-direction: column;
-  gap: clamp(2px, 0.5vw, 4px);
+  gap: clamp(1px, 0.3vh, 3px);
 }
 
 .capital-label,
 .location-label {
-  font-size: clamp(0.55rem, 0.9vw, 0.7rem);
+  font-size: clamp(0.5rem, 0.8vw, 0.65rem);
   color: var(--color-accents);
   font-weight: 600;
 }
 
 .capital-value,
 .location-value {
-  font-size: clamp(0.7rem, 1.2vw, 1rem);
+  font-size: clamp(0.6rem, 1vw, 0.85rem);
   color: var(--color-highlights);
   font-weight: 700;
 }
 
 .character-locked {
-  margin-top: clamp(5px, 1vw, 8px);
-  padding: clamp(4px, 0.8vw, 8px);
+  margin-top: clamp(3px, 0.5vh, 5px);
+  padding: clamp(3px, 0.5vh, 5px);
   background: rgba(255, 0, 0, 0.1);
   border: 1px solid rgba(255, 0, 0, 0.3);
-  border-radius: clamp(4px, 0.8vw, 8px);
+  border-radius: clamp(3px, 0.5vw, 6px);
   text-align: center;
 }
 
 .locked-text {
-  font-size: clamp(0.6rem, 1vw, 0.8rem);
+  font-size: clamp(0.5rem, 0.85vw, 0.7rem);
   color: #ff6b6b;
   font-weight: 600;
 }
 
 /* Центральная панель - Информация о персонаже */
 .character-info-panel {
-  grid-column: 2 / 4;
-  grid-row: 1 / 3;
+  grid-column: 2 / 3;
+  grid-row: 1 / 2;
   background: var(--color-bg-menu-light);
-  border-radius: 12px;
-  padding: 15px;
+  border-radius: clamp(8px, 1vw, 12px);
+  padding: clamp(10px, 1.2vw, 15px);
   border: 2px solid var(--color-buttons);
   backdrop-filter: blur(5px);
   box-shadow: 0 8px 16px var(--shadow-medium);
@@ -478,9 +478,9 @@ const goBack = () => {
 }
 
 .character-avatar-display {
-  width: clamp(200px, 25vw, 280px);
-  height: clamp(200px, 25vw, 280px);
-  margin: 0 auto 8px;
+  width: clamp(220px, 30vw, 400px);
+  height: clamp(220px, 30vw, 400px);
+  margin: 0 auto clamp(5px, 0.8vh, 10px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -495,28 +495,28 @@ const goBack = () => {
 }
 
 .character-name-display {
-  font-size: clamp(0.95rem, 1.4vw, 1.15rem);
+  font-size: clamp(0.85rem, 1.3vw, 1.05rem);
   font-weight: 700;
   color: var(--color-text);
   text-shadow: 1px 1px 0px var(--shadow-light);
-  margin: 0 0 8px 0;
+  margin: 0 0 clamp(5px, 0.8vh, 8px) 0;
 }
 
 .character-stats {
   background: var(--color-bg-menu);
-  border-radius: 10px;
-  padding: 10px;
+  border-radius: clamp(6px, 0.8vw, 10px);
+  padding: clamp(6px, 0.8vw, 10px);
   border: 2px solid var(--color-buttons);
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: clamp(3px, 0.5vh, 5px);
 }
 
 .stat-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 4px 0;
+  padding: clamp(2px, 0.3vh, 4px) 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -525,21 +525,21 @@ const goBack = () => {
 }
 
 .stat-label {
-  font-size: clamp(0.7rem, 1.1vw, 0.85rem);
+  font-size: clamp(0.6rem, 1vw, 0.8rem);
   color: var(--color-accents);
   font-weight: 600;
   text-shadow: 1px 1px 0px var(--shadow-light);
 }
 
 .stat-value {
-  font-size: clamp(0.75rem, 1.2vw, 0.9rem);
+  font-size: clamp(0.65rem, 1.1vw, 0.85rem);
   color: var(--color-highlights);
   font-weight: 700;
   text-shadow: 1px 1px 0px var(--shadow-light);
 }
 
 .equipment-value {
-  font-size: clamp(0.65rem, 1vw, 0.8rem);
+  font-size: clamp(0.55rem, 0.9vw, 0.75rem);
   text-align: right;
   max-width: 200px;
   line-height: 1.2;
@@ -547,43 +547,46 @@ const goBack = () => {
 
 .progress-bar-container {
   flex: 1;
-  height: 12px;
+  height: clamp(8px, 1vh, 12px);
   background: rgba(0, 0, 0, 0.3);
-  border-radius: 6px;
+  border-radius: clamp(4px, 0.5vh, 6px);
   overflow: hidden;
-  margin-left: 8px;
+  margin-left: clamp(6px, 0.8vw, 8px);
 }
 
 .progress-bar-fill {
   height: 100%;
   background: var(--gradient-highlights);
-  border-radius: 6px;
+  border-radius: clamp(4px, 0.5vh, 6px);
   transition: width 0.5s ease;
 }
 
 .skills-content {
   display: flex;
   flex-direction: column;
-  gap: clamp(15px, 2vw, 25px);
+  gap: clamp(8px, 1.2vh, 15px);
+  flex: 1;
+  overflow: hidden;
 }
 
 .skill-points {
   background: var(--color-bg-menu);
-  border-radius: clamp(8px, 1.5vw, 15px);
-  padding: clamp(10px, 2vw, 20px);
+  border-radius: clamp(6px, 1vw, 10px);
+  padding: clamp(6px, 1vh, 12px);
   text-align: center;
   border: clamp(1px, 0.2vw, 2px) solid var(--color-buttons);
+  flex-shrink: 0;
 }
 
 .skill-points-label {
-  font-size: clamp(0.9rem, 1.6vw, 1.2rem);
+  font-size: clamp(0.7rem, 1.2vw, 0.95rem);
   color: var(--color-text);
   text-shadow: 1px 1px 0px var(--shadow-light);
-  margin-right: clamp(5px, 1vw, 10px);
+  margin-right: clamp(4px, 0.8vw, 8px);
 }
 
 .skill-points-value {
-  font-size: clamp(1.1rem, 2vw, 1.4rem);
+  font-size: clamp(0.85rem, 1.5vw, 1.15rem);
   font-weight: 700;
   color: var(--color-highlights);
   text-shadow: 1px 1px 0px var(--shadow-light);
@@ -593,7 +596,7 @@ const goBack = () => {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   grid-template-rows: repeat(3, 1fr);
-  gap: 10px;
+  gap: clamp(6px, 0.8vw, 10px);
   flex: 1;
   overflow: hidden;
   padding-right: 0;
@@ -601,8 +604,8 @@ const goBack = () => {
 
 .skill-item {
   background: var(--color-bg-menu);
-  border-radius: 10px;
-  padding: 10px;
+  border-radius: clamp(6px, 0.8vw, 10px);
+  padding: clamp(5px, 0.8vw, 10px);
   border: 2px solid var(--color-buttons);
   transition: all 0.3s ease;
   display: flex;
@@ -621,18 +624,19 @@ const goBack = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: clamp(30px, 4vw, 45px);
-  height: clamp(30px, 4vw, 45px);
+  width: clamp(25px, 3.5vw, 40px);
+  height: clamp(25px, 3.5vw, 40px);
   background: var(--gradient-buttons);
   border-radius: 50%;
-  margin-bottom: clamp(6px, 1vw, 10px);
-  border: clamp(2px, 0.3vw, 4px) solid var(--color-text);
-  box-shadow: 0 clamp(2px, 0.4vw, 4px) clamp(4px, 0.8vw, 8px) var(--shadow-medium);
+  margin-bottom: clamp(4px, 0.6vh, 8px);
+  border: clamp(2px, 0.25vw, 3px) solid var(--color-text);
+  box-shadow: 0 clamp(2px, 0.3vw, 4px) clamp(3px, 0.5vw, 6px) var(--shadow-medium);
   align-self: center;
+  flex-shrink: 0;
 }
 
 .skill-number {
-  font-size: clamp(1rem, 2vw, 1.5rem);
+  font-size: clamp(0.8rem, 1.5vw, 1.2rem);
   font-weight: 700;
   color: white;
   text-shadow: 1px 1px 0px var(--shadow-dark);
@@ -643,41 +647,45 @@ const goBack = () => {
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 .skill-name {
-  font-size: clamp(0.75rem, 1.2vw, 0.9rem);
+  font-size: clamp(0.6rem, 1vw, 0.8rem);
   font-weight: 700;
   color: var(--color-text);
   text-shadow: 1px 1px 0px var(--shadow-light);
-  margin: 0 0 5px 0;
+  margin: 0 0 clamp(3px, 0.5vh, 5px) 0;
+  flex-shrink: 0;
 }
 
 .skill-description {
-  font-size: clamp(0.65rem, 1.1vw, 0.8rem);
+  font-size: clamp(0.55rem, 0.9vw, 0.7rem);
   color: var(--color-text);
   text-shadow: 1px 1px 0px var(--shadow-light);
-  line-height: 1.3;
-  margin: 0 0 5px 0;
+  line-height: 1.2;
+  margin: 0 0 clamp(3px, 0.5vh, 5px) 0;
+  flex-shrink: 0;
 }
 
 .skill-explanation {
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  padding: 8px;
-  margin-bottom: 6px;
-  border-left: 3px solid var(--color-accents);
+  border-radius: clamp(4px, 0.6vw, 8px);
+  padding: clamp(4px, 0.6vw, 8px);
+  margin-bottom: clamp(4px, 0.6vh, 6px);
+  border-left: 2px solid var(--color-accents);
   flex: 1;
   min-height: 0;
+  overflow: hidden;
 }
 
 .game-effect,
 .real-explanation {
-  font-size: clamp(0.6rem, 1vw, 0.75rem);
+  font-size: clamp(0.5rem, 0.85vw, 0.65rem);
   color: var(--color-text);
   text-shadow: 1px 1px 0px var(--shadow-light);
-  line-height: 1.2;
-  margin-bottom: 3px;
+  line-height: 1.1;
+  margin-bottom: clamp(2px, 0.3vh, 3px);
 }
 
 .game-effect:last-child,
@@ -693,24 +701,25 @@ const goBack = () => {
 
 .skill-level-bar {
   width: 100%;
-  height: clamp(4px, 0.8vw, 8px);
+  height: clamp(4px, 0.6vh, 6px);
   background: rgba(0, 0, 0, 0.3);
-  border-radius: clamp(2px, 0.4vw, 4px);
+  border-radius: clamp(2px, 0.3vh, 3px);
   overflow: hidden;
-  margin-bottom: clamp(6px, 1vw, 10px);
+  margin-bottom: clamp(4px, 0.6vh, 6px);
+  flex-shrink: 0;
 }
 
 .skill-level-progress {
   height: 100%;
   background: var(--gradient-highlights);
-  border-radius: clamp(3px, 0.5vw, 5px);
+  border-radius: clamp(2px, 0.3vh, 3px);
   transition: width 0.5s ease;
 }
 
 .skill-actions {
   display: flex;
   flex-direction: column;
-  gap: clamp(6px, 1vw, 10px);
+  gap: clamp(4px, 0.6vh, 6px);
   text-align: center;
   margin-top: auto;
   flex-shrink: 0;
@@ -719,22 +728,22 @@ const goBack = () => {
 .skill-upgrade-btn {
   background: var(--gradient-buttons);
   color: white;
-  border: clamp(2px, 0.3vw, 3px) solid var(--color-text);
-  border-radius: clamp(6px, 1vw, 10px);
-  padding: clamp(8px, 1.2vw, 12px) clamp(15px, 2vw, 20px);
-  font-size: clamp(0.8rem, 1.3vw, 1rem);
+  border: clamp(1px, 0.2vw, 2px) solid var(--color-text);
+  border-radius: clamp(4px, 0.6vw, 8px);
+  padding: clamp(4px, 0.6vh, 8px) clamp(8px, 1.2vw, 12px);
+  font-size: clamp(0.6rem, 1vw, 0.8rem);
   font-weight: 700;
   font-family: 'Orbitron', sans-serif;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 clamp(3px, 0.5vw, 6px) clamp(6px, 1vw, 10px) var(--shadow-medium);
+  box-shadow: 0 clamp(2px, 0.3vw, 4px) clamp(3px, 0.5vw, 6px) var(--shadow-medium);
   text-shadow: 1px 1px 0px var(--shadow-light);
 }
 
 .skill-upgrade-btn:hover:not(:disabled) {
   background: var(--gradient-accents);
-  transform: translateY(-2px);
-  box-shadow: 0 clamp(4px, 0.8vw, 8px) clamp(6px, 1.2vw, 12px) var(--shadow-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 clamp(3px, 0.5vw, 6px) clamp(4px, 0.8vw, 8px) var(--shadow-dark);
 }
 
 .skill-upgrade-btn:disabled {
@@ -748,31 +757,31 @@ const goBack = () => {
 .skill-tutorial-btn {
   background: var(--gradient-accents);
   color: white;
-  border: clamp(2px, 0.3vw, 3px) solid var(--color-text);
-  border-radius: clamp(6px, 1vw, 10px);
-  padding: clamp(6px, 1vw, 10px) clamp(12px, 1.5vw, 15px);
-  font-size: clamp(0.7rem, 1.2vw, 0.9rem);
+  border: clamp(1px, 0.2vw, 2px) solid var(--color-text);
+  border-radius: clamp(4px, 0.6vw, 8px);
+  padding: clamp(3px, 0.5vh, 6px) clamp(6px, 1vw, 10px);
+  font-size: clamp(0.55rem, 0.9vw, 0.7rem);
   font-weight: 700;
   font-family: 'Orbitron', sans-serif;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 clamp(2px, 0.4vw, 4px) clamp(4px, 0.8vw, 8px) var(--shadow-medium);
+  box-shadow: 0 clamp(1px, 0.2vw, 3px) clamp(2px, 0.4vw, 5px) var(--shadow-medium);
   text-shadow: 1px 1px 0px var(--shadow-light);
 }
 
 .skill-tutorial-btn:hover {
   background: var(--gradient-highlights);
   transform: translateY(-1px);
-  box-shadow: 0 clamp(3px, 0.6vw, 6px) clamp(6px, 1.2vw, 12px) var(--shadow-dark);
+  box-shadow: 0 clamp(2px, 0.4vw, 5px) clamp(3px, 0.6vw, 8px) var(--shadow-dark);
 }
 
 /* Подсказка наставника */
 .mentor-tip {
-  grid-column: 1 / 6;
-  grid-row: 3 / 4;
+  grid-column: 1 / 4;
+  grid-row: 2 / 3;
   background: var(--color-bg-menu-light);
-  border-radius: 12px;
-  padding: 12px;
+  border-radius: clamp(8px, 1vw, 12px);
+  padding: clamp(8px, 1vw, 12px);
   border: 2px solid var(--color-buttons);
   backdrop-filter: blur(5px);
   box-shadow: 0 6px 12px var(--shadow-medium);
@@ -782,19 +791,19 @@ const goBack = () => {
 .tip-content {
   display: flex;
   align-items: center;
-  gap: clamp(10px, 1.5vw, 15px);
+  gap: clamp(8px, 1.2vw, 12px);
 }
 
 .tip-icon {
-  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  font-size: clamp(1.2rem, 2vw, 1.6rem);
   flex-shrink: 0;
 }
 
 .tip-text {
-  font-size: clamp(0.8rem, 1.4vw, 1.1rem);
+  font-size: clamp(0.65rem, 1.1vw, 0.9rem);
   color: var(--color-text);
   text-shadow: 1px 1px 0px var(--shadow-light);
-  line-height: 1.4;
+  line-height: 1.3;
 }
 
 .tip-text strong {
@@ -804,74 +813,13 @@ const goBack = () => {
 
 /* Адаптивность */
 @media (max-width: 1400px) {
-  .hero-content {
-    gap: 10px;
-    padding: 55px 12px 12px;
-  }
-}
-
-@media (max-width: 1200px) {
-  .hero-content {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto auto;
-    gap: 12px;
-    padding: 50px 12px 12px;
-    overflow-y: auto;
+  .skill-explanation {
+    padding: 6px;
   }
   
-  .character-selection {
-    grid-column: 1 / 2;
-    grid-row: 1 / 2;
-    height: auto;
-    min-height: 200px;
-  }
-  
-  .character-info-panel {
-    grid-column: 1 / 2;
-    grid-row: 2 / 3;
-    height: auto;
-    min-height: 250px;
-  }
-  
-  .skills-section {
-    grid-column: 1 / 2;
-    grid-row: 3 / 4;
-    height: auto;
-    min-height: 400px;
-  }
-  
-  .mentor-tip {
-    grid-column: 1 / 2;
-    grid-row: 4 / 5;
-  }
-  
-  .skills-list {
-    overflow-y: visible;
-  }
-}
-
-@media (max-width: 768px) {
-  .hero-content {
-    padding: 45px 10px 10px;
-    gap: 10px;
-  }
-  
-  .character-selection,
-  .character-info-panel,
-  .skills-section {
-    padding: 12px;
-  }
-  
-  .back-btn {
-    top: 10px;
-    left: 10px;
-    padding: 6px 12px;
-    font-size: 0.7rem;
-  }
-  
-  .skills-list {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto;
+  .game-effect,
+  .real-explanation {
+    font-size: clamp(0.55rem, 0.9vw, 0.7rem);
   }
 }
 </style>
