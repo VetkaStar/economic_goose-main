@@ -109,6 +109,7 @@
           <div class="timer-label">до конца</div>
         </div>
 
+        <div class="main-panels">
         <!-- Материал -->
         <div class="material-showcase">
           <div class="material-header">
@@ -214,6 +215,10 @@
                 Победитель: {{ auction.winner_name }}
               </h3>
               <p class="final-price">Финальная цена: ₽{{ auction.current_bid.toLocaleString() }}</p>
+              <div v-if="auction.winner_id === authStore.user?.id" class="points-earned">
+                <span class="points-icon">⭐</span>
+                <span class="points-text">Получено очков: {{ calculateWinnerPoints(auction.current_bid) }}</span>
+              </div>
             </div>
             <div v-else class="no-winner">
               <p>Аукцион завершён без победителя</p>
@@ -231,37 +236,40 @@
             </button>
           </div>
         </div>
-
-        <!-- История ставок -->
-        <div class="bids-history" v-if="auction.bids_history.length > 0">
-          <h4>📊 История ставок</h4>
-          <div class="bids-list">
-            <div 
-              v-for="bid in auction.bids_history.slice(0, 5)" 
-              :key="bid.id"
-              class="bid-item"
-            >
-              <span class="bid-player">{{ bid.player_name }}</span>
-              <span class="bid-value">₽{{ bid.amount.toLocaleString() }}</span>
-              <span class="bid-time">{{ formatTimestamp(bid.timestamp) }}</span>
-            </div>
-          </div>
         </div>
 
-        <!-- Участники -->
-        <div class="participants-panel">
-          <h4>👥 Участники ({{ auction.participants.length }})</h4>
-          <div class="participants-list">
-            <div 
-              v-for="participant in auction.participants" 
-              :key="participant.id"
-              class="participant-item"
-              :class="{ 'is-you': participant.id === authStore.user?.id }"
-            >
-              <span class="participant-name">
-                {{ participant.name }}
-                <span v-if="participant.id === authStore.user?.id" class="you-tag">(Вы)</span>
-              </span>
+        <div class="side-panels">
+          <!-- История ставок -->
+          <div class="bids-history" v-if="auction.bids_history.length > 0">
+            <h4>📊 История ставок</h4>
+            <div class="bids-list">
+              <div 
+                v-for="bid in auction.bids_history.slice(0, 5)" 
+                :key="bid.id"
+                class="bid-item"
+              >
+                <span class="bid-player">{{ bid.player_name }}</span>
+                <span class="bid-value">₽{{ bid.amount.toLocaleString() }}</span>
+                <span class="bid-time">{{ formatTimestamp(bid.timestamp) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Участники -->
+          <div class="participants-panel">
+            <h4>👥 Участники ({{ auction.participants.length }})</h4>
+            <div class="participants-list">
+              <div 
+                v-for="participant in auction.participants" 
+                :key="participant.id"
+                class="participant-item"
+                :class="{ 'is-you': participant.id === authStore.user?.id }"
+              >
+                <span class="participant-name">
+                  {{ participant.name }}
+                  <span v-if="participant.id === authStore.user?.id" class="you-tag">(Вы)</span>
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -272,9 +280,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useAuctionStore } from '@/stores/auctionStore'
 import { useAuthStore } from '@/stores/authStore'
+import { usePlayerPoints } from '@/composables/usePlayerPoints'
 import { supabase } from '@/lib/supabase'
 
 const emit = defineEmits<{
@@ -283,6 +292,7 @@ const emit = defineEmits<{
 
 const auctionStore = useAuctionStore()
 const authStore = useAuthStore()
+const { addAuctionPoints } = usePlayerPoints()
 
 const customBidAmount = ref(0)
 
@@ -374,9 +384,79 @@ async function selectAuction(auctionId: string) {
   }
 }
 
-// При монтировании загружаем список аукционов
+// Расчет очков для победителя
+function calculateWinnerPoints(finalBid: number): number {
+  const points = Math.round(finalBid / 100) // 1 очко за каждые 100 рублей
+  return Math.max(points, 10) // Минимум 10 очков за победу
+}
+
+// Расчет очков для участника
+function calculateParticipantPoints(bidAmount: number): number {
+  const points = Math.round(bidAmount / 200) // 1 очко за каждые 200 рублей ставки
+  return Math.max(points, 1) // Минимум 1 очко за участие
+}
+
+// Обработка завершения аукциона и начисление очков
+async function handleAuctionFinish() {
+  if (!auction.value || !authStore.user) return
+
+  try {
+    const isWinner = auction.value.winner_id === authStore.user.id
+    const bidAmount = auction.value.current_bid
+
+    if (isWinner) {
+      // Победитель получает очки
+      const points = calculateWinnerPoints(bidAmount)
+      await addAuctionPoints(
+        auction.value.id,
+        bidAmount,
+        true,
+        bidAmount
+      )
+      console.log(`🏆 Победитель аукциона! Получено ${points} очков`)
+    } else {
+      // Участники получают очки за участие (находим последнюю ставку игрока)
+      const playerBids = auction.value.bids_history?.filter(
+        (bid: any) => bid.player_id === authStore.user?.id
+      ) || []
+      
+      if (playerBids.length > 0) {
+        const lastBid = playerBids[playerBids.length - 1]
+        const points = calculateParticipantPoints(lastBid.amount)
+        await addAuctionPoints(
+          auction.value.id,
+          lastBid.amount,
+          false,
+          bidAmount
+        )
+        console.log(`🎯 Участие в аукционе! Получено ${points} очков`)
+      }
+    }
+  } catch (error) {
+    console.error('Ошибка при начислении очков за аукцион:', error)
+  }
+}
+
+// Watcher для отслеживания изменения статуса аукциона
+watch(() => auction.value?.status, (newStatus, oldStatus) => {
+  if (newStatus === 'finished' && oldStatus !== 'finished') {
+    // Запускаем обработку завершения с небольшой задержкой
+    setTimeout(() => {
+      handleAuctionFinish()
+    }, 1000)
+  }
+})
+
+// Принудительная обработка при монтировании (если аукцион уже завершен)
 onMounted(async () => {
   await auctionStore.loadAvailableAuctions()
+  
+  // Проверяем, не завершен ли уже текущий аукцион
+  if (auction.value?.status === 'finished') {
+    setTimeout(() => {
+      handleAuctionFinish()
+    }, 1000)
+  }
 })
 
 // При размонтировании выходим из текущего аукциона
@@ -408,8 +488,8 @@ onUnmounted(() => {
   background: var(--color-bg-menu-light);
   border: 2px solid var(--color-buttons);
   border-radius: 15px;
-  width: 1000px;
-  height: 700px;
+  width: clamp(1000px, 80vw, 1700px);
+  height: clamp(700px, 80vh, 1050px);
   overflow: hidden;
   box-shadow: 0 8px 16px var(--shadow-medium);
   display: flex;
@@ -524,9 +604,9 @@ onUnmounted(() => {
   background: var(--color-bg-menu);
   border: 2px solid var(--color-buttons);
   border-radius: 12px;
-  padding: 20px;
+  padding: 16px;
   text-align: center;
-  margin: 20px;
+  margin: 12px 20px 16px 20px;
   box-shadow: 0 2px 4px var(--shadow-light);
 }
 
@@ -549,7 +629,7 @@ onUnmounted(() => {
 }
 
 .timer-value {
-  font-size: clamp(2rem, 3.5vw, 3rem);
+  font-size: clamp(1.6rem, 3vw, 2.6rem);
   font-weight: 700;
   color: var(--color-text);
   font-family: 'Courier New', monospace;
@@ -568,15 +648,18 @@ onUnmounted(() => {
   background: var(--color-bg-menu);
   border: 2px solid var(--color-buttons);
   border-radius: 12px;
-  padding: 20px;
-  margin: 0 20px 20px 20px;
+  padding: 16px;
+  margin: 0;
   box-shadow: 0 2px 4px var(--shadow-light);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .material-header {
   display: flex;
   gap: 15px;
-  margin-bottom: 15px;
+  margin-bottom: 12px;
 }
 
 .material-icon {
@@ -606,15 +689,15 @@ onUnmounted(() => {
 
 .material-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(5, minmax(120px, 1fr));
+  gap: 12px;
 }
 
 .stat-card {
   background: var(--color-bg-menu-light);
   border: 2px solid var(--color-buttons);
   border-radius: 8px;
-  padding: 10px;
+  padding: 10px 8px;
   text-align: center;
 }
 
@@ -641,9 +724,12 @@ onUnmounted(() => {
   background: var(--color-bg-menu);
   border: 2px solid var(--color-buttons);
   border-radius: 12px;
-  padding: 20px;
-  margin: 0 20px 20px 20px;
+  padding: 16px;
+  margin: 0;
   box-shadow: 0 2px 4px var(--shadow-light);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .bid-info {
@@ -659,7 +745,7 @@ onUnmounted(() => {
 }
 
 .bid-amount {
-  font-size: clamp(2rem, 3.5vw, 2.5rem);
+  font-size: clamp(1.8rem, 3vw, 2.2rem);
   font-weight: 700;
   color: var(--color-accents);
   margin-bottom: 10px;
@@ -766,7 +852,6 @@ onUnmounted(() => {
   overflow-y: auto;
   overflow-x: hidden;
   background: var(--color-bg-menu-light);
-  height: calc(700px - 120px);
 }
 
 .auction-content {
@@ -806,6 +891,51 @@ onUnmounted(() => {
   text-shadow: 1px 1px 0px var(--shadow-light);
 }
 
+.points-earned {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 15px;
+  padding: 10px 20px;
+  background: var(--color-accents);
+  border: 2px solid var(--color-highlights);
+  border-radius: 12px;
+  animation: pointsEarned 0.8s ease-in-out;
+}
+
+.points-icon {
+  font-size: clamp(1.2rem, 1.8vw, 1.5rem);
+  animation: pointsPulse 1s infinite;
+}
+
+.points-text {
+  font-size: clamp(0.9rem, 1.4vw, 1.1rem);
+  font-weight: 700;
+  color: var(--color-text);
+  text-shadow: 1px 1px 0px var(--shadow-light);
+}
+
+@keyframes pointsEarned {
+  0% { 
+    opacity: 0; 
+    transform: scale(0.8) translateY(20px); 
+  }
+  50% { 
+    opacity: 1; 
+    transform: scale(1.05) translateY(-5px); 
+  }
+  100% { 
+    opacity: 1; 
+    transform: scale(1) translateY(0); 
+  }
+}
+
+@keyframes pointsPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
 .no-winner {
   padding: 40px 20px;
   color: var(--color-text);
@@ -831,8 +961,8 @@ onUnmounted(() => {
   background: var(--color-bg-menu);
   border: 2px solid var(--color-buttons);
   border-radius: 12px;
-  padding: 15px;
-  margin: 0 20px 15px 20px;
+  padding: 12px;
+  margin: 0;
   box-shadow: 0 2px 4px var(--shadow-light);
 }
 
@@ -884,9 +1014,43 @@ onUnmounted(() => {
   background: var(--color-bg-menu);
   border: 2px solid var(--color-buttons);
   border-radius: 12px;
-  padding: 15px;
-  margin: 0 20px 20px 20px;
+  padding: 12px;
+  margin: 0;
   box-shadow: 0 2px 4px var(--shadow-light);
+}
+
+/* Боковые панели в ряд на широких экранах */
+.side-panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 0 20px 16px 20px;
+}
+
+/* Основные панели (материал слева, ставка справа) */
+.main-panels {
+  display: grid;
+  grid-template-columns: 1.3fr 0.7fr;
+  gap: 16px;
+  margin: 0 20px 16px 20px;
+  align-items: stretch;
+}
+.main-panels > * { align-self: start; }
+
+@media (max-width: 1200px) {
+  .main-panels {
+    grid-template-columns: 1fr;
+  }
+  .current-bid-section {
+    margin: 0 20px 16px 20px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .side-panels {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
 }
 
 .participants-panel h4 {
@@ -947,20 +1111,12 @@ onUnmounted(() => {
     width: 95%;
     height: 85vh;
   }
-  
-  .content-section {
-    height: calc(85vh - 120px);
-  }
 }
 
 @media (max-width: 768px) {
   .auction-modal {
     width: 98%;
     height: 90vh;
-  }
-  
-  .content-section {
-    height: calc(90vh - 120px);
   }
 
   .material-stats {

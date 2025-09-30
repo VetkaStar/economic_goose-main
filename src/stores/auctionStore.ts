@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { supabase } from '@/lib/supabase'
-import type { Auction, AuctionParticipant, AuctionBid, AuctionStatus } from '@/types/auction'
+import type { Auction, AuctionBid, AuctionStatus } from '@/types/auction'
 import { useAuthStore } from './authStore'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
@@ -54,6 +54,22 @@ export const useAuctionStore = defineStore('auction', () => {
     return Math.max(0, 60 - elapsed)
   }
 
+  function sortAuctionsList(list: Auction[]): Auction[] {
+    const weight: Record<AuctionStatus, number> = {
+      waiting: 0,
+      active: 1,
+      finished: 2,
+      cancelled: 3 as any
+    }
+    return [...list].sort((a, b) => {
+      const byStatus = weight[a.status] - weight[b.status]
+      if (byStatus !== 0) return byStatus
+      const aTime = new Date(a.created_at || a.started_at || 0).getTime()
+      const bTime = new Date(b.created_at || b.started_at || 0).getTime()
+      return bTime - aTime
+    })
+  }
+
   // Загрузить список доступных аукционов
   async function loadAvailableAuctions() {
     isLoading.value = true
@@ -69,7 +85,7 @@ export const useAuctionStore = defineStore('auction', () => {
 
       if (fetchError) throw fetchError
 
-      availableAuctions.value = (auctions || []).map(a => ({
+      const mapped = (auctions || []).map(a => ({
         id: a.id,
         material: a.material_data,
         starting_price: a.starting_price,
@@ -86,6 +102,8 @@ export const useAuctionStore = defineStore('auction', () => {
         started_at: a.started_at,
         finished_at: a.finished_at
       }))
+
+      availableAuctions.value = sortAuctionsList(mapped)
 
       console.log(`📋 Загружено ${availableAuctions.value.length} аукционов`)
       
@@ -133,7 +151,7 @@ export const useAuctionStore = defineStore('auction', () => {
             .limit(20)
 
           if (auctionsData) {
-            availableAuctions.value = auctionsData.map(a => ({
+            const mapped = auctionsData.map(a => ({
               id: a.id,
               material: a.material_data,
               starting_price: a.starting_price,
@@ -150,6 +168,7 @@ export const useAuctionStore = defineStore('auction', () => {
               started_at: a.started_at,
               finished_at: a.finished_at
             }))
+            availableAuctions.value = sortAuctionsList(mapped)
           }
         }
       )
@@ -433,7 +452,11 @@ export const useAuctionStore = defineStore('auction', () => {
               .eq('auction_id', auctionId)
             
             if (data) {
-              currentAuction.value.participants = data
+              currentAuction.value.participants = data.map((p: any) => ({
+                id: p.player_id,
+                name: p.player_name,
+                is_ready: p.is_ready
+              }))
             }
           }
         }
@@ -531,7 +554,7 @@ export const useAuctionStore = defineStore('auction', () => {
 
       console.log('Аукцион завершён:', data)
 
-      if (data.winner_id === authStore.user?.id) {
+      if (data.winner_id && authStore.user && data.winner_id === authStore.user.id) {
         const { data: profile, error: profileError } = await supabase
           .from('user_profiles')
           .select('*')

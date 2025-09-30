@@ -7,48 +7,11 @@
       </div>
       
       <div class="modal-body">
-        <!-- Онлайн статус -->
-        <div class="online-banner">
-          <div class="online-info">
-            <span class="online-dot"></span>
-            <span class="online-text">Онлайн: <strong>{{ onlinePlayers }}</strong> игроков</span>
-          </div>
-          <button class="quick-join-btn" @click="quickJoinGame">
-            ◆ Быстрая игра
-          </button>
-        </div>
         
         <!-- Прокручиваемая область -->
         <div class="scrollable-content">
-          <!-- Активные события (еженедельные/ежемесячные) -->
-          <div class="section" v-if="activeEvents.length > 0">
-            <h3 class="section-title">◉ Активные события</h3>
-            <div class="events-grid">
-              <div 
-                v-for="event in activeEvents" 
-                :key="event.id"
-                class="event-card"
-                :class="{ 'event-weekly': event.eventType === 'weekly', 'event-monthly': event.eventType === 'monthly' }"
-                @click="playGame(event)"
-              >
-                <div class="event-icon">{{ event.icon }}</div>
-                <div class="event-info">
-                  <div class="event-name">{{ event.name }}</div>
-                  <div class="event-description">{{ event.description }}</div>
-                  <div class="event-meta">
-                    <span class="event-badge" :class="event.eventType">
-                      {{ event.eventType === 'weekly' ? '■ Неделя' : '● Месяц' }}
-                    </span>
-                    <span class="event-participants">▲ {{ event.onlinePlayers }}</span>
-              </div>
-            </div>
-                </div>
-                </div>
-              </div>
-              
           <!-- Социальные и кооперативные игры (объединены) -->
           <div class="section">
-            <h3 class="section-title">● Совместные игры</h3>
             <div class="games-list">
               <div 
                 v-for="game in combinedGroupGames" 
@@ -63,14 +26,11 @@
                   <div class="game-description">{{ game.description }}</div>
                   <div class="game-meta">
                     <span class="meta-item tag" :class="game.category">
-                      {{ game.category === 'cooperative' ? 'кооперативная' : 'социальная' }}
+                      {{ game.category === 'cooperative' ? 'кооперативная' : game.category === 'solo' ? 'одиночная' : 'социальная' }}
                     </span>
                     <span class="meta-item">▲ {{ game.players }}</span>
                     <span class="meta-item">◉ {{ game.duration }}</span>
                     <span class="meta-item" v-if="game.locked">■ {{ game.unlockRequirement }}</span>
-                    <span class="meta-item online" v-else-if="game.onlinePlayers > 0">
-                      ● {{ game.onlinePlayers }} онлайн
-                    </span>
                   </div>
                 </div>
               </div>
@@ -110,6 +70,24 @@
       v-if="showAuctionGame"
       @close="closeAuctionGame"
     />
+    
+    <!-- Прочие мини-игры -->
+    <FashionBattleGame
+      v-if="showFashionBattleGame"
+      @close="closeFashionBattleGame"
+    />
+    <LogisticsRaceGame
+      v-if="showLogisticsRaceGame"
+      @close="closeLogisticsRaceGame"
+    />
+    <TeamProductionGame
+      v-if="showTeamProductionGame"
+      @close="closeTeamProductionGame"
+    />
+    <FashionCollaborationGame
+      v-if="showFashionCollaborationGame"
+      @close="closeFashionCollaborationGame"
+    />
   </div>
 </template>
 
@@ -117,7 +95,12 @@
 import { ref, computed } from 'vue'
 import AuthModal from './AuthModal.vue'
 import AuctionGame from './AuctionGame.vue'
+import FashionBattleGame from './FashionBattleGame.vue'
+import LogisticsRaceGame from './LogisticsRaceGame.vue'
+import TeamProductionGame from './TeamProductionGame.vue'
+import FashionCollaborationGame from './FashionCollaborationGame.vue'
 import { useAuthGuard } from '@/composables/useAuthGuard'
+import { useGameStore } from '@/stores/gameStore'
 
 // Эмиты
 const emit = defineEmits<{
@@ -126,13 +109,17 @@ const emit = defineEmits<{
 
 // Используем auth guard
 const { requireAuth, showAuthModal, onAuthSuccess, closeAuthModal } = useAuthGuard()
+const gameStore = useGameStore()
 
 // Состояние
-const onlinePlayers = ref(127)
 const gamesPlayed = ref(15)
 const gamesWon = ref(12)
 const totalEarned = ref(2500)
 const showAuctionGame = ref(false)
+const showFashionBattleGame = ref(false)
+const showLogisticsRaceGame = ref(false)
+const showTeamProductionGame = ref(false)
+const showFashionCollaborationGame = ref(false)
 
 // Список всех игр
 const allGames = ref([
@@ -145,7 +132,16 @@ const allGames = ref([
     category: 'social',
     players: '2-8',
     duration: '5 мин',
-    onlinePlayers: 23,
+    type: 'competitive'
+  },
+  {
+    id: 'logistics_race',
+    name: 'Логистическая гонка',
+    description: 'Разведите заказы по городам быстрее всех',
+    icon: '●',
+    category: 'solo',
+    players: '1',
+    duration: '1 мин',
     type: 'competitive'
   },
   {
@@ -156,19 +152,8 @@ const allGames = ref([
     category: 'social',
     players: '2-4',
     duration: '8 мин',
-    onlinePlayers: 15,
-    type: 'competitive'
-  },
-  {
-    id: 'logistics_race',
-    name: 'Логистическая гонка',
-    description: 'Разведите заказы по городам быстрее всех',
-    icon: '●',
-    category: 'social',
-    players: '2-6',
-    duration: '10 мин',
-    onlinePlayers: 31,
-    type: 'competitive'
+    type: 'competitive',
+    requiredLevel: 8
   },
   
   // Кооперативные игры
@@ -180,9 +165,8 @@ const allGames = ref([
     category: 'cooperative',
     players: '2-4',
     duration: '12 мин',
-    onlinePlayers: 8,
     type: 'cooperative',
-    locked: false
+    requiredLevel: 8
   },
   {
     id: 'fashion_collaboration',
@@ -192,37 +176,13 @@ const allGames = ref([
     category: 'cooperative',
     players: '2-6',
     duration: '15 мин',
-    onlinePlayers: 5,
     type: 'cooperative',
     locked: true,
     unlockRequirement: 'Уровень 8'
   },
   
   // События и челленджи
-  {
-    id: 'weekly_challenge',
-    name: 'Челлендж недели',
-    description: 'Достигните максимальной капитализации за игровой год',
-    icon: '◆',
-    category: 'events',
-    players: '1',
-    duration: '20 мин',
-    onlinePlayers: 89,
-    type: 'solo',
-    eventType: 'weekly'
-  },
-  {
-    id: 'eco_challenge',
-    name: 'Эко-инициатива',
-    description: 'Изготовьте 1,000,000 масок за неделю с другими игроками',
-    icon: '●',
-    category: 'events',
-    players: '∞',
-    duration: '7 дней',
-    onlinePlayers: 156,
-    type: 'cooperative',
-    eventType: 'monthly'
-  },
+  // события удалены
   
   
 ])
@@ -230,44 +190,24 @@ const allGames = ref([
 // Фильтрованные игры по категориям (объединены ниже)
 
 // Объединённая категория: социальные + кооперативные с сортировкой по онлайну
-const combinedGroupGames = computed(() =>
-  allGames.value
-    .filter(game => game.category === 'social' || game.category === 'cooperative')
-    .sort((a, b) => (b.onlinePlayers || 0) - (a.onlinePlayers || 0))
-)
+const combinedGroupGames = computed(() => {
+  const playerLevel = gameStore.level
+  return allGames.value
+    .map((game: any) => {
+      const required = game.requiredLevel ?? (game.unlockRequirement ? parseInt(String(game.unlockRequirement).replace(/\D/g, '')) : undefined)
+      const isLocked = required ? playerLevel < required : Boolean(game.locked)
+      const unlockText = required ? `Уровень ${required}` : game.unlockRequirement
+      return {
+        ...game,
+        locked: isLocked,
+        unlockRequirement: unlockText
+      }
+    })
+    .filter(game => game.category === 'social' || game.category === 'cooperative' || game.category === 'solo')
+})
 
-// удалены одиночные игры и связанные вычисления
+// Удалены активные события
 
-const activeEvents = computed(() => 
-  allGames.value.filter(game => game.eventType)
-)
-
-// Быстрое подключение к игре
-const quickJoinGame = () => {
-  const isAuthenticated = requireAuth('minigames', () => {
-    const popularGame = allGames.value
-      .filter(game => game.onlinePlayers > 0)
-      .sort((a, b) => b.onlinePlayers - a.onlinePlayers)[0]
-    
-    if (popularGame) {
-      startGame(popularGame)
-    } else {
-      alert('Сейчас нет доступных игр для быстрого подключения')
-    }
-  })
-  
-  if (isAuthenticated) {
-    const popularGame = allGames.value
-      .filter(game => game.onlinePlayers > 0)
-      .sort((a, b) => b.onlinePlayers - a.onlinePlayers)[0]
-    
-    if (popularGame) {
-      startGame(popularGame)
-    } else {
-      alert('Сейчас нет доступных игр для быстрого подключения')
-    }
-  }
-}
 
 // Запуск игры
 const playGame = (game: any) => {
@@ -287,25 +227,38 @@ const playGame = (game: any) => {
 
 // Функция запуска игры
 const startGame = (game: any) => {
-  // Если это аукцион материалов, открываем компонент игры
-  if (game.id === 'material_auction') {
-    showAuctionGame.value = true
-    return
+  // Открываем соответствующую мини-игру
+  switch (game.id) {
+    case 'material_auction':
+      showAuctionGame.value = true
+      return
+    case 'fashion_battle':
+      showFashionBattleGame.value = true
+      return
+    case 'logistics_race':
+      showLogisticsRaceGame.value = true
+      return
+    case 'team_production':
+      showTeamProductionGame.value = true
+      return
+    case 'fashion_collaboration':
+      showFashionCollaborationGame.value = true
+      return
   }
   
   // Для остальных игр показываем заглушку
-  const gameInfo = game.onlinePlayers > 0 
-    ? `🎮 Запускаем "${game.name}"\n👥 Онлайн: ${game.onlinePlayers} игроков\n⏱️ Время: ${game.duration}`
-    : `🎮 Запускаем "${game.name}"\n⏱️ Время: ${game.duration}\n🎯 Режим: Одиночная игра`
+  const gameInfo = `🎮 Запускаем "${game.name}"\n⏱️ Время: ${game.duration}\n🎯 Режим: ${game.type === 'cooperative' ? 'Кооперативная игра' : 'Соревновательная игра'}`
   
   alert(gameInfo)
   console.log('Запуск игры:', game)
 }
 
-// Закрыть аукцион
-const closeAuctionGame = () => {
-  showAuctionGame.value = false
-}
+// Закрытие окон мини-игр
+const closeAuctionGame = () => { showAuctionGame.value = false }
+const closeFashionBattleGame = () => { showFashionBattleGame.value = false }
+const closeLogisticsRaceGame = () => { showLogisticsRaceGame.value = false }
+const closeTeamProductionGame = () => { showTeamProductionGame.value = false }
+const closeFashionCollaborationGame = () => { showFashionCollaborationGame.value = false }
 
 // Закрытие модального окна
 const close = () => {
@@ -331,8 +284,8 @@ const close = () => {
 .minigames-modal {
   background: var(--color-bg-menu-light);
   border-radius: 15px;
-  width: 1000px;
-  height: 700px;
+  width: clamp(1000px, 80vw, 1600px);
+  height: clamp(700px, 80vh, 1000px);
   overflow: hidden;
   box-shadow: 0 8px 16px var(--shadow-medium);
   border: 2px solid var(--color-buttons);
@@ -384,67 +337,8 @@ const close = () => {
   overflow-y: auto;
   overflow-x: hidden;
   background: var(--color-bg-menu-light);
-  height: calc(700px - 140px);
 }
 
-/* Онлайн баннер */
-.online-banner {
-  background: var(--color-bg-menu);
-  border: 2px solid var(--color-buttons);
-  border-radius: 12px;
-  padding: 15px 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 4px var(--shadow-light);
-}
-
-.online-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: clamp(0.8rem, 1.2vw, 1rem);
-  color: var(--color-text);
-  font-weight: 600;
-}
-
-.online-dot {
-  width: 10px;
-  height: 10px;
-  background: var(--color-accents);
-  border-radius: 50%;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-.online-text strong {
-  font-weight: 700;
-  color: var(--color-accents);
-}
-
-.quick-join-btn {
-  padding: 10px 20px;
-  background: var(--color-buttons);
-  color: var(--color-text);
-  border: 2px solid var(--color-accents);
-  border-radius: 12px;
-  font-weight: 600;
-  font-size: clamp(0.8rem, 1.2vw, 1rem);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 4px var(--shadow-light);
-}
-
-.quick-join-btn:hover {
-  background: var(--color-accents);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px var(--shadow-medium);
-}
 
 /* Прокручиваемая область */
 .scrollable-content {
@@ -651,6 +545,10 @@ const close = () => {
   color: var(--color-accents);
 }
 
+.meta-item.tag.solo {
+  color: var(--color-highlights);
+}
+
 /* Статистика */
 .stats-panel {
   background: var(--color-bg-menu);
@@ -716,11 +614,6 @@ const close = () => {
     grid-template-columns: 1fr;
   }
 
-  .online-banner {
-    flex-direction: column;
-    gap: 10px;
-    text-align: center;
-  }
 }
 
 /* Скроллбар */

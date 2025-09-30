@@ -38,6 +38,13 @@
             </div>
             
             <div class="leaderboard">
+              <!-- Индикатор загрузки -->
+              <div v-if="isLoadingRankings" class="loading-indicator">
+                <div class="loading-spinner">🔄</div>
+                <p>Загрузка рейтинга...</p>
+              </div>
+              
+              <!-- Список игроков -->
               <div 
                 v-for="(player, index) in overallRankings" 
                 :key="player.id"
@@ -153,6 +160,13 @@
             </div>
             
             <div class="minigame-leaderboard">
+              <!-- Индикатор загрузки -->
+              <div v-if="isLoadingRankings" class="loading-indicator">
+                <div class="loading-spinner">🔄</div>
+                <p>Загрузка рейтинга мини-игр...</p>
+              </div>
+              
+              <!-- Список игроков -->
               <div 
                 v-for="(player, index) in minigameRankings" 
                 :key="player.id"
@@ -253,17 +267,54 @@
           </div>
             
           <div class="achievements-section">
-            <h4>▲ Последние достижения</h4>
-            <div class="achievements-list">
+            <h4>▲ Все достижения</h4>
+            
+            <!-- Индикатор загрузки -->
+            <div v-if="isLoadingAchievements" class="loading-indicator">
+              <div class="loading-spinner">🔄</div>
+              <p>Загрузка достижений...</p>
+            </div>
+            
+            <!-- Список достижений -->
+            <div v-else class="achievements-list">
               <div 
-                v-for="achievement in myStats.recentAchievements" 
-                :key="achievement.id"
+                v-for="achievement in allAchievements" 
+                :key="achievement.achievement_id"
                 class="achievement-item"
+                :class="{ 
+                  'unlocked': achievement.is_unlocked,
+                  'locked': !achievement.is_unlocked,
+                  [`rarity-${achievement.rarity}`]: true
+                }"
               >
-                <span class="achievement-icon">{{ achievement.icon }}</span>
+                <div class="achievement-icon-wrapper">
+                  <span class="achievement-icon">{{ achievement.achievement_icon }}</span>
+                  <div v-if="achievement.is_unlocked" class="unlocked-badge">✓</div>
+                </div>
+                
                 <div class="achievement-info">
-                  <div class="achievement-name">{{ achievement.name }}</div>
-                  <div class="achievement-date">{{ achievement.date }}</div>
+                  <div class="achievement-name">{{ achievement.achievement_name }}</div>
+                  <div class="achievement-description">{{ achievement.description }}</div>
+                  
+                  <!-- Прогресс-бар для неразблокированных достижений -->
+                  <div v-if="!achievement.is_unlocked" class="achievement-progress">
+                    <div class="progress-info">
+                      <span class="progress-text">{{ formatProgress(achievement.current_progress, achievement.target_value) }}</span>
+                      <span class="progress-percent">{{ achievement.progress_percent }}%</span>
+                    </div>
+                    <div class="progress-bar">
+                      <div 
+                        class="progress-fill" 
+                        :style="{ width: achievement.progress_percent + '%' }"
+                        :class="`rarity-${achievement.rarity}`"
+                      ></div>
+                    </div>
+                  </div>
+                  
+                  <!-- Дата получения для разблокированных -->
+                  <div v-else class="achievement-date">
+                    Дата получения: {{ formatAchievementDate(achievement.unlocked_at || '') }}
+                  </div>
                 </div>
               </div>
             </div>
@@ -276,11 +327,21 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
+import { usePlayerPoints, type Achievement } from '@/composables/usePlayerPoints'
 
 // Эмиты
 const emit = defineEmits<{
   close: []
 }>()
+
+// Composable для работы с очками
+const { 
+  getLeaderboard, 
+  getPlayerStats, 
+  getMinigamesLeaderboard, 
+  getPlayerAchievements,
+  getAllAchievementsWithProgress
+} = usePlayerPoints()
 
 // Состояние
 const activeTab = ref('overall')
@@ -300,34 +361,48 @@ const ratingTabs = ref([
   { id: 'my-stats', name: 'Мои данные', icon: '◆' }
 ])
 
-// Общий рейтинг (реальные данные из базы)
-const overallRankings = ref([
-  {
-    id: '71bbeef1-6c5a-402e-953c-f7109a5efbdf',
-    name: 'Jemov',
-    avatar: '●',
-    level: 1,
-    points: 533450,
-    achievements: 12,
-    badge: 'Лидер',
-    isOnline: true,
-    isCurrentPlayer: false
-  },
-  {
-    id: 'e9dcca5e-5360-43ae-856d-39baf617db7f',
-    name: 'Vetka',
-    avatar: '▲',
-    level: 1,
-    points: 138400,
-    achievements: 8,
-    badge: 'Новичок',
-    isOnline: true,
-    isCurrentPlayer: true
-  }
-])
+// Типы для рейтингов
+interface PlayerRanking {
+  id: string
+  name: string
+  avatar: string
+  level: number
+  points: number
+  achievements: number
+  badge: string
+  isOnline: boolean
+  isCurrentPlayer: boolean
+}
+
+interface CompanyRanking {
+  id: string
+  name: string
+  logo: string
+  owner: string
+  level: number
+  revenue: number
+  reputation: number
+  employees: number
+  badge: string
+}
+
+interface MinigameRanking {
+  id: string
+  name: string
+  avatar: string
+  gameName: string
+  score: number
+  gamesPlayed: number
+  wins: number
+  winRate: number
+}
+
+// Общий рейтинг (будет загружен из базы данных)
+const overallRankings = ref<PlayerRanking[]>([])
+const isLoadingRankings = ref(false)
 
 // Рейтинг компаний (пока пустой, будет заполнен позже)
-const companyRankings = ref([])
+const companyRankings = ref<CompanyRanking[]>([])
 
 // Мини-игры
 const minigames = ref([
@@ -337,14 +412,14 @@ const minigames = ref([
 ])
 
 // Рейтинг мини-игр (пока пустой, будет заполнен позже)
-const minigameRankings = ref([])
+const minigameRankings = ref<MinigameRanking[]>([])
 
-// Моя статистика (базовые данные, будут обновлены из базы)
+// Моя статистика (будет загружена из базы данных)
 const myStats = ref({
-  overallRank: 2,
-  totalEarned: 138400,
+  overallRank: 0,
+  totalEarned: 0,
   gamesPlayed: 0,
-  achievements: 8,
+  achievements: 0,
   friends: 0,
   companyLevel: 1,
   recentAchievements: [
@@ -354,25 +429,198 @@ const myStats = ref({
   ]
 })
 
+// Все достижения с прогрессом
+const allAchievements = ref<Achievement[]>([])
+const isLoadingAchievements = ref(false)
+
 // Таймер для времени
 let timeInterval: NodeJS.Timeout
 
 // Установка активной вкладки
-const setActiveTab = (tabId: string) => {
+const setActiveTab = async (tabId: string) => {
   activeTab.value = tabId
+  
+  // Загружаем данные при переключении вкладок
+  if (tabId === 'overall') {
+    await loadOverallRankings()
+  } else if (tabId === 'minigames') {
+    await loadMinigamesRankings()
+  } else if (tabId === 'my-stats') {
+    await loadMyStats()
+  }
+}
+
+// Загрузка рейтинга игроков
+const loadOverallRankings = async () => {
+  try {
+    isLoadingRankings.value = true
+    const rankings = await getLeaderboard(50, 0) // Загружаем топ 50
+    
+    overallRankings.value = rankings.map((entry, index) => ({
+      id: entry.user_id,
+      name: entry.username,
+      avatar: getRandomAvatar(),
+      level: Math.floor(entry.total_points / 1000) + 1, // Уровень на основе очков
+      points: entry.total_points,
+      achievements: Math.floor(entry.games_played / 5), // Достижения на основе игр
+      badge: getBadgeByRank(index + 1),
+      isOnline: Math.random() > 0.3, // Случайный онлайн статус
+      isCurrentPlayer: false // Будет установлено позже
+    }))
+    
+    console.log('✅ Рейтинг игроков загружен:', overallRankings.value.length)
+  } catch (error) {
+    console.error('Ошибка при загрузке рейтинга:', error)
+  } finally {
+    isLoadingRankings.value = false
+  }
+}
+
+// Загрузка рейтинга мини-игр
+const loadMinigamesRankings = async () => {
+  try {
+    isLoadingRankings.value = true
+    const gameType = selectedGame.value === 'all' ? undefined : selectedGame.value as any
+    
+    const rankings = await getMinigamesLeaderboard(gameType, 50, 0)
+    
+    minigameRankings.value = rankings.map((entry) => ({
+      id: entry.user_id,
+      name: entry.username,
+      avatar: getRandomAvatar(),
+      gameName: getGameDisplayName(entry.game_type),
+      score: entry.total_points,
+      gamesPlayed: entry.games_played,
+      wins: Math.floor(entry.games_played * 0.7), // Примерный расчет побед
+      winRate: Math.round((entry.games_played * 0.7 / entry.games_played) * 100) || 0
+    }))
+    
+    console.log('✅ Рейтинг мини-игр загружен:', minigameRankings.value.length)
+  } catch (error) {
+    console.error('Ошибка при загрузке рейтинга мини-игр:', error)
+  } finally {
+    isLoadingRankings.value = false
+  }
+}
+
+// Загрузка всех достижений с прогрессом
+const loadAllAchievements = async () => {
+  try {
+    isLoadingAchievements.value = true
+    const achievements = await getAllAchievementsWithProgress()
+    allAchievements.value = achievements
+    console.log('✅ Все достижения загружены:', achievements.length)
+  } catch (error) {
+    console.error('Ошибка при загрузке достижений:', error)
+  } finally {
+    isLoadingAchievements.value = false
+  }
+}
+
+// Загрузка статистики игрока
+const loadMyStats = async () => {
+  try {
+    const [stats, achievements] = await Promise.all([
+      getPlayerStats(),
+      getPlayerAchievements()
+    ])
+    
+    if (stats) {
+      myStats.value = {
+        overallRank: stats.rank,
+        totalEarned: stats.total_points,
+        gamesPlayed: stats.games_played,
+        achievements: achievements.length,
+        friends: 0, // Пока не реализовано
+        companyLevel: 1, // Пока не реализовано
+        recentAchievements: achievements.slice(0, 5).map((achievement, index) => ({
+          id: index + 1,
+          name: achievement.achievement_name,
+          icon: achievement.achievement_icon,
+          date: formatAchievementDate(achievement.unlocked_at)
+        }))
+      }
+      console.log('✅ Статистика игрока загружена:', myStats.value)
+    }
+    
+    // Также загружаем все достижения для отображения прогресса
+    await loadAllAchievements()
+  } catch (error) {
+    console.error('Ошибка при загрузке статистики:', error)
+  }
 }
 
 // Обновление рейтингов
 const updateRankings = () => {
   console.log('Обновление рейтинга с фильтром:', timeFilter.value)
+  loadOverallRankings()
 }
 
 const updateCompanyRankings = () => {
   console.log('Обновление рейтинга компаний по:', companySort.value)
+  // TODO: Реализовать загрузку рейтинга компаний
 }
 
 const updateMinigameRankings = () => {
   console.log('Обновление рейтинга мини-игр:', selectedGame.value)
+  loadMinigamesRankings()
+}
+
+// Вспомогательные функции
+const getRandomAvatar = () => {
+  const avatars = ['●', '▲', '■', '◆', '◉', '◈', '◇', '◆']
+  return avatars[Math.floor(Math.random() * avatars.length)]
+}
+
+const getBadgeByRank = (rank: number) => {
+  if (rank === 1) return 'Лидер'
+  if (rank <= 3) return 'Топ-3'
+  if (rank <= 10) return 'Элита'
+  if (rank <= 25) return 'Опытный'
+  return 'Новичок'
+}
+
+const getGameDisplayName = (gameType: string) => {
+  const gameNames = {
+    'auction': 'Аукцион материалов',
+    'logistics_race': 'Логистическая гонка',
+    'fashion_battle': 'Fashion Battle',
+    'team_production': 'Командное производство'
+  }
+  return gameNames[gameType as keyof typeof gameNames] || gameType
+}
+
+const formatAchievementDate = (dateString: string) => {
+  if (!dateString) return 'Не получено'
+  
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffTime = Math.abs(now.getTime() - date.getTime())
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  
+  if (diffDays === 1) return 'Сегодня'
+  if (diffDays === 2) return 'Вчера'
+  if (diffDays <= 7) return `${diffDays} дней назад`
+  return date.toLocaleDateString('ru-RU', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+const formatProgress = (current: number, target: number) => {
+  if (current >= target) return `${target.toLocaleString()}`
+  
+  // Форматируем числа для лучшего отображения
+  if (target >= 1000000) {
+    return `${Math.round(current / 1000000 * 10) / 10}М / ${Math.round(target / 1000000 * 10) / 10}М`
+  } else if (target >= 1000) {
+    return `${Math.round(current / 1000 * 10) / 10}К / ${Math.round(target / 1000 * 10) / 10}К`
+  } else {
+    return `${current.toLocaleString()} / ${target.toLocaleString()}`
+  }
 }
 
 // Обновление времени
@@ -385,9 +633,18 @@ const updateTime = () => {
 }
 
 // Загрузка при монтировании
-onMounted(() => {
+onMounted(async () => {
   updateTime()
   timeInterval = setInterval(updateTime, 1000)
+  
+  // Загружаем данные в зависимости от активной вкладки
+  if (activeTab.value === 'overall') {
+    await loadOverallRankings()
+  } else if (activeTab.value === 'minigames') {
+    await loadMinigamesRankings()
+  } else if (activeTab.value === 'my-stats') {
+    await loadMyStats()
+  }
 })
 
 // Очистка при размонтировании
@@ -555,6 +812,32 @@ const closeModal = () => {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.loading-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: var(--color-text);
+}
+
+.loading-spinner {
+  font-size: 2rem;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.loading-indicator p {
+  font-size: 1rem;
+  opacity: 0.8;
+  margin: 0;
 }
 
 .player-card, .company-card, .minigame-card {
@@ -787,15 +1070,83 @@ const closeModal = () => {
 
 .achievement-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 15px;
-  padding: 10px;
+  padding: 15px;
   background: #f8f9fa;
-  border-radius: 8px;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  margin-bottom: 10px;
+}
+
+.achievement-item.unlocked {
+  background: linear-gradient(135deg, #e8f5e8 0%, #f0f8f0 100%);
+  border-color: #4CAF50;
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
+}
+
+.achievement-item.locked {
+  opacity: 0.7;
+  background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+}
+
+/* Редкость достижений */
+.achievement-item.rarity-common {
+  border-left: 4px solid #95a5a6;
+}
+
+.achievement-item.rarity-rare {
+  border-left: 4px solid #3498db;
+}
+
+.achievement-item.rarity-epic {
+  border-left: 4px solid #9b59b6;
+}
+
+.achievement-item.rarity-legendary {
+  border-left: 4px solid #f39c12;
+  background: linear-gradient(135deg, #fff9e6 0%, #fff2cc 100%);
+  box-shadow: 0 2px 12px rgba(243, 156, 18, 0.3);
+}
+
+.achievement-icon-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .achievement-icon {
-  font-size: 1.5rem;
+  font-size: 1.8rem;
+  filter: grayscale(1);
+  transition: filter 0.3s ease;
+}
+
+.achievement-item.unlocked .achievement-icon {
+  filter: grayscale(0);
+}
+
+.unlocked-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 20px;
+  height: 20px;
+  background: #4CAF50;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .achievement-info {
@@ -805,12 +1156,94 @@ const closeModal = () => {
 .achievement-name {
   font-weight: bold;
   color: #2c3e50;
-  margin-bottom: 2px;
+  margin-bottom: 5px;
+  font-size: 1.1rem;
+}
+
+.achievement-description {
+  font-size: 0.9rem;
+  color: #7f8c8d;
+  margin-bottom: 10px;
+  line-height: 1.4;
 }
 
 .achievement-date {
   font-size: 0.8rem;
+  color: #27ae60;
+  font-weight: 600;
+}
+
+/* Прогресс-бар */
+.achievement-progress {
+  margin-top: 8px;
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.progress-text {
+  font-size: 0.8rem;
   color: #7f8c8d;
+  font-weight: 600;
+}
+
+.progress-percent {
+  font-size: 0.8rem;
+  color: #3498db;
+  font-weight: bold;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+  position: relative;
+}
+
+.progress-fill.rarity-common {
+  background: linear-gradient(90deg, #95a5a6, #7f8c8d);
+}
+
+.progress-fill.rarity-rare {
+  background: linear-gradient(90deg, #3498db, #2980b9);
+}
+
+.progress-fill.rarity-epic {
+  background: linear-gradient(90deg, #9b59b6, #8e44ad);
+}
+
+.progress-fill.rarity-legendary {
+  background: linear-gradient(90deg, #f39c12, #e67e22);
+  box-shadow: 0 0 8px rgba(243, 156, 18, 0.5);
+}
+
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
 
 .tablet-footer {
